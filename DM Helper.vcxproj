@@ -1,0 +1,351 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6A27B750-8C8E-49DC-98E8-B0D418C32BFE}</ProjectGuid>
+    <RootNamespace>DM Helper</RootNamespace>
+    <Keyword>MFCProj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>Dungeon Maestro</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/DM Helper.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <AdditionalOptions>/Zl %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>c:\gdi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\Debug/DM Helper.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>c:/gdi/Gdiplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>.\Debug/DM Helper.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/DM Helper.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug/DM Helper.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/DM Helper.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>c:\gdi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\Release/DM Helper.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <AdditionalIncludeDirectories>c:\gdi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>c:/gdi/Gdiplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+      <UACUIAccess>false</UACUIAccess>
+      <ProgramDatabaseFile>.\Release/Dungeon Maestro.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <TargetMachine>MachineX86</TargetMachine>
+      <OutputFile>$(OutDir)Dungeon Maestro.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release/DM Helper.bsc</OutputFile>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="cDMMapViewDialog.cpp" />
+    <ClCompile Include="ColoredListCtrl.cpp" />
+    <ClCompile Include="DM Helper Common.cpp" />
+    <ClCompile Include="DM Helper.cpp" />
+    <ClCompile Include="DM HelperDlg.cpp" />
+    <ClCompile Include="DMAboutDialog.cpp" />
+    <ClCompile Include="DMCalendarDialog.cpp" />
+    <ClCompile Include="DMCastSpellDialog.cpp" />
+    <ClCompile Include="DMCharacterNotesDialog.cpp" />
+    <ClCompile Include="DMCharacterSelectorDialog.cpp" />
+    <ClCompile Include="DMCharSheetDialog.cpp" />
+    <ClCompile Include="DMCharSpellsDialog.cpp" />
+    <ClCompile Include="DMCharViewDialog.cpp" />
+    <ClCompile Include="DMContainerDetailsDialog.cpp" />
+    <ClCompile Include="DMCustomArmorDialog.cpp" />
+    <ClCompile Include="DMCustomItemsDialog.cpp" />
+    <ClCompile Include="DMCustomMonsterDialog.cpp" />
+    <ClCompile Include="DMCustomSpellDialog.cpp" />
+    <ClCompile Include="DMCustomWeaponDialog.cpp" />
+    <ClCompile Include="DMDiceRollerDialog.cpp" />
+    <ClCompile Include="DMDungeonMonsterDialog.cpp" />
+    <ClCompile Include="DMEditMapLayersDialog.cpp" />
+    <ClCompile Include="DMEventLoggerDialog.cpp" />
+    <ClCompile Include="DMFileManagementDialog.cpp" />
+    <ClCompile Include="DMHPEditDialog.cpp" />
+    <ClCompile Include="DMInitiativeDialog.cpp" />
+    <ClCompile Include="DMInputDialog.cpp" />
+    <ClCompile Include="DMInventoryDialog.cpp" />
+    <ClCompile Include="DMItemDescriptionDialog.cpp" />
+    <ClCompile Include="DMLanguageSelectDialog.cpp" />
+    <ClCompile Include="DMLoadFileDialog.cpp" />
+    <ClCompile Include="DMMagicSwordPropertiesDialog.cpp" />
+    <ClCompile Include="DMMapEditDialog.cpp" />
+    <ClCompile Include="DMModifyValueDialog.cpp" />
+    <ClCompile Include="DMMundaneTypeSelectorDialog.cpp" />
+    <ClCompile Include="DMNPCPortraitSelectDialog.cpp" />
+    <ClCompile Include="DMNPCViewDialog.cpp" />
+    <ClCompile Include="DMPartyDialog.cpp" />
+    <ClCompile Include="DMPartyLogDialog.cpp" />
+    <ClCompile Include="DMPCDetailsDialog.cpp" />
+    <ClCompile Include="DMRandomEncounterDialog.cpp" />
+    <ClCompile Include="DMSaveConfirmDialog.cpp" />
+    <ClCompile Include="DMScrollDetailsDialog.cpp" />
+    <ClCompile Include="DMSFXEditorDialog.cpp" />
+    <ClCompile Include="DMSFXMapperDialog.cpp" />
+    <ClCompile Include="DMSoundboardDialog.cpp" />
+    <ClCompile Include="DMSoundFXDialog.cpp" />
+    <ClCompile Include="DMSpellDescDialog.cpp" />
+    <ClCompile Include="DMSpellSelectorDialog.cpp" />
+    <ClCompile Include="DMStringSelectorDialog.cpp" />
+    <ClCompile Include="DMSubPartyDialog.cpp" />
+    <ClCompile Include="DMTestDialog.cpp" />
+    <ClCompile Include="DMTimeEditDialog.cpp" />
+    <ClCompile Include="DMTreasureTypeDialog.cpp" />
+    <ClCompile Include="DungeonGen.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="TransparentListBox.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DM Helper.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cDMMapViewDialog.h" />
+    <ClInclude Include="ColoredListCtrl.h" />
+    <ClInclude Include="DM Helper Common.h" />
+    <ClInclude Include="DM Helper.h" />
+    <ClInclude Include="DM HelperDlg.h" />
+    <ClInclude Include="DMAboutDialog.h" />
+    <ClInclude Include="DMCalendarDialog.h" />
+    <ClInclude Include="DMCastSpellDialog.h" />
+    <ClInclude Include="DMCharacterNotesDialog.h" />
+    <ClInclude Include="DMCharacterSelectorDialog.h" />
+    <ClInclude Include="DMCharSheetDialog.h" />
+    <ClInclude Include="DMCharSpellsDialog.h" />
+    <ClInclude Include="DMCharViewDialog.h" />
+    <ClInclude Include="DMContainerDetailsDialog.h" />
+    <ClInclude Include="DMCustomArmorDialog.h" />
+    <ClInclude Include="DMCustomItemsDialog.h" />
+    <ClInclude Include="DMCustomMonsterDialog.h" />
+    <ClInclude Include="DMCustomSpellDialog.h" />
+    <ClInclude Include="DMCustomWeaponDialog.h" />
+    <ClInclude Include="DMDiceRollerDialog.h" />
+    <ClInclude Include="DMDungeonMonsterDialog.h" />
+    <ClInclude Include="DMEditMapLayersDialog.h" />
+    <ClInclude Include="DMEventLoggerDialog.h" />
+    <ClInclude Include="DMFileManagementDialog.h" />
+    <ClInclude Include="DMHPEditDialog.h" />
+    <ClInclude Include="DMInitiativeDialog.h" />
+    <ClInclude Include="DMInputDialog.h" />
+    <ClInclude Include="DMInventoryDialog.h" />
+    <ClInclude Include="DMItemDescriptionDialog.h" />
+    <ClInclude Include="DMLanguageSelectDialog.h" />
+    <ClInclude Include="DMLoadFileDialog.h" />
+    <ClInclude Include="DMMagicSwordPropertiesDialog.h" />
+    <ClInclude Include="DMMapEditDialog.h" />
+    <ClInclude Include="DMModifyValueDialog.h" />
+    <ClInclude Include="DMMundaneTypeSelectorDialog.h" />
+    <ClInclude Include="DMNPCPortraitSelectDialog.h" />
+    <ClInclude Include="DMNPCViewDialog.h" />
+    <ClInclude Include="DMPartyDialog.h" />
+    <ClInclude Include="DMPartyLogDialog.h" />
+    <ClInclude Include="DMPCDetailsDialog.h" />
+    <ClInclude Include="DMRandomEncounterDialog.h" />
+    <ClInclude Include="DMSaveConfirmDialog.h" />
+    <ClInclude Include="DMScrollDetailsDialog.h" />
+    <ClInclude Include="DMSFXEditorDialog.h" />
+    <ClInclude Include="DMSFXMapperDialog.h" />
+    <ClInclude Include="DMSoundboardDialog.h" />
+    <ClInclude Include="DMSoundFXDialog.h" />
+    <ClInclude Include="DMSpellDescDialog.h" />
+    <ClInclude Include="DMSpellSelectorDialog.h" />
+    <ClInclude Include="DMStringSelectorDialog.h" />
+    <ClInclude Include="DMSubPartyDialog.h" />
+    <ClInclude Include="DMTestDialog.h" />
+    <ClInclude Include="DMTimeEditDialog.h" />
+    <ClInclude Include="DMTreasureTypeDialog.h" />
+    <ClInclude Include="DungeonGen.h" />
+    <ClInclude Include="memdc.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="TransparentListBox.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\bitmap2.bmp" />
+    <Image Include="res\calendar_cell.bmp" />
+    <Image Include="res\camera_icon.bmp" />
+    <Image Include="res\cleric.bmp" />
+    <Image Include="res\d100_button.bmp" />
+    <Image Include="res\d10_button.bmp" />
+    <Image Include="res\d12_button.bmp" />
+    <Image Include="res\d20.ico" />
+    <Image Include="res\d20_button.bmp" />
+    <Image Include="res\d4_button.bmp" />
+    <Image Include="res\d6_button.bmp" />
+    <Image Include="res\d8_button.bmp" />
+    <Image Include="res\DM Helper.ico" />
+    <Image Include="res\DMGuide.bmp" />
+    <Image Include="res\down_arrow.bmp" />
+    <Image Include="res\down_arrow_pressed.bmp" />
+    <Image Include="res\dX_button.bmp" />
+    <Image Include="res\expand_down.bmp" />
+    <Image Include="res\expand_up.bmp" />
+    <Image Include="res\fighter.bmp" />
+    <Image Include="res\folder_icon.bmp" />
+    <Image Include="res\Furyondy.bmp" />
+    <Image Include="res\inventory.bmp" />
+    <Image Include="res\Keoland.bmp" />
+    <Image Include="res\large_left_black_button.bmp" />
+    <Image Include="res\large_left_button.bmp" />
+    <Image Include="res\large_right_black_button.bmp" />
+    <Image Include="res\large_right_button.bmp" />
+    <Image Include="res\left_icon.bmp" />
+    <Image Include="res\magicuser.bmp" />
+    <Image Include="res\mini_portrait_backdrop.bmp" />
+    <Image Include="res\moon_cells.bmp" />
+    <Image Include="res\multiclass.bmp" />
+    <Image Include="res\npc_portrait_backdrop.bmp" />
+    <Image Include="res\parchment.bmp" />
+    <Image Include="res\PlayersHandbook.bmp" />
+    <Image Include="res\print_icon.bmp" />
+    <Image Include="res\right_icon.bmp" />
+    <Image Include="res\save_icon.bmp" />
+    <Image Include="res\scroll_gray.bmp" />
+    <Image Include="res\spellbook.bmp" />
+    <Image Include="res\swap_icon.bmp" />
+    <Image Include="res\thief.bmp" />
+    <Image Include="res\up_arrow.bmp" />
+    <Image Include="res\up_arrow_pressed.bmp" />
+    <Image Include="res\up_folder_bitmap.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\DM Helper.rc2" />
+    <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Release\Data\fonts\CloisterBlack.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="DM Helper.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

@@ -1,0 +1,113 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: DM Helper - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/DM Helper.res" /i "c:\gdi" /d "NDEBUG" /d "_AFXDLL" "F:\SOURCE\DM HELPER\DM Helper.rc"" 
+Creating temporary file "C:\DOCUME~1\Keary\LOCALS~1\Temp\RSP9.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /I "c:\gdi" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Release/DM Helper.pch" /Yu"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"F:\SOURCE\DM HELPER\cDMMapViewDialog.cpp"
+"F:\SOURCE\DM HELPER\ColoredListCtrl.cpp"
+"F:\SOURCE\DM HELPER\DM Helper Common.cpp"
+"F:\SOURCE\DM HELPER\DM Helper.cpp"
+"F:\SOURCE\DM HELPER\DM HelperDlg.cpp"
+"F:\SOURCE\DM HELPER\DMCastSpellDialog.cpp"
+"F:\SOURCE\DM HELPER\DMCharacterSelectorDialog.cpp"
+"F:\SOURCE\DM HELPER\DMCharSheetDialog.cpp"
+"F:\SOURCE\DM HELPER\DMCharSpellsDialog.cpp"
+"F:\SOURCE\DM HELPER\DMCharViewDialog.cpp"
+"F:\SOURCE\DM HELPER\DMHPEditDialog.cpp"
+"F:\SOURCE\DM HELPER\DMInventoryDialog.cpp"
+"F:\SOURCE\DM HELPER\DMLoadFileDialog.cpp"
+"F:\SOURCE\DM HELPER\DMMapEditDialog.cpp"
+"F:\SOURCE\DM HELPER\DMModifyValueDialog.cpp"
+"F:\SOURCE\DM HELPER\DMNPCViewDialog.cpp"
+"F:\SOURCE\DM HELPER\DMPartyDialog.cpp"
+"F:\SOURCE\DM HELPER\DMSFXEditorDialog.cpp"
+"F:\SOURCE\DM HELPER\DMSFXMapperDialog.cpp"
+"F:\SOURCE\DM HELPER\DMSoundboardDialog.cpp"
+"F:\SOURCE\DM HELPER\DMSoundFXDialog.cpp"
+"F:\SOURCE\DM HELPER\DMSpellDescDialog.cpp"
+"F:\SOURCE\DM HELPER\DMTimeEditDialog.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\Keary\LOCALS~1\Temp\RSP9.tmp" 
+Creating temporary file "C:\DOCUME~1\Keary\LOCALS~1\Temp\RSPA.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /I "c:\gdi" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Release/DM Helper.pch" /Yc"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"F:\SOURCE\DM HELPER\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\Keary\LOCALS~1\Temp\RSPA.tmp" 
+Creating temporary file "C:\DOCUME~1\Keary\LOCALS~1\Temp\RSPB.tmp" with contents
+[
+c:/DevStudio/VC98/lib/winmm.lib c:/gdi/Gdiplus.lib c:/gdi/Gdiplus.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/Dungeon Maestro.pdb" /machine:I386 /out:"Release/Dungeon Maestro.exe" 
+".\Release\cDMMapViewDialog.obj"
+".\Release\ColoredListCtrl.obj"
+".\Release\DM Helper Common.obj"
+".\Release\DM Helper.obj"
+".\Release\DM HelperDlg.obj"
+".\Release\DMCastSpellDialog.obj"
+".\Release\DMCharacterSelectorDialog.obj"
+".\Release\DMCharSheetDialog.obj"
+".\Release\DMCharSpellsDialog.obj"
+".\Release\DMCharViewDialog.obj"
+".\Release\DMHPEditDialog.obj"
+".\Release\DMInventoryDialog.obj"
+".\Release\DMLoadFileDialog.obj"
+".\Release\DMMapEditDialog.obj"
+".\Release\DMModifyValueDialog.obj"
+".\Release\DMNPCViewDialog.obj"
+".\Release\DMPartyDialog.obj"
+".\Release\DMSFXEditorDialog.obj"
+".\Release\DMSFXMapperDialog.obj"
+".\Release\DMSoundboardDialog.obj"
+".\Release\DMSoundFXDialog.obj"
+".\Release\DMSpellDescDialog.obj"
+".\Release\DMTimeEditDialog.obj"
+".\Release\StdAfx.obj"
+".\Release\DM Helper.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\Keary\LOCALS~1\Temp\RSPB.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+StdAfx.cpp
+Compiling...
+cDMMapViewDialog.cpp
+ColoredListCtrl.cpp
+DM Helper Common.cpp
+DM Helper.cpp
+DM HelperDlg.cpp
+DMCastSpellDialog.cpp
+DMCharacterSelectorDialog.cpp
+DMCharSheetDialog.cpp
+DMCharSpellsDialog.cpp
+DMCharViewDialog.cpp
+DMHPEditDialog.cpp
+DMInventoryDialog.cpp
+DMLoadFileDialog.cpp
+DMMapEditDialog.cpp
+DMModifyValueDialog.cpp
+DMNPCViewDialog.cpp
+DMPartyDialog.cpp
+DMSFXEditorDialog.cpp
+DMSFXMapperDialog.cpp
+DMSoundboardDialog.cpp
+Generating Code...
+Compiling...
+DMSoundFXDialog.cpp
+DMSpellDescDialog.cpp
+DMTimeEditDialog.cpp
+Generating Code...
+Linking...
+
+
+
+<h3>Results</h3>
+Dungeon Maestro.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

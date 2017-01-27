@@ -1,0 +1,82 @@
+# Dice is die roll, Language is language name, “List” is flag if the language should appear in the selection list||
+#Dice|Language|List
+0|Common|1
+1|Brownie|1
+2-3|Bugbear|1
+4|Centaur|1
+5|Dragon, Black|1
+6|Dragon, Blue|1
+7|Dragon, Brass|1
+8|Dragon, Bronze|1
+9|Dragon, Copper|1
+10|Dragon, Gold|1
+11|Dragon, Green|1
+12|Dragon, Red|1
+13|Dragon, Silver|1
+14|Dragon, White|1
+15|Dryad|1
+16-20|Dwarvish|1
+21-25|Elvish|1
+26|Ettin|1
+27|Gargoyle|1
+28|Giant, Cloud|1
+29|Giant, Fire|1
+30|Giant, Frost|1
+31-33|Giant, Hill|1
+34|Giant, Stone|1
+35|Giant, Storm|1
+36-39|Goblin|1
+40|Gnoll|1
+41-44|Gnome|1
+45-49|Halfling|1
+50-51|Hobgoblin|1
+52-54|Kobold|1
+55|Lammasu|1
+56-58|Lizard Man|1
+59|Manticore|1
+60|Medusion|1
+61|Minotaur|1
+62|Naga, Guardian|1
+63|Spirit|1
+64|Water|1
+65|Nixie|1
+66|Nymph|1
+67-70|Ogrish|1
+71|Ogre magian|1
+72-76|Orcish|1
+77|Pixie|1
+78|Salamander|1
+79|Satyr|1
+80|Shedu|1
+81|Sprite|1
+82|Slyph|1
+83|Titan|1
+84|Troll|1
+85|Xorn|1
+86-100|Human Foreign or Other|0
+101|Undercommon|1
+# Do not change any languages above this line, below this line languages can be added/deleted as you wish for your campaign||
+101|Amedi|1
+101|Ancient Baklunish|1
+101|The Cold Tongue|1
+101|Drow|1
+101|Druidic|1
+101|Etlan|1
+101|Feral|1
+101|Flan|1
+101|Keolandish|1
+101|Lendorian|1
+101|Leraran Suloise|1
+101|Low Baklunish|1
+101|Nyrondese|1
+101|Old Oeridian|1
+101|Olman|1
+101|Ordai|1
+101|Ralat|1
+101|Rasol|1
+101|Rhopan|1
+101|Suloise|1
+101|Touv|1
+101|Ulagha|1
+101|Velondi|1
+101|Xolasa|1

@@ -1,0 +1,187 @@
+# ID|Name|Type|Rarity|Int|% In Lair|Treasure|Alignment|Number|AC|Move|HD|# Attacks|Damage|Spec Att|Spec Def|Magic Res|Size|Psi|PsiAttDef|XP|Armor|Weapon
+3000|Aarakocra|Monstrous Humanoid|Very Rare|Average (8-10)|5%|D|2|1-10|7|6, Fl 36|1+2|2|1-3(x2) or by weapon|Nil|Nil|Standard|M |Nil|Nil|28+2|Nil|Nil
+3001|Achaierai|Monster|Very Rare|Average (8-10)|5%|F|9|1-8|8 (legs: -1)|18|40 hp (legs 15 hp each)|3|1-8(x2)/1-10|Nil|Toxic Smoke|35%|L (15')|Nil|Nil|1300+14|Nil|Nil 
+3002|Adherer|Monstrous Humanoid|Rare|Semi (2-4)|20%|Nil|7|1-4|3|9|4|1|1-3|Adhesion|Special|Special|M |Nil|Nil|150+4|Nil|Nil 
+3003|Al-Mi'raj|Magical Beast|Very Rare|Animal (1)|5%|Nil|5|2-20|6|18|1|1|1-4|Nil|Nil|Special|S (3')|Nil|Nil|10+1|Nil|Nil 
+3004|Aleax|Outsider|Very Rare|Genius (17-18)|0%|Nil|5|1|Special|12|Special|Special|Special|Nil|Regeneration|100%|M |Nil|Nil|Special|Nil|Nil 
+3005|Algoid|Plant|Very Rare|Semi (2-4)|20%|Dx1/2|6|1-6|5|6|5|2|1-10(x2)|Nil|Immune to edged weapons of less than +2|Immune to fireballs and lightning|M |101-120|A|280+5|Nil|Nil 
+3006|Apparition|Undead|Very Rare|Average (8-10)|20%|E|9|1-4|0|24|8|1|Special|Nil|+1 or silver to hit|Standard|M |Nil|Nil|1000+10|Nil|Nil 
+3007|Assassin Bug|Vermin|Rare|Animal (1)|50%|Nil|5|2|5|6, Fl 18|1+1|1|1-4|Paralysis|Nil|Standard|S (2')|Nil|Nil|65+2|Nil|Nil 
+3008|Astral Searcher|Outsider|Very Rare|Non (0)|0%|Nil|5|4-24|10|12|2|1|1-6|All victims are AC5|Nil|50%|M |Nil|Nil|73+2|Nil|Nil 
+3009|Babbler|Magical Beast|Very Rare|Average (8-10)|15%|B|9|1-4|6|6 or 12|5|3|1-6(x2)/1-8|Special|Nil|Standard|L (8')|Nil|Nil|130+5|Nil|Nil 
+3010|Bat - Doombat|Magical Beast|Rare|Animal (1)|100%|Nil|8|1-8|4|18|6+3|2|1-6/1-4|Shriek|Nil|Standard|M|Nil|Nil|400+7|Nil|Nil 
+3011|Bat - Giant|Animal|Uncommon|Non (0)|50%|Nil|5|3-18|8|3, Fl 18|1/2 to 1|1|1-2 or 1-4|Nil|Special|Standard|S|Nil|Nil|5+1 to 10+1|Nil|Nil 
+3012|Berbalang|Monstrous Humanoid|Very Rare|Very (11-12)|Special|D|9|1|6|6, Fl 24|1+1|3|1-4(x2)/1-6|Nil|Nil|Standard|M |Nil|Nil|65+2|Nil|Nil 
+3013|Blindheim|Monster|Very Rare|Animal (1)|5%|B|9|1-4|3 (1)|9|4+2|1|1-8|Blinding stare|Nil|Standard|S (4')|Nil|Nil|130+5|Nil|Nil 
+3014|Blood Hawk|Animal|Uncommon|Semi (2-4)|25%|Qx2|5|5-15 |7|24|1+1|3|1-4(x2)/1-6|Nil|Nil|Standard|S|Nil|Nil|20+2|Nil|Nil 
+3015|Bloodworm - Giant|Vermin|Rare|Non (0)|50%|Q|5|1-4|4|6|6|1|1-8 + blood drain|Nil|Nil|Standard|L (20')|Nil|Nil|225+6|Nil|Nil 
+3016|Bonesnapper|Animal|Rare|Non (0)|20%|C|5|1-3|4|6|4|2|1-8/1-4|Nil|Nil|Standard|M (5')|Nil|Nil|60+4|Nil|Nil 
+3017|Booka|Fey|Uncommon|Very (11-12)|75%|J|2|1-4|7|12, Fl 18|1/2|Nil|Nil|Special|Special|10%|S|Nil|Nil|9+1|Nil|Nil 
+3018|Bullywug|Monstrous Humanoid|Rare|Low to Average (5-10)|20%|(J,K,M,Qx5,C)|9|10-80|6 or better|3, Sw 15|1|3 or 1|1-2(x2)/2-5 or by weapon|Hop|Camouflage|Standard|S-M|Nil|Nil|18+1 to 80+3|Nil|Nil 
+3019|Bunyip|Magical Beast|Rare|Animal (1)|30%|Nil|2|1|10|12|5|1|1-6|Nil|Nil|Standard|M (6')|Nil|Nil|90+5|Nil|Nil 
+3020|Carbuncle|Magical Beast|Rare|Low to Average (5-10)|10%|Nil|6|1|2|3|1|Nil|Nil|Nil|Special|Standard|S (3')|Nil|Nil|14+1|Nil|Nil 
+3021|Caryatid Column|Construct|Very Rare|Non (0)|0%|Nil|5|1-12|5|6|22 hp|1|2-8|Nil|Special|Save at +4|M (7')|Nil|Nil|280|Nil|Nil 
+3022|Caterwaul|Monster|Rare|Low (5-7)|20%|N,R,S,U|9|1|6|18 or 24|4+2|3|1-4(x2)/1-6|Screech; Multiple attacks|Special|Standard|M|Nil|Nil|170+5|Nil|Nil 
+3023|Cifal|Vermin|Rare|Non (0)|15%|Q|5|1-6|6|6|8 or 10|1|1-12|Nil|Reduced damage from edged weapons|Standard|M|Nil|Nil|1350+14|Nil|Nil 
+3024|Clubnek|Magical Beast|Uncommon|Low (5-7)|0%|N|5|2-8|8|12|2|3|1-6(x2)/1-8|Nil|Nil|Standard|M|Nil|Nil|20+2|Nil|Nil 
+3025|Coffer Corpse|Undead|Rare|Low (5-7)|80%|B|9|1|8|6|2|1|1-6 or by weapon|Nil|+1 to hit|Standard|M|Nil|Nil|36+2|Nil|Nil 
+3026|Crabman|Monstrous Humanoid|Rare|Low to Average (5-10)|25%|K|5|2-12|4|9, Sw 6|3|2|1-4(x2)|Nil|Nil|Standard|L (9')|Nil|Nil|35+3|Nil|Nil 
+3027|Crypt Thing|Undead|Very Rare|Very (11-12)|100%|Z|5|1|3|12|6|1|1-8|Special|Special|Standard|M|Nil|Nil|275+6|Nil|Nil 
+3028|Dakon|Animal|Uncommon|Average (8-10)|50%|E|4|6-60|5|6|1+1|2|1-10(x2)|Nil|Nil|Standard|M|Nil|Nil|20+2|Nil|Nil 
+3029|Dark Creeper|Monstrous Humanoid|Rare|Average (8-10)|20%|Special|6|1 (20-80)|0 (8)|9|1+1|1|1-4|Special|Nil|Standard|S (4')|Nil|Nil|110+2|Nil|Nil 
+3030|Dark Stalker|Humanoid|Very Rare|Average (8-10)|20%|Special|6|1|0 (8)|9|2+1|1|1-6|Special|Special|Standard|M|Nil|Nil|200+3|Nil|Nil 
+3031|Death Knight|Undead|Very Rare|Average to Genius (8-18)|0%|N|9|1|0|9 or 12|9 (10 sided)|1|By weapon|Special|Special|75%|M|Nil|Nil|3700+16|Nil|Nil 
+3032|Demon - Lesser Goddess - Lolth (Demon Queen of Spiders)|Outsider|Very Rare|Godlike (21+)|25%|Qx5,R,Xx3|9|1|-10 (-2)|1, Cl 9, Br 15|16 (66 hp)|2|4-16/by weapon + poison and webs|Special|Special|70%|L|266|All/All|12470|Nil|Nil
+3033|Denzelian|Monster|Very Rare|Semi (2-4)|100%|Nil|5|1-2|0|1|6|Nil|Nil|Nil|Nil|Standard|S|Nil|Nil|Nil|Nil|Nil 
+3034|Devil - Greater - Styx|Outsider|Very Rare|High (13-14)|60%|Q,R|7|1-2|-1|6, Fl 15|6+6|1|2-8|Special|+1 to hit|50%|M|121|BD/FGH|1275+8|Nil|Nil 
+3035|Dire Corby|Monstrous Humanoid|Rare|Low (5-7)|20%|Qx5|8|1-12|6|12|2|2|1-6(x2)|Nil|Nil|Standard|M|Nil|Nil|20+2|Nil|Nil 
+3036|Disenchanter|Monster|Very Rare|Average (8-10)|0%|Nil|5|1-2|5|12|5|1|Special|Disenchants|+1 to hit|Standard|M (5')|Nil|Nil|205+5|Nil|Nil 
+3037|Dog - Death Dog|Magical Beast|Very Rare|Animal (1)|0%|Nil|8|5-50|7|12|2+1|2|1-10(x2)|Disease|Nil|Standard|M (4')|Nil|Nil|105+3|Nil|Nil 
+3038|Dog - Devil Dog|Magical Beast|Rare|Average (8-10)|10%|Nil|9|4-16|6|30|6|1|2-8|Throat attack|Nil|Standard|M (3')|Nil|Nil|350+6|Nil|Nil 
+3039|Dog - Hound of Ill Omen|Magical Beast|Very Rare|Non (0)|0%|Nil|5|1|N/A|Nil|N/A|1|Special|Nil|Nil|Standard|M (5')|Nil|Nil|NA|Nil|Nil 
+3040|Dragon - Oriental - Li Lung (Earth Dragon)|Dragon|Rare|Average (8-10)|60%|H|5|1-4|4|9, Fl 24, Sw 6, Br 1-6|7 to 9|3|2-8(x2)/1-20|Spells|Nil|Standard|L (18')|Nil|Nil|575+8 to 1400+12|Nil|Nil 
+3041|Dragon - Oriental - Lung Wang (Sea Dragon)|Dragon|Very Rare|Very (11-12)|60%|Hx2|5|1|0|3, Sw 9|11 to 13|3|1-12(x2)/6-36|Breath weapon and spells|Nil|Standard|L (30')|Nil|Nil|4550+16 to 6350+18|Nil|Nil 
+3042|Dragon - Oriental - Pan Lung (Coiled Dragon)|Dragon|Rare|High (13-14)|60%|Hx1/2|6|1-4|2|12, Fl 12, Sw 9|6 to 8|3|1-3(x2)/2-16|Constriction and spells|Nil|Standard|L (54')|Nil|Nil|475+6 to 1100+10|Nil|Nil 
+3043|Dragon - Oriental - Shen Lung (Spirit Dragon)|Dragon|Rare|High (13-14)|60%|H|6|1-4|1|12, Fl 12, Sw 9|9 to 11|4|1-4(x2)/2-24/1-8|Spells|Special|Standard|L (48')|Nil|Nil|1400+12 to 3000+16|Nil|Nil 
+3044|Dragon - Oriental - T'ien Lung (Celestial Dragon)|Dragon|Very Rare|Exceptional (15-16)|60%|Hx2|4|1|-2|9, Fl 48, Sw 6|11 to 13|3|1-6(x2)/4-40|Breath weapon and spells|Nil|Standard|L (48')|Nil|Nil|4550+16 to 6350+18|Nil|Nil 
+3045|Dragon - Oriental - Yu Lung (Carp Dragon)|Dragon|Rare|Low (5-7)|60%|Nil|5|1-4|3|6, Sw 18|5 to 7|3|1-4(x2)/2-16|Nil|Nil|Standard|L (18')|Nil|Nil|130+5 to 350+8|Nil|Nil 
+3046|Dragonfish|Animal|Rare|Non (0)|0%|Nil|5|1|4|Sw 6|2|1|1-6|Poison|Nil|Standard|S|Nil|Nil|65+2|Nil|Nil 
+3047|Dune Stalker|Humanoid|Very Rare|High (13-14)|0%|Nil|8|1|3|12|6|1|2-12|Kiss of death|+1 to hit|30%|M|Nil|Nil|400+6|Nil|Nil 
+3048|Elemental - Prince of Evil - Cryonax (Prince of Cold)|Outsider|Very Rare|Genius (17-18)|55%|H,V,X|8|1|-6|9|90 hp|2|5-20(x2)|Cold damage; Spells|Special|75%|L (15')|200|All/All|28000|Nil|Nil 
+3049|Elemental - Prince of Evil - Imix (Prince of Fire)|Outsider|Very Rare|Genius (17-18)|45%|R,U|8|1|-4|18|90 hp|1|6-36|Fire damage; Spells|Special|85%|L (18')|190|All/All|25900|Nil|Nil 
+3050|Elemental - Prince of Evil - Ogremaoch (Prince of Earth)|Outsider|Very Rare|Exceptional (15-16)|65%|H,U,Z|8|1|-7|9|110 hp|2|5-50(x2)|Spells|Special|85%|L (10')|185|All/All|39450|Nil|Nil 
+3051|Elemental - Prince of Evil - Olhydra (Princess of Water)|Outsider|Very Rare|Genius (17-18)|75%|H,S,U|8|1|-5|6, Sw 18|90 hp|1|2-24|Drowning; Spells|Special|70%|L (20')|210|All/All|23000|Nil|Nil 
+3052|Elemental - Prince of Evil - Yan-C-Bin (Prince of Air)|Outsider|Very Rare|Genius (17-18)|15%|U,Z|8|1|-6|Fl 48|85 hp|2|2-20(x2)|Spells; Whirlwind; Monk abilities|Special|90%|L (10')|220|All/All|25650|Nil|Nil 
+3053|Elf - Drow|Humanoid|Very Rare|High (13-14)|0%|Nx5,Qx2|9|5-50|4 to 8|12 (Females: 15)|2 to 8|1 or 2|By weapon|Special|Special|50% or better, +2 to saves|M (5')|Unknown|Unknown|Variable|Nil|Nil 
+3054|Enveloper|Monster|Very Rare|Variable|85%|E|5|1|4|9|3 to 6|2|1-8(x2)|Special|Nil|Varies|L|Varies|Variable|Variable|Nil|Nil 
+3055|Ettercap|Monster|Rare|Low (5-7)|30%|Nil|8|1-2|6|12|5|3|1-3(x2)/1-8|Poison|Traps|Standard|M|Nil|Nil|165+5|Nil|Nil 
+3056|Eye Killer|Monster|Very Rare|Animal (1)|25%|Nil|9|1-4 (2-8)|5|9|4|1|1-6|Death stare|Nil|Standard|M|Nil|Nil|150+4|Nil|Nil 
+3057|Eye of Fear and Flame|Monster|Very Rare|High (13-14)|0%|Nil|9|1|2|9|12|Special|Special|Special|Special|Special|M|Nil|Nil|2850+16|Nil|Nil 
+3058|Fire Snake|Magical Beast|Uncommon|Semi (2-4)|100%|Q|5|1-6|6|4|2|1|1-4|Paralysis|Immune to fire|Standard|S (2-3')|Nil|Nil|73+2|Nil|Nil 
+3059|Firedrake|Dragon|Rare|Semi (2-4)|80%|Nil|5|2-8|5|6, Fl 18|4|1|2-8|Breath weapon|Nil|Standard|S (4')|Nil|Nil|125+4|Nil|Nil 
+3060|Firenewt|Monstrous Humanoid|Rare|Low (5-7)|75%|K,M (F)|8|10-100|5|9|2+2|1|By weapon|Breathe fire|Special|Standard|M|Nil|Nil|90+3 to 165+5|Nil|Nil 
+3061|Firetoad|Magical Beast|Rare|Low (5-7)|20%|C|6|1-6|10|6|4+1|1|Varies|Nil|Nil|Standard|S|Nil|Nil|165+5|Nil|Nil 
+3062|Flail Snail|Magical Beast|Very Rare|Low (5-7)|0%|Nil|5|1|4|3|4 to 6|1 per tentacle|1-8 each|Nil|Special|Special|L|Nil|Nil|150+4 to 350+6|Nil|Nil 
+3063|Flind|Humanoid|Rare|Average (8-10)|20%|A|7|2-24|5|12|2+3|1|1-6 or 1-4|Disarming|Nil|Standard|M (6.5')|Nil|Nil|35+3 to 60+4|Nil|Nil 
+3064|Flumph|Monster|Rare|Average (8-10)|0%|Nil|1|2-16|0 (8)|6|2|1|1-8 + 1-4 |Nil|Special|Standard|S (2')|Nil|Nil|36+2|Nil|Nil
+3065|Forlarren|Monster|Very Rare|Semi (2-4)|0%|Nil|8|1|2|9|3|2|1-4(x2)|Heat metal|Nil|Standard|M|Nil|Nil|90+3|Nil|Nil 
+3066|Frostman|Humanoid|Very Rare|Average (8-10)|20%|C|7|1|5|12|4|1|By weapon|Ice blast|Nil|Standard|M|Nil|Nil|125+4|Nil|Nil 
+3067|Galltrit|Monstrous Humanoid|Very Rare|Average (8-10)|20%|1-3 gems|9|1-4|2|3, Fl 18|1/4|1|1-2|Blood drain; Anti-coagulant; anaesthesis|Nil|Standard|S (6")|Nil|Nil|32|Nil|Nil 
+3068|Gambado|Monster|Rare|Low (5-7)|100%|P,R|6|1-8|6|Special|4|3|1-8/1-4(x2)|Nil|Nil|Standard|M|Nil|Nil|85+4|Nil|Nil 
+3069|Garbug - Black|Monster|Rare|Animal (1)|40%|C|5|1-3|5|6, Fl 9|2+2|1 and 6|1-4 and special|Paralysis|Nil|Standard|L (9')|Nil|Nil|145+3|Nil|Nil 
+3070|Garbug - Violet|Monster|Rare|Animal (1)|40%|C|5|1-3|5|6, Fl 9|3+1|2 and 6|1-6(x2) and special|Paralysis|Nil|Standard|L (9')|Nil|Nil|190+4|Nil|Nil 
+3071|Giant - Fog|Giant|Very Rare|Average to High (8-14)|50%|E|5|1-4 (1-6)|1|15|14|1|4-24|Hurl rocks for 2-20|Special|Standard|L (18')|Nil|Nil|3950+18|Nil|Nil 
+3072|Giant - Mountain|Giant|Very Rare|High (13-14)|90%|E|6|1-4|4|12|12|1|4-40|Hurl rocks for 2-16|Nil|Standard|L (14')|Nil|Nil|2850+16|Nil|Nil 
+3073|Giant Strider|Magical Beast|Rare|Animal (1)|0%|Nil|8|1-6|4|15|2|2|1-8/1-10|Fireball|Special|+2 to saves; Immune to normal fire|L (6-7')|Nil|Nil|73+2|Nil|Nil 
+3074|Gibberling|Monstrous Humanoid|Uncommon|Low (5-7)|40%|D|6|40-400|10|9|1|1|1-8|Special|Nil|Standard|S (4-5')|Nil|Nil|14+1|Nil|Nil 
+3075|Githyanki|Humanoid|Very Rare|Exceptional to Genius (15-18)|40%|N (A,Zx2)|8|1-4|Varies|Varies|2 to 11|Varies|By weapon|Nil|Nil|Standard|M|150-250|All but J|Variable|Nil|Nil 
+3076|Githzarai|Humanoid|Very Rare|Exceptional (15-16)|50%|A|6|1-4|Varies|Varies|2 to 9|Varies|By weapon|Nil|Nil|50%|M|121-250|All/All|Variable|Nil|Nil 
+3077|Gnome - Svirfneblin (Deep Gnome)|Humanoid|Very Rare|Exceptional (15-16)|0%|Kx2,Qx3|2|3-30|2 to 7|9|3+6|1 or 2|By weapon|Special|Special|20%|S (3')|Nil|Nil|325+5 to 1800+10|Nil|Nil 
+3078|Goldbug|Vermin|Rare|Non (0)|100%|Nil|5|1-20|9|1|1|1|1-4|Poison|Nil|Standard|S|Nil|Nil|45+1|Nil|Nil 
+3079|Gorbel|Monster|Uncommon|Non (0)|0%|Nil|6|1-20|3 (10)|Fl 18|Special|1|1-4 or 1-6|Nil|Immune to blunt|Standard|S (3')|Nil|Nil|32+2|Nil|Nil 
+3080|Gorilla Bear|Magical Beast|Uncommon|Low (5-7)|50%|Nil|5|2-7|4|9|4|2|1-8(x2)|Hug for 2-12|Nil|Standard|L (9')|Nil|Nil|85+4|Nil|Nil 
+3081|Grell|Monster|Rare|Average (8-10)|0%|Nil|8|1|4|12|5|11|1-4(x10)/1-6|Paralysis|Immune to lightning|Standard|M|Nil|Nil|840+5|Nil|Nil 
+3082|Gremlin - Jermlaine|Humanoid|Uncommon|Average (8-10)|Special|O,Q (C,Qx5,S,T)|8|12-48|7|15|1/2|1|1-2 or 1-4|Special|Special|Special|S (1'+)|Nil|Nil|7+1 to 32+1|Nil|Nil 
+3083|Grimlock|Monstrous Humanoid|Uncommon|Average (8-10)|50%|K,L,M (B)|8|20-200|5|12|2|1|1-6 or by weapon|Nil|Special|Save as 6th level fighter|M|Nil|Nil|28+2 to 85+4|Nil|Nil 
+3084|Gryph|Magical Beast|Very Rare|Animal (1)|0%|Nil|8|1-6|6|Fl 21|2 to 4|1|2-12|Special|Nil|Standard|S|Nil|Nil|28+2 to 85+4|Nil|Nil 
+3085|Guardian Daemon|Outsider|Very Rare|Very (11-12)|0%|Special|5|1-3|1|9|8|3|1-6/1-12(x2)|Special|Special|Special|Varies|Nil|Nil|1275+10|Nil|Nil 
+3086|Guardian Familiar|Magical Beast|Very Rare|Animal (1)|0%|Special|5|1|8|12|1 (9)|3|1-6/1-4(x2)|Nil|Special|Special|S|Nil|Nil|1800+12|Nil|Nil 
+3087|Hellcat (Bezekira)|Outsider|Rare|Animal (1)|30%|Nil|7|1|6|12|7+2|3|2-5(x2)/2-12|Nil|Special|20%; Immune to charm and sleep|L|Nil|Nil|1000+10|Nil|Nil 
+3088|Huecuva|Undead|Very Rare|Semi (2-4)|10%|C|9|1-10|3|9|2|1|1-6|Disease|+1 or silver to hit|Standard|M|Nil|Nil|0+81|Nil|Nil 
+3089|Hoar Fox|Magical Beast|Rare|Animal (1)|20%|Special|5|1-6|6|15|2|1|1-6|Breath weapon|Nil|Standard|S 4')|Nil|Nil|28+2|Nil|Nil 
+3090|Hook Horror|Monster|Rare|Low (5-7)|20%|P|5|2-12|3|9|5|2|1-8(x2)|Nil|Nil|Standard|L (9')|Nil|Nil|90+5|Nil|Nil 
+3091|Hornet - Giant|Vermin|Uncommon|Semi (2-4)|70%|Nil|5|1|2 (4)|Fl 24|5|1|1-4|Poison; Incapacitation|Nil|Standard|M|Nil|Nil|165+5|Nil|Nil 
+3092|Imorph|Monster|Very Rare|Animal (1)|10%|Nil|5|1|5|6|5|2|1-4(x2)|Nil|Special|Standard|M|Nil|Nil|130+5|Nil|Nil 
+3093|Iron Cobra|Construct|Very Rare|Non (0)|0%|Special|5|1|0|12|1|1|1-3|Poison|Special|Special|S (3')|Nil|Nil|88+1|Nil|Nil 
+3094|Jaculi|Animal|Rare|Animal (1)|0%|Nil|5|11-20|6|9|1|1|1-6|Nil|Nil|Standard|L (8-12')|Nil|Nil|10+1|Nil|Nil 
+3095|Jelly - Stun|Ooze|Rare|Animal (1)|0%|Special|5|1|6|3|4|1|2-8|Paralysis|Nil|Standard|L|Nil|Nil|125+4|Nil|Nil 
+3096|Jelly - Symbiotic|Ooze|Very Rare|Very (11-12)|100%|Nil|5|1|8|1|2|Nil|Nil|Special|Special|Standard|S (2-3')|Nil|Nil|65+2|Nil|Nil
+3097|Kamadan|Magical Beast|Rare|Low (5-7)|20%|C|9|1|4|18|4+2|3 plus 4-7|1-3(x2)/1-6/1-4(x4-7)|Breath weapon|Nil|Standard|L|Nil|Nil|240+5|Nil|Nil 
+3098|Kelpie|Plant|Very Rare|Low to Average (5-10)|70%|D|8|1-4|3|9, Sw 12|5|Nil|Nil|Special|Special|Standard|M|Nil|Nil|165+5|Nil|Nil 
+3099|Kenku|Monstrous Humanoid|Uncommon|Average (8-10)|20%|F|5|2-8|5|6, Fl 18|2 to 5|3 or 1|1-4(x2)/1-6 or by weapon|Nil|Special|30%|M|Nil|Nil|28+2 to 420+5|Nil|Nil 
+3100|Khargra|Outsider|Very Rare|Low (5-7)|0%|Special|5|1-6|-3|3, Br 15|6|1|3-18|Surprise on 1-7 (on 1d8)|Special|Standard|S (3.5')|Nil|Nil|300+6|Nil|Nil 
+3101|Killmoulis|Monster|Uncommon|Average (8-10)|60%|K|2|1-3|6|15|1/2|Nil|Nil|Special|Special|20%|S|Nil|Nil|9+1|Nil|Nil 
+3102|Kuo-Toa|Monstrous Humanoid|Very Rare|High and Up (13+)|Special|L,M,N (Z)|8|2-24 (40-400)|4|9, Sw 18|2 to 8|1 or 2|2-5/by weapon|Special|Special|Special|M-L|Nil|Nil|Variable|Nil|Nil 
+3103|Lamia - Noble|Magical Beast|Very Rare|High (13-14)|60%|D|9|1|6|9|10+1|1|1-6|Spells|Nil|Standard|M|Nil|Nil|2550+14|Nil|Nil 
+3104|Lava Children|Humanoid|Very Rare|Average (8-10)|0%|Q|5|3-18|4|9|4 to 7|3|1-6(x2)/2-12|Spells|Immune' to metal|Standard|M|Nil|Nil|150+4 to 700+7|Nil|Nil 
+3105|Leech - Throat|Vermin|Common|Non (0)|0%|Nil|5|1-6|10|1, Sw 1|1/8|1|1-3|Choke|Nil|Standard|S (1")|Nil|Nil|6|Nil|Nil 
+3106|Lizard - Ice|Dragon|Very Rare|Low (5-7)|30%|G|9|1-4|1|9, Fl 15|3+3|3|1-6/1-3(x2)|Spells; Breath weapon|Special|80%|S (3')|Nil|Nil|255+4|Nil|Nil 
+3107|Lizard King|Humanoid|Very Rare|Average (8-10)|20%|E|9|1|3|15, Sw 12|8|1|5-20|Skewering|Nil|20%|L (8')|Nil|Nil|550+10|Nil|Nil 
+3108|Magnesium Spirit|Outsider|Very Rare|Very (11-12)|0%|Nil|7|1|0|36|6+1|1|3-12|Energy and strength drain|+1 or silver to hit|50%|M|Nil|Nil|1300+8|Nil|Nil 
+3109|Mantari|Magical Beast|Very Rare|Animal (1)|0%|Nil|8|1-3|9|Fl 18|1+1|1|Special|Nil|Nil|Standard|S|Nil|Nil|65+2|Nil|Nil 
+3110|Meazel|Humanoid|Uncommon|Low (5-7)|95%|B|9|1|8|12|4|2|1-4(x2)|Nil|Special|Standard|M|Nil|Nil|85+4|Nil|Nil 
+3111|Meenlock|Monster|Very Rare|Very (11-12)|100%|Nil|7|3-5|7|9|4|2|1-4(x2)|Paralysis|Dimensional door|Standard|S (2')|Nil|Nil|240+4|Nil|Nil 
+3112|Mephit - Fire|Outsider|Very Rare|Average (8-10)|0%|2-12 platinum|8|1|5|12, Fl 24|3+1|2|1-3(x2)|Breath weapon|Special|Standard|M (5')|Nil|Nil|150+4|Nil|Nil 
+3113|Mephit - Lave|Outsider|Very Rare|Average (8-10)|0%|1-10 platinum|8|1|6|12, Fl 24|3|2|Special|Breath weapon|Special|Standard|M (5')|Nil|Nil|105+3|Nil|Nil 
+3114|Mephit - Smoke|Outsider|Very Rare|Average (8-10)|0%|1-10 platinum|8|1|4|12, Fl 24|3|2|1-2(x2)|Breath weapon|Special|Standard|M (5')|Nil|Nil|105+3|Nil|Nil 
+3115|Mephit - Steam|Outsider|Very Rare|Average (8-10)|0%|3-18 platinum|8|1|7|12, Fl 24|3+3|2|1-4(x2)|Breath weapon|Special|Standard|M (5')|Nil|Nil|175+4|Nil|Nil 
+3116|Mezzodaemon|Outsider|Uncommon|High to Exceptional (13-16)|0%|Qx5 (X)|8|1 (1-3)|-3|15|10+40|2 or 1|7-12(x2) or by weapon +6|Special|Special|Special|M (7')|Nil|Nil|2700+14|Nil|Nil 
+3117|Mite|Humanoid|Rare|Low (5-7)|10%|C|7|6-24|8|3|1-1|1|1-3|Nil|Nil|Standard|S (2')|Nil|Nil|5+1|Nil|Nil 
+3118|Necrophidius (Death Worm)|Construct|Very Rare|Average (8-10)|10%|Nil|5|1|2|9|2|1|1-8|Paralysis|Immune to poison|Special|L|Nil|Nil|118+2|Nil|Nil 
+3119|Needleman|Plant|Very Rare|Low (5-7)|25%|G|5|5-50|6|9|3+4|1 to 6|1-2 each|Surprise|Special|Sub-Standard|M|Nil|Nil|85+3|Nil|Nil 
+3120|Nilbog|Humanoid|Very Rare|Average (8-10)|40%|K (C)|7|4-40|6|6|1-1|1|1-6 or by weapon|Nil|Special|Standard|S (4')|Nil|Nil|53+1|Nil|Nil 
+3121|Nonafel (Cat O' Nine Tails)|Magical Beast|Very Rare|Low (5-7)|40%|Nil|9|1|5 (6)|9 (12)|9|1|2-20 or 1-8|Nil|Special|Standard|L|Nil|Nil|1400+12|Nil|Nil 
+3122|Norker|Monstrous Humanoid|Rare|Average (8-10)|20%|E|9|3-30|3|9|1+2|2|1-3/1-6|Nil|Nil|Standard|S (4')|Nil|Nil|20+2|Nil|Nil 
+3123|Nycadaemon|Outsider|Very Rare|Exceptional to Genius (15-18)|0%|Qx10,X|8|1 (1-2)|-4|12, Fl 36|12+36|2 or 1|9-16(x2) or by weapon +8|Special|Special|Standard|L (8')|Nil|Nil|6800+16|Nil|Nil 
+3124|Ogrillon|Humanoid|Rare|Low (5-7)|20%|M (B,S)|9|1-4 (5-30)|6|12|2|2|2-7(x2)|Nil|Nil|Standard|M|Nil|Nil|28+2|Nil|Nil 
+3125|Penanggalan|Undead|Rare|Average (8-10)|Special|Nil|7|1|10 (8)|12, Fl 12|4|1|1-6 or by weapon|Blood drain|Special|Special|M|Nil|Nil|290+5 or more|Nil|Nil 
+3126|Pernicon|Vermin|Rare|Semi (2-4)|20%|1-4 gems and 25% 100-600 gp|5|4-40 (300-3000)|3|12|1/2|1|1-3|Constitution drain|Nil|Standard|S (2")|Nil|Nil|7+1|Nil|Nil 
+3127|Phantom Stalker|Outsider|Very Rare|Semi (2-4)|0%|Nil|5|1-2|3|12, Fl 24|6|2|1-4(x2)|Special|Immune to fire|Standard|L|Nil|Nil|375+6|Nil|Nil 
+3128|Poltergeist|Undead|Rare|Low (5-7)|95%|Nil|7|1-8|10|6|1/2|Nil|Nil|Fear|+1 or silver to hit; Invisibility|Standard|M|Nil|Nil|34+1|Nil|Nil
+3129|Protein Polymorph|Monster|Rare|Average (8-10)|50%|D|6|1|2|9|6 to 8|Varies|6-36 or by weapon|Special|Nil|Standard|L|Nil|Nil|400+6 to 925+10|Nil|Nil 
+3130|Quaggoth|Humanoid|Rare|Low (5-7)|50%|A|5|2-24|6|12|1+2|2 or 1|1-4(x2) or by weapon|Special|Immune to poison|Standard|L (7'+)|Nil|Nil|28+2 or 50+3|Nil|Nil 
+3131|Quipper|Animal|Very Rare|Non (0)|0%|Nil|5|5-50 (10-100)|8|Sw 9|1/2|1|1-2|Nil|Nil|Standard|S (3-6")|Nil|Nil|5+1|Nil|Nil 
+3132|Qullan|Humanoid|Rare|Low (5-7)|10%|10% of A|9|1-6|10|12|2|1|5-11|Special|Special|Standard|L (8'+)|Nil|Nil|73+2|Nil|Nil 
+3133|Rat - Osquip|Magical Beast|Uncommon|Animal (1)|80%|D|5|2-24|7|12, Br 1/2|3+1|1|2-12|Nil|Nil|Standard|S (2')|Nil|Nil|60+4|Nil|Nil 
+3134|Retriever|Monster|Very Rare|Low (5-7)|10%|Z|9|1|-2|19|10|4|3-18(x4)|Eye rays|Nil|Standard|L (12')|Nil|Nil|4950+14|Nil|Nil 
+3135|Revenant|Undead|Very Rare|Special|0%|Nil|5|1|10|9|8|1|2-16|Paralysis|Special|Special|M|Nil|Nil|1275+10|Nil|Nil 
+3136|Rothe|Animal|Uncommon|Animal (1)|40%|Nil|5|2-20|7|9|2|3|1-3(x2)/1-8|Nil|Nil|Standard|M (4')|Nil|Nil|20+2|Nil|Nil 
+3137|Sandman|Outsider|Rare|Average (8-10)|20%|100-2000 gp|8|1-6|3|9|3|Nil|Nil|Sleep|Special|20%|M|Nil|Nil|215+4|Nil|Nil 
+3138|Scarecrow|Construct|Very Rare|Non (0)|0%|Nil|8|1-6|6|6|5|1|1-6 + special|Charm|Nil|Standard|M|Nil|Nil|165+5|Nil|Nil 
+3139|Screaming Devilkin|Monstrous Humanoid|Rare|Low (5-7)|20%|M|7|1-4|2|12|3|1|1-6|Scream|Nil|Standard|S (3')|Nil|Nil|90+3|Nil|Nil 
+3140|Shadow Demon|Outsider|Very Rare|Very (11-12)|0%|Nil|9|1|9, 5, or 1|12|7+3|3|1-8/1-6(x2)|Special|Special|Special|M|Nil|Nil|825+10|Nil|Nil 
+3141|Sheet Ghoul|Undead|Very Rare|Average (8-10)|0%|Nil|9|1|2|9|4+2|3|1-3(x2)/1-6|Acid squirt|Special|Standard|M|Nil|Nil|170+5|Nil|Nil 
+3142|Sheet Phantom|Undead|Very Rare|Average (8-10)|0%|Nil|9|1|3|6|3|1|1-4|Suffocation|Nil|Standard|Special|Nil|Nil|105+4|Nil|Nil 
+3143|Shocker|Outsider|Rare|Semi (2-4)|0%|15% 1-4 gems|6|6-24|0 or 10|9|1+2|11|10 hp each|Special|Special|Special|M|Nil|Nil|65+2|Nil|Nil 
+3144|Skeleton - Warrior|Undead|Very Rare|Exceptional (15-16)|90%|A|8|1|2|6|9+2 to 9+12|1|By weapon|+3 to attacks|Special|90%|M|Nil|Nil|2550+14 to 3700+16|Nil|Nil 
+3145|Skulk|Humanoid|Rare|Average (8-10)|40%|A|9|1-8|7|12|2|1|By weapon|Nil|Camouflage|Standard|M|Nil|Nil|36+2|Nil|Nil 
+3146|Slaad - Blue|Outsider|Rare|Low (5-7)|35%|Z|6|2-12|5|7|8+4|5|2-16/2-12(x4)|Special|Special|40%|L (10')|47|Nil/FG|2000+12|Nil|Nil 
+3147|Slaad - Death|Outsider|Very Rare|Genius (17-18)|50%|Zx4|6|1-2|-4|12|15+7|3 or 2|2-20/3-18(x2) or 1-8(x2) +bonus|Special|+2 to hit|75%|M (6')|207|All/All|13250+20|Nil|Nil 
+3148|Slaad - Green|Outsider|Rare|Average (8-10)|50%|C,F,G|6|1-6|3|9|9+3|3|2-16/3-8(x2)|Special|+1 to hit|50%|L (7'+)|76|BD/Nil|4350+14|Nil|Nil 
+3149|Slaad - Grey|Outsider|Very Rare|High (13-14)|20%|Special|6|1-2|1|12|10+6|3 or 2|2-16/4-10(x2) or 1-8(x2) +bonus|Special|+1 to hit|55%|M (6')|160|ACD/FGH|6200+16|Nil|Nil 
+3150|Slaad - Lord - Ssendam (Lord of the Insane)|Outsider|Very Rare|Supra-genius (19-20)|30%|Ax4,Fx2|6|1|-6|16, Fl 19|197 hp|3 or 1|2-16(x3) or special|Energy drain; Spells|+3 to hit; Regeneration; Spells|85%|M|379|All/All|28695|Nil|Nil 
+3151|Slaad - Lord - Ygorl (Lord of Entropy)|Outsider|Very Rare|Supra-genius (19-20)|75%|Px4,Zx2|6|1|-7|18|210 hp|2|Special|Special|+3 to hit|85%|L|379|All/All|28950|Nil|Nil 
+3152|Slaad - Red|Outsider|Rare|Low (5-7)|30%|F|6|3-18|6|6, Jp 9|7|3|1-4(x2)/2-16|Special|Regeneration|35%|L (8')|Nil|Nil|875+8|Nil|Nil 
+3153|Snyad (Pestie)|Humanoid|Uncommon|Low (5-7)|95%|J|5|1-8|-4|21|1-1|Nil|Nil|Nil|Special|Standard|S (2.5')|Nil|Nil|7+1|Nil|Nil 
+3154|Son of Kyuss|Undead|Very Rare|Low (5-7)|0%|Nil|9|1-3|10|9|4|1|1-8|Special|Regeneration|Standard|M|Nil|Nil|215+4|Nil|Nil 
+3155|Sussurus|Monster|Very Rare|Low (5-7)|100%|Nil|5|1|4|15|8|2|1-8(x2)|Hug|Nil|Standard|L|Unknown|Unknown|550+10|Nil|Nil 
+3156|Tabaxi (Cat man)|Monstrous Humanoid|Rare|Average (8-10)|15%|Special|6|2-8|6|15|2|3 |1-3(x3) or by weapon|Nil|Nil|Standard|M (6.5')|Nil|Nil|20+2|Nil|Nil 
+3157|Tentamort|Monster|Rare|Non (0)|95%|Nil|5|1-10|3 (head: 1)|1|8|2|1-6(x2)|Constriction; Paralysation; Special|Nil|Standard|S|Nil|Nil|475+6|Nil|Nil 
+3158|Terithran|Outsider|Very Rare|Low to Average (5-10)|Nil (100%)|Special|5|1|3 (6)|15 (18)|5+1|2|2-5(x2)|Special|+1 or silver to hit|50%|S (4')|Nil|Nil|575+6|Nil|Nil 
+3159|Thoqqua (Rock Worm)|Outsider|Very Rare|Low (5-7)|80%|10-60 gems|5|1-2|2|12, Br 3|3|2|4-32/2-12|Heat|Fire attacks heal|Standard|S|Nil|Nil|65+3|Nil|Nil 
+3160|Thork|Magical Beast|Very Rare|Animal (1)|90%|1-20 pp|5|1-6|3|6, Sw 6|3|1|1-6|Breath weapon|Nil|Standard|L (9')|Nil|Nil|90+3|Nil|Nil
+3161|Tiger Fly|Monster|Rare|Non (0)|40%|B|5|3-18|4 or 9|6, Fl 18|6 (male), 4 (famale), 1-1 (larva)|3 or 1|1-8(x2)/4-24, 4-16, or 2-8|Poison; Paralysation|Nil|Standard|M (5')|Nil|Nil|275+6, 125+4, or 10+1|Nil|Nil 
+3162|Tirapheg|Monster|Very Rare|Average (8-10)|20%|Nil|5|1|10|3|2|3|1-4(x3)|Strangle|Illusions|Standard|M (7')|Nil|Nil|73+2|Nil|Nil 
+3163|Trilloch|Outsider|Very Rare|Animal (1)|0%|Nil|5|1|N/A|12|N/A|NA|Nil|Nil|Undetectable|Special|NA|Unknown|Unknown|NA|Nil|Nil 
+3164|Troll - Giant|Giant|Rare|Low (5-7)|30%|C|9|1-12|4|12|8|1|2-16|Nil|Regeneration|Standard|L (10'+)|Nil|Nil|725+10|Nil|Nil 
+3165|Troll - Giant - Two-Headed|Giant|Very Rare|Average (8-10)|40%|D,Q|9|1-3|4|12|10|4|1-6(x2)/1-10(x2)|Nil|Regeneration|Standard|L (10'+)|Nil|Nil|1800+14|Nil|Nil 
+3166|Troll - Ice|Giant|Rare|Semi (2-4)|10%|D (no magic)|9|1-6|8|9|2|2|1-8(x2)|Nil|+1 to hit; Regeneration; Immune to cold|Standard|L (9')|Nil|Nil|44+2|Nil|Nil 
+3167|Troll - Spirit|Giant|Very Rare|Very (11-12)|0%|Nil|9|1-2|2|15|5+5|3|1-6/1-3(x2)|Strength drain|+1 to hit; Regeneration; Immune to cold; Invisibility|30%|L (8'+)|Nil|Nil|575+6|Nil|Nil 
+3168|Tween|Outsider|Very Rare|Very (11-12)|0%|Nil|5|1 (1-3)|10|Varies|1|1|By weapon|Nil|Etherealness|Standard|M|Nil|Nil|14+1|Nil|Nil 
+3169|Umpleby|Monster|Very Rare|Low (5-7)|0%|Special|5|1|4|9|6|1|1-4|Electric Shock|Immune to electricity|Standard|L (8'+)|Nil|Nil|350+6|Nil|Nil 
+3170|Urchin - Black|Animal|Uncommon|Semi (2-4)|10%|Special|5|1-6|4|9, Sw 15|1+1|1|1-6|Nil|Nil|Standard|S (3')|Nil|Nil|28+2|Nil|Nil 
+3171|Urchin - Green|Animal|Rare|Semi (2-4)|10%|Special|5|1-4|3|9, Sw 18|2+1|2|2-7(x2)|Nil|Nil|Standard|S (3')|Nil|Nil|50+3|Nil|Nil 
+3172|Urchin - Red|Animal|Rare|Semi (2-4)|10%|Special|5|1-4|2|9, Sw 18|3+1|3|2-5(x3)|Venom|Nil|Standard|S (3')|Nil|Nil|85+4|Nil|Nil 
+3173|Urchin - Silver|Animal|Very Rare|Semi (2-4)|10%|Special|5|1-2|0|12, Sw 21|5+3|5|2-5(x5)|Venom|Nil|Standard|S (3')|Nil|Nil|400+6|Nil|Nil 
+3174|Urchin - Yellow|Animal|Very Rare|Semi (2-4)|10%|Special|5|1-3|1|12, Sw 18|4+2|4|1-6(x4)|Nil|Nil|Standard|S (3')|Nil|Nil|205+5|Nil|Nil 
+3175|Vision|Monster|Very Rare|High (13-14)|0%|Nil|7|1|0 (10)|15|8|Nil|Nil|Aging|Semi-Ethereal; Immune to normal weapons and missiles|75%|M|Nil|Nil|825+10|Nil|Nil 
+3176|Vodyanoi|Monster|Rare|Average (8-10)|30%|G|9|1-3|2|6|8|3|3-12(x2)/1-10|Nil|Special|Standard|L (8')|Nil|Nil|650+10|Nil|Nil 
+3177|Volt|Monster|Uncommon|Animal (1)|10%|Nil|5|2-24|3|6|2+1|2|1-4/2-12|Nil|Immune to electricity|Standard|S (2')|Nil|Nil|50+3|Nil|Nil 
+3178|Vortex|Monster|Very Rare|Non (0)|0%|Nil|6|1-8|0|Fl 15|2+2|1|Special|Nil|Nil|Standard|Varies|Nil|Nil|50+3|Nil|Nil 
+3179|Whipweed|Monster|Uncommon|Semi (2-4)|50%|Nil|5|1-2|6 (4)|3|2+4 (base: 1+4)|2|1-10(x2)|Special|Nil|Standard|Varies|Nil|Nil|120+4|Nil|Nil 
+3180|Witherstench|Magical Beast|Rare|Semi (2-4)|20%|B|5|3-12|7|6|2+2|2|1-6(x2)|Nil|Special|Standard|S (4')|Nil|Nil|65+3|Nil|Nil 
+3181|Witherweed|Plant|Uncommon|Non (0)|100%|Special|5|1|8|0|3 to 7|Varies|Special|Special|Nil|Standard|Varies|Nil|Nil|90+3 to 275+6|Nil|Nil 
+3182|Xill|Monster|Very Rare|Very (11-12)|15%|C|7|1-6|0|15|5|4|1-4(x4) or by weapon|Special|Special|70%|M|Nil|Nil|325+5|Nil|Nil 
+3183|Xvart|Humanoid|Uncommon|Average (8-10)|40%|K|9|40-400|7|6|1-1|1|2-5 or by weapon|Nil|Nil|Standard|S (3')|Nil|Nil|5+1|Nil|Nil 
+3184|Yellow Musk Creeper|Plant|Rare|Non (0)|100%|Any|5|1|7|0|3|2-12|Special|Nil|Nil|Standard|L|Nil|Nil|65+3|Nil|Nil 
+3185|Zombie - Yellow Musk|Plant|Rare|Non (0)|0%|Nil|8|1-2|Varies|12|2|1|By weapon|Nil|Nil|Special|M|Nil|Nil|28+2|Nil|Nil 
