@@ -195,7 +195,7 @@
 
 - 1.0.028	2/X/16
 	* Fixed bug where XP bonus for high prime requisite stats was calculated incorrectly
-	* Added change on this line for git test
+	* Added change on this line for git testing
 */
 
 #define PCSTRING CString*
