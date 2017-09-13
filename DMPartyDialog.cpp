@@ -270,6 +270,8 @@ BEGIN_MESSAGE_MAP(DMPartyDialog, CDialog)
 	ON_BN_CLICKED(IDC_SUB_PARTY_BUTTON, &DMPartyDialog::OnBnClickedSubPartyButton)
 	ON_BN_CLICKED(IDC_RANDOM_ENCOUNTER_BUTTON, &DMPartyDialog::OnBnClickedRandomEncounterButton)
 	ON_MESSAGE(DND_WM_MESSAGE, OnDNDMessage)
+	ON_BN_CLICKED(IDC_STAT_BLOCK_BUTTON, &DMPartyDialog::OnBnClickedStatBlockButton)
+	ON_BN_CLICKED(IDC_STAT_BLOCK_BUTTON2, &DMPartyDialog::OnBnClickedStatBlockButton2)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -4169,6 +4171,21 @@ void DMPartyDialog::OnBnClickedPasteMemberButton()
 }
 
 
+void DMPartyDialog::OnBnClickedStatBlockButton()
+{
+	GenerateStatBlock(m_pParty);
+}
+
+
+void DMPartyDialog::OnBnClickedStatBlockButton2()
+{
+	if (m_pOpposingPartyDialog != NULL)
+	{
+		GenerateStatBlock(m_pOpposingPartyDialog->m_pParty);
+	}
+}
+
+
 void DMPartyDialog::OnNMDblclkPartyList(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
@@ -4822,3 +4839,372 @@ LRESULT DMPartyDialog::OnDNDMessage(UINT wParam, LONG lParam)
 
     return 0; // I handled this message
 }
+
+void DMPartyDialog::GenerateStatBlock(cDNDParty *pParty)
+{
+	if (pParty == NULL)
+	{
+		return;
+	}
+
+	CString szFileName = "";
+	szFileName.Format("%sData/statblock.txt", m_pApp->m_szEXEPath.GetBuffer(0));
+	FILE *pOutFile = fopen(szFileName, "wt");
+
+	if (pOutFile == NULL)
+	{
+		return;
+	}
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//DO PCS
+
+	/*
+	Gerallt Lechen: AC 4; MV 9"; Lvl Druid 5; hp 32; #AT 1; Dmg scimitar (1-8); S 15; I 13; W 15; D 12; C 11; Ch 16; AL N; SIZE M; XP 353; PH p.20.
+	*/
+
+	for (int i = 0; i < MAX_PARTY_MEMBERS; ++i)
+	{
+		if (pParty->m_dwPartyRoster[i] == 0)
+			break;
+
+		PDNDCHARACTER pChar = NULL;
+
+		PDNDCHARVIEWDLG pCharDlg = NULL;
+		PDNDNPCVIEWDLG pNPCDlg = NULL;
+
+		m_pApp->m_CharacterViewMap.Lookup((WORD)pParty->m_dwPartyRoster[i], pCharDlg);
+
+		if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+		{
+			if (m_dwSubPartyID && pCharDlg->m_pCharacter->m_dwSubPartyID != m_dwSubPartyID)
+				continue;
+
+			pChar = pCharDlg->m_pCharacter;
+		}
+
+		if (pChar == NULL)
+			continue;
+
+		CString szLine = "<NAME>, <RACE>: AC <AC>; MV <MOVE>\"; Lvl <CLASS> <LEVEL>; hp <HP>; #AT <NUMATTACKS>; Dmg <DAMAGE>; <STATS>; AL <ALIGN>; SIZE <SIZE>; XP <XP>; <PAGE>";
+		CString szTemp;
+
+		szLine.Replace("<NAME>", pChar->m_szCharacterName);
+		szLine.Replace("<RACE>", pCharDlg->m_szRaceSex);
+
+		szTemp = pCharDlg->m_szArmorClass;
+		szTemp.Replace(" ", "");
+		szLine.Replace("<AC>", szTemp);
+
+		szLine.Replace("<MOVE>", pCharDlg->m_szMove);
+
+		szLine.Replace("<CLASS>", pCharDlg->m_szClassList);
+		szLine.Replace("<LEVEL>", pCharDlg->m_szLevelList);
+		
+		szLine.Replace("<HP>", GetStringFromInt(pChar->m_nHitPoints));
+
+		szLine.Replace("<NUMATTACKS>", pCharDlg->m_szNumAttacks);
+
+		szLine.Replace("<DAMAGE>", pCharDlg->m_szDamageStat);
+
+		szLine.Replace("<STATS>", pCharDlg->m_szCharStats);
+
+		szLine.Replace("<ALIGN>", GetShortAlignmentName(pChar->m_nAlignment));
+
+		szLine.Replace("<SIZE>", GetCharacterSize(pChar->m_nHeight));
+
+		szLine.Replace("<XP>", pCharDlg->m_szXPValue);
+
+		szLine.Replace("<PAGE>", GetCharacterBook(pChar->m_Class[0]));
+
+		fprintf(pOutFile, "%s\n", szLine);
+
+		// write out memorized spells
+		BOOL bComplete = FALSE;
+		for (int nSpellClass = 0; nSpellClass < 4; ++nSpellClass)
+		{
+			if (pChar->m_SpellClasses[nSpellClass] == 0)
+				continue;
+
+			cDNDSpellBook *pSpellBook = NULL;
+			switch (pChar->m_SpellClasses[nSpellClass])
+			{
+			case DND_CHARACTER_CLASS_CLERIC:
+			case DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC:
+			{
+				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_CLERIC);
+				break;
+			}
+			case DND_CHARACTER_CLASS_DRUID:
+			case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
+			{
+				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_DRUID);
+				break;
+			}
+			case DND_CHARACTER_CLASS_MAGE:
+			case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+			{
+				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);
+				break;
+			}
+			case DND_CHARACTER_CLASS_ILLUSIONIST:
+			{
+				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_ILLUSIONIST);
+				break;
+			}
+			} //end switch
+
+			if (pSpellBook == NULL)
+				continue;
+
+			for (int nSpellLevel = 0; nSpellLevel < 10 && !bComplete; ++nSpellLevel)
+			{
+				BOOL bDone = FALSE;
+				int nSpellCount = 0;
+				BOOL bFirstSpellThisLevel = TRUE;
+
+				while (!bDone)
+				{
+					cDNDSpell *pSpell = NULL;
+					int nMultipleSpells = 0;
+
+					do
+					{
+						nMultipleSpells = pChar->m_nSpellsMemorized[nSpellClass][nSpellLevel][nSpellCount];
+						if (nMultipleSpells > 0)
+						{
+							pSpell = &pSpellBook->m_Spells[nSpellLevel][nSpellCount];
+							if (pSpell && !pSpell->m_bSpellValid)
+							{
+								pChar->m_nSpellsMemorized[nSpellClass][nSpellLevel][nSpellCount] = 0;
+								pSpell = NULL;
+							}
+						}
+
+						++nSpellCount;
+
+					} while (pSpell == NULL && nSpellCount < MAX_SPELLS_PER_LEVEL && bDone == FALSE && bComplete == FALSE);
+
+					if (bDone == FALSE && pSpell != NULL && pSpell->m_bSpellValid && bComplete == FALSE)
+					{
+						if (nMultipleSpells > 1)
+						{
+							szTemp.Format("%s (x%d)", pSpell->m_szSpellName, nMultipleSpells);
+						}
+						else
+						{
+							szTemp.Format("%s", pSpell->m_szSpellName);
+						}
+
+						if (bFirstSpellThisLevel)
+						{
+							fprintf(pOutFile, "\n%s Lvl %s spells:\n", GetNumberth(nSpellLevel), GetClassName(pSpellBook->m_ClassBook));
+							bFirstSpellThisLevel = FALSE;
+						}
+
+						szTemp.MakeLower();
+						fprintf(pOutFile, " %s\n", szTemp);
+					}
+					else
+					{
+						bDone = TRUE;
+					}
+				};
+
+			} //for(int nSpellLevel = 0; nSpellLevel < 10; ++nSpellLevel)
+
+		} // for(int nSpellClass = 0; nSpellClass < 10; ++nSpellClass)
+		
+
+		fprintf(pOutFile, "\n-------------------------------------------------------------------------------\n");
+
+	}
+
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//DO NPCS 
+
+	/*
+	Kobold (12): AC 7; MV 6"; HD 1-4 hit points; hp 4(x8), 2(x2), 1(x2); #AT 1; Dmg 1-4 or by weapon; AL LE; SIZE S; XP 98; MM p.57.
+	Weasel, Giant: AC 6; MV 15"; HD 3+3; hp 12; #AT 1; Dmg 2-12; SA successful strike drains blood for 2-12; AL N; SIZE M; XP 173; MM p.100.
+	*/
+
+	PDNDSTATBLOCKMAP _StatBlockMap;
+
+	int nNPC = 0;
+
+	do
+	{
+		if (pParty->m_NPCs[nNPC].m_dwCharacterID)
+		{
+			CString szNPCType = "";
+
+			PDNDMONSTERMANUALENTRY pMonster = NULL;
+			m_pApp->m_MonsterManualIndexedMap.Lookup(pParty->m_NPCs[nNPC].m_nMonsterIndex, pMonster);
+
+			if (pMonster != NULL)
+			{
+				szNPCType = pMonster->m_szMMName;
+			}
+
+			cDNDStatBlock *pBlock = NULL;
+
+			if (!_StatBlockMap.Lookup(szNPCType, pBlock) || pBlock == NULL)
+			{
+				pBlock = new cDNDStatBlock();
+				pBlock->m_szName = szNPCType;
+
+				_StatBlockMap.SetAt(szNPCType, pBlock);
+			}
+
+			TRACE("%s\n", pParty->m_NPCs[nNPC].m_szCharacterName);
+
+			if (pMonster != NULL)
+			{
+				pBlock->m_szAC.Format("%d", pParty->m_NPCs[nNPC].m_nCurrentArmorClass);
+				pBlock->m_szMove = pMonster->m_szMovement;
+				pBlock->m_szHD = pMonster->m_szHD;
+
+				pBlock->AddHitPointsCount(pParty->m_NPCs[nNPC].m_nHitPoints);
+
+				pBlock->m_szAttacks = pMonster->m_szNumAttacks;
+				pBlock->m_szDamage = pMonster->m_szDamage;
+				pBlock->m_szAlignment = GetShortAlignmentName(pMonster->m_nAlignment);
+				pBlock->m_szSize = pMonster->m_szSize;
+				pBlock->m_nXP += GetXPFromMonsterManual(pMonster, pParty->m_NPCs[nNPC].m_nHitDice, pParty->m_NPCs[nNPC].m_nHitDicePlus, pParty->m_NPCs[nNPC].m_nHitPoints);
+
+				pBlock->m_szSpecialAttack = pMonster->m_szSpecialAttack;
+				pBlock->m_szSpecialDefense = pMonster->m_szSpecialDefense;
+
+				pBlock->m_szPage = pMonster->m_szBook;
+
+				++pBlock->m_nNumber;
+			}
+		}
+		++nNPC;
+
+	} while (nNPC < MAX_NPC_PARTY_MEMBERS);
+
+		
+	for (POSITION pos = _StatBlockMap.GetStartPosition(); pos != NULL;)
+	{
+		CString szJunk = "";
+		cDNDStatBlock *pBlock = NULL;
+		_StatBlockMap.GetNextAssoc(pos, szJunk, pBlock);
+		//Weasel, Giant: AC 6; MV 15"; HD 3+3; hp 12; #AT 1; Dmg 2-12; SA successful strike drains blood for 2-12; AL N; SIZE M; XP 173; MM p.100.
+		CString szLine = "<NAME><NUMBER>: AC <AC>; MV <MOVE>\"; HD <HD>; hp <HP>; #AT <NUMATTACKS>; Dmg <DAMAGE>; <SPECIAL_ATTACK><SPECIAL_DEFENSE>AL <ALIGN>; SIZE <SIZE>; XP <XP>; <PAGE>";
+
+		szLine.Replace("<NAME>", pBlock->m_szName);
+
+		CString szTemp = "";
+		if (pBlock->m_nNumber > 1)
+		{
+			szTemp.Format(" (%d)", pBlock->m_nNumber);
+		}
+
+		szLine.Replace("<NUMBER>", szTemp);
+
+		szLine.Replace("<AC>", pBlock->m_szAC);
+		szLine.Replace("<MOVE>", pBlock->m_szMove);
+		szLine.Replace("<HD>", pBlock->m_szHD);
+
+		if (pBlock->m_nNumber == 1)
+		{
+			szTemp.Format("%d", pBlock->m_HitPointsValue[0]);
+		}
+		else
+		{
+			pBlock->SortHPCount();
+
+			szTemp = "";
+
+			CString szHP = "";
+			for (int i = 0; i < pBlock->m_nNumber; ++i)
+			{
+				if (pBlock->m_HitPointsValue[i])
+				{
+					if (i == 0)
+					{
+						if (pBlock->m_HitPointsCount[i] == 1)
+						{
+							szHP.Format("%d", pBlock->m_HitPointsValue[i]);
+						}
+						else
+						{
+							szHP.Format("%d(x%d)", pBlock->m_HitPointsValue[i], pBlock->m_HitPointsCount[i]);	
+						}
+					}
+					else
+					{
+						if (pBlock->m_HitPointsCount[i] == 1)
+						{
+							szHP.Format(", %d", pBlock->m_HitPointsValue[i]);
+						}
+						else
+						{
+							szHP.Format(", %d(x%d)", pBlock->m_HitPointsValue[i], pBlock->m_HitPointsCount[i]);
+						}
+					}
+
+					szTemp += szHP;
+				}
+			}
+					
+		}
+
+		szLine.Replace("<HP>", szTemp);
+
+		szLine.Replace("<NUMATTACKS>", pBlock->m_szAttacks);
+		szLine.Replace("<DAMAGE>", pBlock->m_szDamage);
+
+		szLine.Replace("<ALIGN>", pBlock->m_szAlignment);
+		szLine.Replace("<SIZE>", pBlock->m_szSize);
+
+		szTemp.Format("%d", pBlock->m_nXP);
+		szLine.Replace("<XP>", szTemp);
+
+		if (pBlock->m_szSpecialAttack != "" && pBlock->m_szSpecialAttack != "Nil")
+		{
+			szTemp.Format("SA %s; ", pBlock->m_szSpecialAttack);
+		}
+		else
+		{
+			szTemp = "";
+		}
+		szLine.Replace("<SPECIAL_ATTACK>", szTemp);
+
+		if (pBlock->m_szSpecialDefense != "" && pBlock->m_szSpecialDefense != "Nil")
+		{
+			szTemp.Format("SD %s; ", pBlock->m_szSpecialDefense);
+		}
+		else
+		{
+			szTemp = "";
+		}
+		szLine.Replace("<SPECIAL_DEFENSE>", szTemp);
+
+		szLine.Replace("<PAGE>", pBlock->m_szPage);
+
+		fprintf(pOutFile, "%s\n", szLine);
+
+		fprintf(pOutFile, "\n-------------------------------------------------------------------------------\n");
+
+		delete pBlock;
+	}
+
+		
+
+	_StatBlockMap.RemoveAll();
+
+	
+
+	fclose(pOutFile);
+
+	CString szExecute = "notepad.exe ";
+	szExecute += szFileName;
+
+	WinExec(szExecute, SW_SHOW);
+
+}
+
+
+

@@ -134,6 +134,7 @@
 #define IDB_NPC_PORTRAIT_BACKDROP_BITMAP 261
 #define IDD_PORTRAIT_SELECT_DIALOG      262
 #define IDD_MAP_LAYER_EDIT_DIALOG       263
+#define IDD_DETACHED_MAP_DIALOG         264
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -288,10 +289,13 @@
 #define IDC_ADD_XP_BUTTON_1             1069
 #define IDC_PARTY_XP_EDIT               1069
 #define IDC_INSERT_BUTTON               1069
+#define IDC_DETACH_BUTTON               1069
 #define IDC_MAP_COLUMNS_EDIT            1070
 #define IDC_ADD_XP_BUTTON_2             1070
 #define IDC_ADD_EDIT                    1070
 #define IDC_ERASE_BUTTON                1070
+#define IDC_DETACH_BUTTON2              1070
+#define IDC_FLIP_BUTTON                 1070
 #define IDC_MAP_PIXELS_X_EDIT           1071
 #define IDC_ADD_XP_BUTTON_3             1071
 #define IDC_MAIN_TAB                    1071
@@ -589,7 +593,9 @@
 #define IDC_SHOW_BUTTON                 1160
 #define IDC_RANDOM_ENCOUNTER_BUTTON     1160
 #define IDC_PARTY_STATIC                1161
+#define IDC_STAT_BLOCK_BUTTON           1161
 #define IDC_CHAR_STATIC                 1162
+#define IDC_STAT_BLOCK_BUTTON2          1162
 #define IDC_PARENT_MAP_COMBO            1163
 #define IDC_PLOT_PARTY_EXTEND_ROUTE_BUTTON 1163
 #define IDC_PARTIES_CHECK               1164
@@ -661,7 +667,6 @@
 #define IDC_ISOMETRIC_CHECK             1192
 #define IDC_DEC_DAY_BUTTON              1193
 #define IDC_SOUND_BUTTON_11             1193
-#define IDC_SUBPARTIES_CHECK2           1193
 #define IDC_LABELS_CHECK                1193
 #define IDC_INC_EDIT_TIME_BUTTON        1194
 #define IDC_SOUND_BUTTON_12             1194
@@ -1111,7 +1116,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        264
+#define _APS_NEXT_RESOURCE_VALUE        265
 #define _APS_NEXT_COMMAND_VALUE         32796
 #define _APS_NEXT_CONTROL_VALUE         1564
 #define _APS_NEXT_SYMED_VALUE           101

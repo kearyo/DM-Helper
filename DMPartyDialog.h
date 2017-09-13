@@ -114,6 +114,7 @@ public:
 
 	void LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_TYPES nType, char *szName, DWORD dwID, LONG lAmount, char *szComment);
 
+	void GenerateStatBlock(cDNDParty *pParty);
 
 
 // Dialog Data
@@ -241,6 +242,8 @@ public:
 	afx_msg LRESULT OnDNDMessage(UINT wParam, LONG lParam);
 	CEdit m_cSegmentEdit;
 	CEdit m_cRoundEdit;
+	afx_msg void OnBnClickedStatBlockButton();
+	afx_msg void OnBnClickedStatBlockButton2();
 };
 
 //{{AFX_INSERT_LOCATION}}

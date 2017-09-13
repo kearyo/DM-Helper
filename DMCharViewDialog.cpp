@@ -277,6 +277,12 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 
 	m_bReversedMapIcon = FALSE;
 
+	m_szRaceSex = "";
+	m_szClassList = "";
+	m_szLevelList = "";
+	m_szDamageStat = "";
+	m_szCharStats = "";
+
 	Create(CDMCharViewDialog::IDD, pParent);
 	
 }
@@ -850,8 +856,6 @@ void CDMCharViewDialog::OnSelchangeCharRaceCombo()
 
 void CDMCharViewDialog::OnSelchangeCharClassCombo1() 
 {
-	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 
 	int nCursor = m_cClassCombo_1.GetCurSel();
@@ -872,8 +876,6 @@ void CDMCharViewDialog::OnSelchangeCharClassCombo1()
 
 void CDMCharViewDialog::OnSelchangeCharClassCombo2() 
 {
-	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 
 	int nCursor = m_cClassCombo_2.GetCurSel();
@@ -895,8 +897,6 @@ void CDMCharViewDialog::OnSelchangeCharClassCombo2()
 
 void CDMCharViewDialog::OnSelchangeCharClassCombo3() 
 {
-	// TODO: Add your control notification handler code here
-
 	UpdateData(TRUE);
 
 	int nCursor = m_cClassCombo_3.GetCurSel();
@@ -924,6 +924,10 @@ void CDMCharViewDialog::Refresh()
 		return;
 
 	CString szTemp;
+
+	m_szRaceSex = "";
+	m_szClassList = "";
+	m_szLevelList = "";
 
 	UpdateData(TRUE);
 	
@@ -1000,12 +1004,21 @@ void CDMCharViewDialog::Refresh()
 		m_szExceptionalStrength.Format("%02d", m_pCharacter->m_nDisplayStats[ATTRIB_EXSTR]);
 		m_cExceptionalStrengthEdit.ShowWindow(SW_SHOW);
 		m_cSTRComment.SetWindowPos(NULL, 98+36,88+32, 20,200, SW_SHOW);
+
+		m_szCharStats.Format("S %s/%s; ", m_szSTREdit, m_szExceptionalStrength);
 	}
 	else
 	{
 		m_cExceptionalStrengthEdit.ShowWindow(SW_HIDE);
 		m_cSTRComment.SetWindowPos(NULL, 93,88+32, 20,200, SW_SHOW);
+
+		m_szCharStats.Format("S %s; ", m_szSTREdit);
 	}
+
+	CString szAttribs;
+	szAttribs.Format("I %s; W %s; D %s; C %s; Ch %s", m_szINTEdit, m_szWISEdit, m_szDEXEdit, m_szCONEdit, m_szCHAEdit);
+
+	m_szCharStats += szAttribs;
 
 	m_szLevelEdit1.Format("%d", m_pCharacter->m_nLevel[0]);
 	m_szLevelEdit2.Format("%d", m_pCharacter->m_nLevel[1]);
@@ -1050,6 +1063,12 @@ void CDMCharViewDialog::Refresh()
 	m_cCurrentClassCheck2.EnableWindow(FALSE);
 	m_cCurrentClassCheck3.EnableWindow(FALSE);
 
+	if (m_pCharacter->m_Class[0] != DND_CHARACTER_CLASS_UNDEF)
+	{
+		m_szClassList = GetClassName(m_pCharacter->m_Class[0]);
+		m_szLevelList = GetStringFromInt(m_pCharacter->m_nLevel[0]);
+	}
+
 	if(m_pCharacter->m_nRace == DND_CHARACTER_RACES_UNDEF || m_pCharacter->m_nRace == DND_CHARACTER_RACE_HUMAN) // human dual class section
 	{
 		m_cClassCombo_2.ResetContent();
@@ -1091,6 +1110,15 @@ void CDMCharViewDialog::Refresh()
 					if(m_cClassCombo_2.GetItemData(j) == (unsigned int)m_pCharacter->m_Class[1])
 					{
 						m_cClassCombo_2.SetCurSel(j);
+
+						if (m_pCharacter->m_Class[1] != DND_CHARACTER_CLASS_UNDEF)
+						{
+							m_szClassList += "/";
+							m_szClassList += GetClassName(m_pCharacter->m_Class[1]);
+							m_szLevelList += "/";
+							m_szLevelList += GetStringFromInt(m_pCharacter->m_nLevel[1]);
+						}
+
 						break;
 					}
 				}
@@ -1126,9 +1154,18 @@ void CDMCharViewDialog::Refresh()
 
 				for(int j = 0; j < m_cClassCombo_3.GetCount(); ++j)
 				{
-					if(m_cClassCombo_2.GetItemData(j) == (unsigned int)m_pCharacter->m_Class[3])
+					if(m_cClassCombo_3.GetItemData(j) == (unsigned int)m_pCharacter->m_Class[2]) 
 					{
 						m_cClassCombo_3.SetCurSel(j);
+
+						if (m_pCharacter->m_Class[2] != DND_CHARACTER_CLASS_UNDEF)
+						{
+							m_szClassList += "/";
+							m_szClassList += GetClassName(m_pCharacter->m_Class[2]);
+							m_szLevelList += "/";
+							m_szLevelList += GetStringFromInt(m_pCharacter->m_nLevel[2]);
+						}
+
 						break;
 					}
 				}
@@ -1227,7 +1264,16 @@ void CDMCharViewDialog::Refresh()
 					if(m_pCharacter->m_Class[1] != DND_CHARACTER_CLASS_UNDEF)
 					{
 						m_cCurrentClassCheck2.SetCheck(1);
+
+						if (m_pCharacter->m_Class[1] != DND_CHARACTER_CLASS_UNDEF)
+						{
+							m_szClassList += "/";
+							m_szClassList += GetClassName(m_pCharacter->m_Class[1]);
+							m_szLevelList += "/";
+							m_szLevelList += GetStringFromInt(m_pCharacter->m_nLevel[1]);
+						}
 					}
+
 					break;
 				}
 			}
@@ -1281,6 +1327,14 @@ void CDMCharViewDialog::Refresh()
 					if(m_pCharacter->m_Class[2] != DND_CHARACTER_CLASS_UNDEF)
 					{
 						m_cCurrentClassCheck3.SetCheck(1);
+
+						if (m_pCharacter->m_Class[2] != DND_CHARACTER_CLASS_UNDEF)
+						{
+							m_szClassList += "/";
+							m_szClassList += GetClassName(m_pCharacter->m_Class[2]);
+							m_szLevelList += "/";
+							m_szLevelList += GetStringFromInt(m_pCharacter->m_nLevel[2]);
+						}
 					}
 
 					break;
@@ -1314,6 +1368,7 @@ void CDMCharViewDialog::Refresh()
 		if(nRace == m_pCharacter->m_nRace)
 		{
 			m_cCharRaceCombo.SetCurSel(i);
+			m_szRaceSex = GetRaceName(m_pCharacter->m_nRace);
 			break;
 		}
 	}
@@ -1325,6 +1380,17 @@ void CDMCharViewDialog::Refresh()
 		if(nSex == m_pCharacter->m_nSex)
 		{
 			m_cCharSexCombo.SetCurSel(i);
+			m_szRaceSex += " ";
+			
+			if (m_pCharacter->m_nSex)
+			{
+				m_szRaceSex += "F";
+			}
+			else
+			{
+				m_szRaceSex += "M";
+			}
+
 			break;
 		}
 	}
@@ -2856,7 +2922,10 @@ void CDMCharViewDialog::ProcessCharStats()
 
 		if(j  == 0)
 		{
+			szTemp.Replace("+-", "-");
 			m_szDamageDesc = szTemp;
+			m_szDamageStat = szTemp;
+			m_szDamageStat.Replace(" ", "");
 		}
 
 		m_cWeaponChartList.SetItemText(nWeaponCount,23,szTemp);
@@ -4922,6 +4991,8 @@ void CDMCharViewDialog::OnBnClickedCurrentClassCheck1()
 
 	m_pCharacter->m_nDualClassClass = 0;
 
+	ProcessCharStats();
+
 	Refresh();
 
 	m_pCharacter->MarkChanged();
@@ -4933,6 +5004,8 @@ void CDMCharViewDialog::OnBnClickedCurrentClassCheck2()
 
 	m_pCharacter->m_nDualClassClass = 1;
 
+	ProcessCharStats();
+
 	Refresh();
 
 	m_pCharacter->MarkChanged();
@@ -4943,6 +5016,8 @@ void CDMCharViewDialog::OnBnClickedCurrentClassCheck3()
 	UpdateData(TRUE);
 
 	m_pCharacter->m_nDualClassClass = 2;
+
+	ProcessCharStats();
 
 	Refresh();
 

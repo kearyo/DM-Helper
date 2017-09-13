@@ -546,6 +546,7 @@ public:
 	PCSTRINGMAP	m_MonsterDescMap;
 	PCSTRINGMAP	m_MonsterIntMap;
 	PCSTRINGMAP	m_MagicResistanceMap;
+	PCSTRINGMAP m_MonsterPageMap;
 
 	cDNDMapScaler m_MapScaler;
 
@@ -618,7 +619,10 @@ public:
 	void AddMonsterDescToMap(CString szInitialDesc);
 	void AddMonsterIntToMap(CString szInitialInt);
 	void AddMonsterMagicResistanceToMap(CString szInitialMR);
-	void LoadMonsterManual(char *path, BOOL bCustom);
+
+	void LoadMonsterPageIndexer(char *path);
+	void DeleteMonsterPageIndexer();
+	void LoadMonsterManual(char *path, char *szBook, BOOL bCustom);
 
 	cDNDMonsterManualEntry *GetMonsterManualEntryFromName(CString szMonsterName);
 

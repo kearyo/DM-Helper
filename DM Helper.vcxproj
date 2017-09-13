@@ -157,6 +157,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cDMDetachedMapDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
     <ClCompile Include="ColoredListCtrl.cpp" />
     <ClCompile Include="DM Helper Common.cpp" />
@@ -222,6 +223,7 @@
     <ResourceCompile Include="DM Helper.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cDMDetachedMapDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
     <ClInclude Include="ColoredListCtrl.h" />
     <ClInclude Include="DM Helper Common.h" />

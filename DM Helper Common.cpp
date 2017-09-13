@@ -3246,6 +3246,26 @@ char *GetAlignmentName(DND_CHARACTER_ALIGNMENTS nAlignment)
 	return "Undefined";
 }
 
+char *GetShortAlignmentName(DND_CHARACTER_ALIGNMENTS nAlignment)
+{
+	switch (nAlignment)
+	{
+		case DND_CHARACTER_ALIGNMENT_LAWFUL_GOOD:		return("LG");
+		case DND_CHARACTER_ALIGNMENT_NEUTRAL_GOOD:		return("NG");
+		case DND_CHARACTER_ALIGNMENT_CHAOTIC_GOOD:		return("CG");
+
+		case DND_CHARACTER_ALIGNMENT_LAWFUL_NEUTRAL:	return("LN");
+		case DND_CHARACTER_ALIGNMENT_NEUTRAL:			return("N");
+		case DND_CHARACTER_ALIGNMENT_CHAOTIC_NEUTRAL:	return("CN");
+
+		case DND_CHARACTER_ALIGNMENT_LAWFUL_EVIL:		return("LE");
+		case DND_CHARACTER_ALIGNMENT_NEUTRAL_EVIL:		return("NE");
+		case DND_CHARACTER_ALIGNMENT_CHAOTIC_EVIL:		return("CE");
+	}
+
+	return "A?";
+}
+
 BOOL IsAlignmentGood(DND_CHARACTER_ALIGNMENTS nAlignment)
 {
 	switch(nAlignment)
@@ -4951,12 +4971,19 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 		}
 	}
 
-	switch(pCharacter->m_Class[0])
+	if (pCharacter->m_nDualClassClass < 0 || pCharacter->m_nDualClassClass > 2)
+	{
+		pCharacter->m_nDualClassClass = 0;
+	}
+
+	int nClassLevel = pCharacter->m_nDualClassClass;
+
+	switch (pCharacter->m_Class[nClassLevel])
 	{
 		case DND_CHARACTER_CLASS_CLERIC:
 		case DND_CHARACTER_CLASS_DRUID:
 		{
-			nCol = min(pCharacter->m_nLevel[0]-1+nSaveAdjust,19)/3;
+			nCol = min(pCharacter->m_nLevel[nClassLevel] - 1 + nSaveAdjust, 19) / 3;
 
 			if(nCol < 0) nCol = 0;
 
@@ -4971,7 +4998,7 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 		case DND_CHARACTER_CLASS_MAGE:
 		case DND_CHARACTER_CLASS_ILLUSIONIST:
 		{
-			nCol = min(pCharacter->m_nLevel[0]-1+nSaveAdjust,21)/5;
+			nCol = min(pCharacter->m_nLevel[nClassLevel] - 1 + nSaveAdjust, 21) / 5;
 
 			if(nCol < 0) nCol = 0;
 
@@ -4987,7 +5014,7 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 		case DND_CHARACTER_CLASS_ASSASSIN:
 		case DND_CHARACTER_CLASS_MONK:
 		{
-			nCol = min(pCharacter->m_nLevel[0]-1+nSaveAdjust,21)/4;
+			nCol = min(pCharacter->m_nLevel[nClassLevel] - 1 + nSaveAdjust, 21) / 4;
 
 			if(nCol < 0) nCol = 0;
 
@@ -5000,9 +5027,9 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 
 		default: //fighter chart is default
 		{
-			if(pCharacter->m_nLevel[0] > 0)
+			if (pCharacter->m_nLevel[nClassLevel] > 0)
 			{
-				nCol = min(pCharacter->m_nLevel[0]-1+nSaveAdjust,17)/2 +1;
+				nCol = min(pCharacter->m_nLevel[nClassLevel] - 1 + nSaveAdjust, 17) / 2 + 1;
 			}
 
 			if(nCol < 0) nCol = 0;
@@ -7204,6 +7231,78 @@ CString szPlusOrMinus(int nVal)
 	{
 		szRetVal.Format("%d", nVal);
 	}
+
+	return szRetVal;
+}
+
+CString GetStringFromInt(int nVal)
+{
+	CString szRetVal = _T("");
+	szRetVal.Format("%d", nVal);
+
+	return szRetVal;
+}
+
+CString GetCharacterSize(int nHeight)
+{
+
+	if (nHeight > 7 * 12)
+		return "L";
+
+	if (nHeight < 4 * 12)
+		return "S";
+
+	return "M";
+}
+
+CString GetCharacterBook(DND_CHARACTER_CLASSES nClass)
+{
+	switch (nClass)
+	{
+		case DND_CHARACTER_CLASS_FIGHTER:		return "PH pg. 22";
+		case DND_CHARACTER_CLASS_RANGER:		return "PH pg. 24";
+		case DND_CHARACTER_CLASS_CAVALIER:		return "UA pg. 20";
+		case DND_CHARACTER_CLASS_PALADIN:		return "PH pg. 22";
+		case DND_CHARACTER_CLASS_BARBARIAN:		return "UA pg. 14";
+
+		case DND_CHARACTER_CLASS_CLERIC:		return "PH pg. 20";
+		case DND_CHARACTER_CLASS_DRUID:			return "PH pg. 20";
+		case DND_CHARACTER_CLASS_MONK:			return "PH pg. 30";
+
+		case DND_CHARACTER_CLASS_THIEF:			return "PH pg. 26";
+		case DND_CHARACTER_CLASS_THIEF_ACROBAT:	return "UA pg. 23";
+		case DND_CHARACTER_CLASS_ASSASSIN:		return "PH pg. 28";
+
+		case DND_CHARACTER_CLASS_MAGE:			return "PH pg. 25";
+		case DND_CHARACTER_CLASS_ILLUSIONIST:	return "PH pg. 26";
+	}
+
+	return "DMG p. 88";
+}
+
+CString GetNumberth(int nNumber)
+{
+	int nDigit = nNumber % 10;
+
+	CString szEth = "";
+
+	switch (nDigit)
+	{
+		case 0:	szEth = "th"; break;
+		case 1:	szEth = "st"; break;
+		case 2:	szEth = "nd"; break;
+		case 3:	szEth = "rd"; break;
+		case 4:	szEth = "th"; break;
+		case 5:	szEth = "th"; break;
+		case 6:	szEth = "th"; break;
+		case 7:	szEth = "th"; break;
+		case 8:	szEth = "th"; break;
+		case 9:	szEth = "th"; break;
+	}
+
+	CString szRetVal;
+	szRetVal.Format("%d", nNumber);
+	szRetVal += szEth;
 
 	return szRetVal;
 }

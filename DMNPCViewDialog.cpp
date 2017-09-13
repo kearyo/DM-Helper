@@ -876,10 +876,16 @@ void DMNPCViewDialog::Refresh()
 		int nBook = pMonster->m_nMonsterIndex / 1000;
 		switch(nBook)
 		{
-			case 1: m_szDescComment += _T("[ Monster Manual ]"); break;
-			case 2: m_szDescComment += _T("[ Monster Manual II ]"); break;
-			case 3: m_szDescComment += _T("[ Fiend Folio ]"); break;
+			case 1: m_szDescComment += _T("[ Monster Manual <PAGE> ]"); break;
+			case 2: m_szDescComment += _T("[ Monster Manual II <PAGE> ]"); break;
+			case 3: m_szDescComment += _T("[ Fiend Folio <PAGE> ]"); break;
 		}
+
+		CString szReplace = pMonster->m_szBook;
+		szReplace.Replace("MM ", "");
+		szReplace.Replace("FF ", "");
+		szReplace.Replace("MM2 ", "");
+		m_szDescComment.Replace("<PAGE>", szReplace);
 
 		m_szIntComment.Format("INT: %s", pMonster->m_szIntelligence);
 		m_szMonsterSize.Format("SIZE: %s", pMonster->m_szSize);

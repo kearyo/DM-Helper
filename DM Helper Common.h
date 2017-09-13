@@ -9,7 +9,7 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10028
+#define DMH_CURRENT_VERSION 10030
 
 #define USE_CANTRIPS	TRUE
 
@@ -193,9 +193,13 @@
 	* Fixed bug where creating a new map did not set layer transparency values correctly
 	* Fixed error where armor.dat was erased by the installer
 
-- 1.0.028	2/X/16
+- 1.0.028	12/17/16
 	* Fixed bug where XP bonus for high prime requisite stats was calculated incorrectly
-	* Added change on this line for git testing
+	* Fixed bug where HD+ values for monsters was not calculating hitpoints correctly
+
+- 1.0.029	5/19/17
+	* Fixed bug where saving throws were not being calculated correctly for dual classed characters
+	* Added 'stat block' party summaries that can be copy/pasted from the program
 */
 
 #define PCSTRING CString*
@@ -327,6 +331,7 @@ typedef enum
 } DND_CHARACTER_ALIGNMENTS;
 
 char *GetAlignmentName(DND_CHARACTER_ALIGNMENTS nAlignment);
+char *GetShortAlignmentName(DND_CHARACTER_ALIGNMENTS nAlignment);
 
 BOOL IsAlignmentGood(DND_CHARACTER_ALIGNMENTS nAlignment);
 BOOL IsAlignmentEvil(DND_CHARACTER_ALIGNMENTS nAlignment);
@@ -2263,6 +2268,7 @@ public:
 	CString m_szXP;		    				// 10+1/hp,
 	CString m_szArmors;
 	CString m_szWeapons;
+	CString m_szBook;						//MM, MM2, FF etc.
 
 	cDNDMonsterManualEntry()
 	{
@@ -2299,6 +2305,7 @@ public:
 		m_szXP				= _T("");   
 		m_szArmors			= _T("");   
 		m_szWeapons			= _T("");   
+		m_szBook			= _T("");
 	}
 
 	void CopyFrom(cDNDMonsterManualEntry* pMonster)
@@ -2326,7 +2333,8 @@ public:
 		m_szAttDefModes		= pMonster->m_szAttDefModes;		
 		m_szXP				= pMonster->m_szXP;				
 		m_szArmors			= pMonster->m_szArmors;			
-		m_szWeapons			= pMonster->m_szWeapons;			
+		m_szWeapons			= pMonster->m_szWeapons;
+		m_szBook			= pMonster->m_szBook;
 	}
 
 };
@@ -3427,6 +3435,112 @@ typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDRANDOMNAMETABLE> PDNDRANDOMNAMETA
 void GenerateAmmoForWeapons(cDNDCharacter *pCharacter, PWEAPONTYPE pWeapon);
 
 
+/*
+Kobold (12): AC 7; MV 6"; HD 1-4 hit points; hp 4(x8), 2(x2), 1(x2); #AT 1; Dmg 1-4 or by weapon; AL LE; SIZE S; XP 98; MM p.57.
+Weasel, Giant: AC 6; MV 15"; HD 3+3; hp 12; #AT 1; Dmg 2-12; SA successful strike drains blood for 2-12; AL N; SIZE M; XP 173; MM p.100.
+*/
+
+typedef CTypedPtrMap <CMapWordToPtr, WORD, WORD*> PDNDSTATHPMAP;
+
+class cDNDStatBlock
+{
+public:
+
+	CString m_szName;
+	int m_nNumber;
+	CString m_szAC;
+	CString m_szMove;
+	CString m_szHD;
+
+	int m_HitPointsCount[MAX_NPC_PARTY_MEMBERS];	//HP if there are multiple creatures in the block
+	int m_HitPointsValue[MAX_NPC_PARTY_MEMBERS];	//HP if there are multiple creatures in the block
+
+	CString m_szAttacks;
+	CString m_szDamage;
+	CString m_szAlignment;
+	CString m_szSize;
+	int m_nXP;
+
+	CString m_szSpecialAttack;
+	CString m_szSpecialDefense;
+
+	CString m_szPage;
+
+	cDNDStatBlock()
+	{
+		Reset();
+	};
+
+	~cDNDStatBlock()
+	{
+		Reset();
+	}
+
+	void Reset()
+	{
+		m_szName = "";
+		m_nNumber = 0;
+		m_szAC = "";
+		m_szMove = "";
+		m_szHD = "";
+		
+		memset(m_HitPointsCount, 0, MAX_NPC_PARTY_MEMBERS*sizeof(int));	
+		memset(m_HitPointsValue, 0, MAX_NPC_PARTY_MEMBERS*sizeof(int));
+
+		m_szAttacks = "";
+		m_szDamage = "";
+		m_szAlignment = "";
+		m_szSize = "";
+		m_nXP = 0;
+
+		m_szSpecialAttack = "";
+		m_szSpecialDefense = "";
+
+		m_szPage = "";
+	};
+
+	void AddHitPointsCount(int nHP)
+	{
+		int nIndex = 0;
+		BOOL bFoundSlot = FALSE;
+		do
+		{
+			if (m_HitPointsCount[nIndex] == 0 || m_HitPointsValue[nIndex] == 0 || m_HitPointsValue[nIndex] == nHP)
+			{
+				++m_HitPointsCount[nIndex];
+				m_HitPointsValue[nIndex] = nHP;
+				bFoundSlot = TRUE;
+			}
+
+			++nIndex;
+
+		} while (bFoundSlot == FALSE && nIndex < MAX_NPC_PARTY_MEMBERS);
+	};
+
+	void SortHPCount()
+	{
+		for (int i = 0; i < m_nNumber - 1; ++i)
+		{
+			for (int j = i; j < m_nNumber; ++j)
+			{
+				if (m_HitPointsValue[i] < m_HitPointsValue[j])
+				{
+					int nJunk = m_HitPointsValue[i];
+					m_HitPointsValue[i] = m_HitPointsValue[j];
+					m_HitPointsValue[j] = nJunk;
+
+					nJunk = m_HitPointsCount[i];
+					m_HitPointsCount[i] = m_HitPointsCount[j];
+					m_HitPointsCount[j] = nJunk;
+				}
+			}
+		}
+	};
+
+};
+
+#define PDNDSTATBLOCK cDNDStatBlock*
+typedef CTypedPtrMap <CMapStringToPtr, CString, PDNDSTATBLOCK> PDNDSTATBLOCKMAP;
 
 //utility functions
 void RemoveSpaces(char *szInString);
@@ -3435,6 +3549,14 @@ void RemoveLineFeeds(char *szInString);
 char *GetNumberSuffix(int nNumber);
 
 CString szPlusOrMinus(int nVal);
+
+CString GetStringFromInt(int nVal);
+
+CString GetCharacterSize(int nHeight);
+
+CString GetCharacterBook(DND_CHARACTER_CLASSES nClass);
+
+CString GetNumberth(int nNumber);
 
 #endif 
 

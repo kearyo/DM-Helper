@@ -216,6 +216,10 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 
 	m_nRandomDungeonOccupancy = 50;
 
+	m_bDetachedWindow = FALSE;
+
+	m_nOrientation = DMDO_DEFAULT;
+
 	Create(cDMMapViewDialog::IDD, pParent);
 }
 
@@ -262,6 +266,8 @@ void cDMMapViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ISOMETRIC_CHECK, m_cIsometricCheck);
 	DDX_Check(pDX, IDC_ISOMETRIC_CHECK, m_bIsometricCheck);
 	DDX_Check(pDX, IDC_LABELS_CHECK, m_bLabelsCheck);
+	DDX_Control(pDX, IDC_DETACH_BUTTON, m_cDetachButton);
+	DDX_Control(pDX, IDC_FLIP_BUTTON, m_cFlipDisplayButton);
 }
 
 
@@ -326,6 +332,8 @@ BEGIN_MESSAGE_MAP(cDMMapViewDialog, CDialog)
 	ON_NOTIFY(NM_RELEASEDCAPTURE, IDC_SCALE_SLIDER2, &cDMMapViewDialog::OnNMReleasedcaptureScaleSlider2)
 	ON_BN_CLICKED(IDC_ISOMETRIC_CHECK, &cDMMapViewDialog::OnBnClickedIsometricCheck)
 	ON_BN_CLICKED(IDC_LABELS_CHECK, &cDMMapViewDialog::OnBnClickedLabelsCheck)
+	ON_BN_CLICKED(IDC_DETACH_BUTTON, &cDMMapViewDialog::OnBnClickedDetachButton)
+	ON_BN_CLICKED(IDC_FLIP_BUTTON, &cDMMapViewDialog::OnBnClickedFlipButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -561,17 +569,30 @@ void cDMMapViewDialog::OnPaint()
 	CDC* pmDC = &_dc;
 #endif
 
-	if(m_pParent != NULL)
+	if (m_pParent != NULL || m_bDetachedWindow)
 	{
 		CRect rect;
-		m_pParent->GetClientRect(&rect);
+		
+		if (m_bDetachedWindow == FALSE && m_pParent != NULL)
+		{
+			m_pParent->GetClientRect(&rect);
+			rect.top += 20;
 
-		rect.top+=20;
+			SetWindowPos(NULL, rect.left, rect.top, rect.right, rect.bottom, SWP_SHOWWINDOW);
 
-		SetWindowPos(NULL, rect.left, rect.top, rect.right, rect.bottom, SWP_SHOWWINDOW);
+			GetClientRect(&rect);
+		}
+		else
+		{
+			GetClientRect(&rect);
+			rect.bottom += 20;
+		}
+		
+		m_cMapLegend.MoveWindow(rect.left, rect.bottom-40, rect.right, 20, TRUE);
 
-		GetClientRect(&rect);
-		m_cMapLegend.MoveWindow(rect.left, rect.bottom-40, rect.right, rect.bottom, TRUE);
+		//m_cFlipDisplayButton.MoveWindow(rect.left+10, rect.bottom - 65, rect.left+80, 20, TRUE);
+		//m_cDetachButton.MoveWindow(rect.left+10, rect.bottom - 90, rect.left+80, 20, TRUE);
+		m_cDetachButton.MoveWindow(rect.left + 10, rect.bottom - 65, rect.left + 80, 20, TRUE);
 		
 		m_cTravelButton.MoveWindow(rect.right-153, rect.top+2, 150, 35, TRUE);
 		m_cTravelMountedButton.MoveWindow(rect.right-153, rect.top+45, 150, 35, TRUE);
@@ -913,6 +934,8 @@ void cDMMapViewDialog::OnPaint()
 
 			if(m_bShowChildMapsCheck)
 			{
+				DrawChildMap(&graphics, pMapDlg->m_pDNDMap, nX, nY);
+
 				graphics.DrawLine(&pen4, nX, nY, tX, nY);
 				graphics.DrawLine(&pen4, nX, nY, nX, tY);
 				graphics.DrawLine(&pen4, nX, tY, tX, tY);
@@ -1352,6 +1375,47 @@ void cDMMapViewDialog::OnPaint()
 	m_bMapPaint = FALSE;
 
 	TimeSpan("END MAP PAINT", &dwStartPaintTime);
+
+}
+
+void cDMMapViewDialog::DrawChildMap(Graphics *graphics, cDNDMap *pDNDChildMap, int nX, int nY)
+{
+	TRACE("SHATNER!\n");
+
+	if (pDNDChildMap->m_bMapScaleFeet == 0)
+		return;
+
+	float fScale = (pDNDChildMap->m_fScaleX / 5280.0f / m_pDNDMap->m_fScaleX) * m_fViewScale;
+
+	float fSizeX = (float)(pDNDChildMap->m_nPixelSizeX) * fScale;
+	float fSizeY = (float)(pDNDChildMap->m_nPixelSizeY) * fScale;
+
+	if (fSizeX < 16.0f)
+	{
+		return;
+	}
+
+	for (int i = 0; i < pDNDChildMap->m_nColumns; ++i)
+	{
+		for (int j = 0; j < pDNDChildMap->m_nRows; ++j)
+		{
+			cDNDMapCell *pCell = &pDNDChildMap->m_Cells[i][j];
+
+			if (pCell->m_pBitmap == NULL)
+			{
+				CString szPath;
+				szPath.Format("%s", pCell->m_szBitmapPath);
+				szPath.MakeUpper();
+				szPath.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
+
+				LPWSTR wcsFile = szPath.AllocSysString();
+				pCell->m_pBitmap = new Bitmap(wcsFile, FALSE);
+			}
+
+
+			graphics->DrawImage(pCell->m_pBitmap, (int)(nX+fSizeX*i), (int)(nY+fSizeY*j), (int)fSizeX, (int)fSizeY);
+		}
+	}
 
 }
 
@@ -4472,7 +4536,7 @@ BOOL cDMMapViewDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 */
 
 #ifdef _DEBUG
-#define MAX_MSCALE 16.0f
+#define MAX_MSCALE 128.0f
 #else
 #define MAX_MSCALE 16.0f
 #endif
@@ -4496,7 +4560,7 @@ BOOL cDMMapViewDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	}
 	else
 	{
-		m_fViewScale += 0.1f;
+		m_fViewScale += 0.2f;
 		if (m_fViewScale > MAX_MSCALE)
 		{
 			m_fViewScale = MAX_MSCALE;
@@ -5455,4 +5519,191 @@ void cDMMapViewDialog::OnBnClickedLabelsCheck()
 	UpdateData(TRUE);
 
 	InvalidateRect(NULL);
+}
+
+
+void cDMMapViewDialog::OnBnClickedDetachButton()
+{
+	//TRACE("PING");
+	//DWORD style = GetWindowLong(m_hWnd, GWL_STYLE);
+	//style &= ~WS_CAPTION;
+
+	if (m_bDetachedWindow == TRUE)
+	{
+		return;
+	}
+
+	CDMHelperDlg *pMainDlg = (CDMHelperDlg *)m_pApp->m_pMainWindow;
+
+	int nTabSelected = pMainDlg->m_cMainTab.GetCurSel();
+
+	if (nTabSelected <= 0)
+		return;
+	
+	SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+
+	::SetWindowPos(m_hWnd, 0, 0, 0, 0, 0, 39);
+
+	m_bDetachedWindow = TRUE;
+
+	m_pParent = NULL;
+	SetParent(NULL);
+
+	cDNDDisplayTab *pDeleteTab = m_pApp->m_SubTabArray[nTabSelected];
+
+	if (pMainDlg->ValidateDeletedTab(pDeleteTab))
+	{
+		int nNewSize = m_pApp->m_TabArray.GetSize() - 1;
+		nTabSelected = pDeleteTab->m_wTabId;
+
+		for (int i = nTabSelected; i < nNewSize; ++i)
+		{
+			cDNDDisplayTab *pTab = m_pApp->m_TabArray[i];
+
+			if (pTab != NULL)
+			{
+				m_pApp->m_TabArray[i] = m_pApp->m_TabArray[i + 1];
+			}
+		}
+
+		m_pApp->m_TabArray.SetSize(nNewSize);
+
+		//pDeleteTab->m_pWindow->PostMessage(WM_CLOSE);
+
+		pMainDlg->SortTabs();
+
+		pMainDlg->PickTab();
+	}
+
+	m_cDetachButton.ShowWindow(SW_HIDE);
+
+	PostMessage(WM_SYSCOMMAND, SC_RESTORE, 0);
+
+}
+
+
+BOOL cDMMapViewDialog::GetMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo)
+{
+
+	BOOL bResult = TRUE;
+
+	DISPLAY_DEVICE DispDev;
+	char szDeviceName[32];
+
+	ZeroMemory(&DispDev, sizeof(DISPLAY_DEVICE));
+	DispDev.cb = sizeof(DISPLAY_DEVICE);
+
+	// After first call to EnumDisplayDevices DispDev.DeviceString 
+	//contains graphic card name
+	if (EnumDisplayDevices(NULL, nDeviceIndex, &DispDev, 0)) {
+		lstrcpy(szDeviceName, DispDev.DeviceName);
+
+		// after second call DispDev.DeviceString contains monitor's name 
+		EnumDisplayDevices(szDeviceName, 0, &DispDev, 0);
+
+		lstrcpy(lpszMonitorInfo, DispDev.DeviceString);
+	}
+	else 
+	{
+		bResult = FALSE;
+	}
+
+	//FreeLibrary(hInstUserLib);
+
+	return bResult;
+}
+
+
+void cDMMapViewDialog::OnBnClickedFlipButton()
+{
+	// this function replaced by CONTROL+F hotkey
+
+#if 0
+	DISPLAY_DEVICE dd;
+	dd.cb = sizeof(DISPLAY_DEVICE);
+
+	BOOL bDone = FALSE;
+	DWORD deviceNum = 0;
+	while (bDone == FALSE && EnumDisplayDevices(NULL, deviceNum, &dd, 0))
+	{
+		//DumpDevice(dd, 0);
+		DISPLAY_DEVICE newdd = { 0 };
+		newdd.cb = sizeof(DISPLAY_DEVICE);
+		DWORD monitorNum = 0;
+		while (bDone == FALSE && EnumDisplayDevices(dd.DeviceName, monitorNum, &newdd, 0))
+		{
+			monitorNum++;
+
+			if (deviceNum == 1 && monitorNum == 1)
+			{
+				bDone = TRUE;
+			}
+		}
+		deviceNum++;
+	}
+
+
+	DEVMODE devMode;
+	long r;
+
+	// Init DEVMODE to current settings
+	ZeroMemory(&devMode, sizeof(DEVMODE));
+	devMode.dmSize = sizeof(devMode);
+
+	EnumDisplaySettingsEx(dd.DeviceName, ENUM_CURRENT_SETTINGS, &devMode, NULL);
+	//ShowDevMode(devMode);
+
+	/* Rotate Orientation - 180 */
+
+	if (m_nOrientation == DMDO_DEFAULT)
+		m_nOrientation = DMDO_180;
+	else
+		m_nOrientation = DMDO_DEFAULT;
+
+	devMode.dmDisplayOrientation = m_nOrientation;
+
+	/* Rotate Orientation - 90 */
+	//devMode.dmDisplayOrientation = DMDO_90;
+
+	//swap(devMode.dmPelsHeight, devMode.dmPelsWidth);
+	//int nSwap = devMode.dmPelsHeight;
+	//devMode.dmPelsHeight = devMode.dmPelsWidth;
+	//devMode.dmPelsWidth = nSwap;
+
+	devMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYORIENTATION;
+	r = ChangeDisplaySettingsEx(dd.DeviceName, &devMode, NULL, CDS_RESET, NULL);
+
+	switch (r)
+	{
+	case DISP_CHANGE_SUCCESSFUL:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_SUCCESSFUL" << endl;
+		break;
+	case DISP_CHANGE_BADDUALVIEW:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADDUALVIEW" << endl;
+		break;
+	case DISP_CHANGE_BADFLAGS:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADFLAGS" << endl;
+		break;
+	case DISP_CHANGE_BADMODE:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADMODE" << endl;
+		break;
+	case DISP_CHANGE_BADPARAM:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADPARAM" << endl;
+		break;
+	case DISP_CHANGE_FAILED:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_FAILED" << endl;
+		break;
+	case DISP_CHANGE_NOTUPDATED:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_NOTUPDATED" << endl;
+		break;
+	case DISP_CHANGE_RESTART:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_RESTART" << endl;
+		break;
+	default:
+		//cout << "ChangeDisplaySettingsEx - Unexpected return value." << endl;
+		break;
+
+	}
+
+#endif
 }

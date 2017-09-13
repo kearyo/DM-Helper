@@ -193,6 +193,13 @@ public:
 
 	BOOL m_bReversedMapIcon;
 
+	CString m_szRaceSex;
+	CString m_szClassList;
+	CString m_szLevelList;
+	CString m_szDamageStat;
+	CString m_szCharStats;
+
+
 // Dialog Data
 	//{{AFX_DATA(CDMCharViewDialog)
 	enum { IDD = IDD_CHAR_VIEW_DIALOG };

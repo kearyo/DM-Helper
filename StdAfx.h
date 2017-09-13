@@ -40,6 +40,8 @@ using namespace Gdiplus;
 
 #include <gdiplusbitmap.h>
 
+#include <vector>
+
 #include "DM Helper Common.h"
 #include "ColoredListCtrl.h"
 #include "TransparentListBox.h"

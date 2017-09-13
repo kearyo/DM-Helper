@@ -67,6 +67,8 @@ public:
 
 	CDMDiceRollerDialog *m_pDiceRollerDialog;
 
+	int m_nOrientation;
+
 	void CloseParty(DWORD dwPartyID) ;
 	void CloseParty(DMPartyDialog *pDlg, BOOL bQuiet);
 
@@ -157,6 +159,7 @@ protected:
 public:
 	afx_msg void OnHelpAboutdungeonmaestro();
 	afx_msg void OnDicerollerOpendicerroller();
+	afx_msg void OnFlipSecondaryScreen();
 	afx_msg void OnHelpDungeonmaestrouser();
 	BOOL m_bUsed10Initiative;
 	afx_msg void OnBnClickedD10InitiativeCheck();

@@ -156,6 +156,8 @@ CDMHelperDlg::CDMHelperDlg(CWnd* pParent /*=NULL*/)
 	m_pDiceRollerDialog = NULL;
 
 	m_bInitialMaximize = FALSE;
+
+	m_nOrientation = DMDO_DEFAULT;
 }
 
 void CDMHelperDlg::DoDataExchange(CDataExchange* pDX)
@@ -260,6 +262,7 @@ BOOL CDMHelperDlg::OnInitDialog()
 	m_pApp->m_pMainWindow = this;
 
 	RegisterHotKey(m_hWnd, 100, MOD_CONTROL, 'R');	// dice roller hotkey
+	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, 'F');	// flip secondary screen hotkey
 
 	CMenu* pMenu = GetMenu();
 
@@ -1932,7 +1935,19 @@ void CDMHelperDlg::PickTab()
 				{
 					if(pTab->m_pWindow != NULL && pTab->m_pWindow->m_hWnd != NULL)
 					{
-						pTab->m_pWindow->ShowWindow(SW_HIDE);
+						if (pTab->m_nTabType == DND_TAB_TYPE_MAP)
+						{
+							cDMMapViewDialog *pMapDlg = (cDMMapViewDialog *)pTab->m_pWindow;
+
+							if (pMapDlg->m_bDetachedWindow == FALSE)
+							{
+								pTab->m_pWindow->ShowWindow(SW_HIDE);
+							}
+						}
+						else
+						{
+							pTab->m_pWindow->ShowWindow(SW_HIDE);
+						}
 					}
 				}
 				//TRACE("HIDE WINDOW %d\n", i);
@@ -2173,6 +2188,11 @@ void CDMHelperDlg::OnClose()
 	if(m_bCloseandUpdate)
 	{
 		StartDungeonMaestroUpdate();
+	}
+
+	if (m_nOrientation != DMDO_DEFAULT)
+	{
+		OnFlipSecondaryScreen();
 	}
 	
 	CDialog::OnClose();
@@ -2436,6 +2456,102 @@ void CDMHelperDlg::OnDicerollerOpendicerroller()
 	}
 }
 
+void CDMHelperDlg::OnFlipSecondaryScreen()
+{
+	DISPLAY_DEVICE dd;
+	dd.cb = sizeof(DISPLAY_DEVICE);
+
+	BOOL bFoundSecondaryScreen = FALSE;
+
+	BOOL bDone = FALSE;
+	DWORD deviceNum = 0;
+	while (bDone == FALSE && EnumDisplayDevices(NULL, deviceNum, &dd, 0))
+	{
+		//DumpDevice(dd, 0);
+		DISPLAY_DEVICE newdd = { 0 };
+		newdd.cb = sizeof(DISPLAY_DEVICE);
+		DWORD monitorNum = 0;
+		while (bDone == FALSE && EnumDisplayDevices(dd.DeviceName, monitorNum, &newdd, 0))
+		{
+			monitorNum++;
+
+			if (deviceNum == 1 && monitorNum == 1)
+			{
+				bDone = TRUE;
+				bFoundSecondaryScreen = TRUE;
+			}
+		}
+		deviceNum++;
+	}
+
+	if (bFoundSecondaryScreen == FALSE)
+	{
+		return;
+	}
+
+	DEVMODE devMode;
+	long r;
+
+	// Init DEVMODE to current settings
+	ZeroMemory(&devMode, sizeof(DEVMODE));
+	devMode.dmSize = sizeof(devMode);
+
+	EnumDisplaySettingsEx(dd.DeviceName, ENUM_CURRENT_SETTINGS, &devMode, NULL);
+	//ShowDevMode(devMode);
+
+	/* Rotate Orientation - 180 */
+
+	if (m_nOrientation == DMDO_DEFAULT)
+		m_nOrientation = DMDO_180;
+	else
+		m_nOrientation = DMDO_DEFAULT;
+
+	devMode.dmDisplayOrientation = m_nOrientation;
+
+	/* Rotate Orientation - 90 */
+	//devMode.dmDisplayOrientation = DMDO_90;
+
+	//swap(devMode.dmPelsHeight, devMode.dmPelsWidth);
+	//int nSwap = devMode.dmPelsHeight;
+	//devMode.dmPelsHeight = devMode.dmPelsWidth;
+	//devMode.dmPelsWidth = nSwap;
+
+	devMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYORIENTATION;
+	r = ChangeDisplaySettingsEx(dd.DeviceName, &devMode, NULL, CDS_RESET, NULL);
+
+	switch (r)
+	{
+	case DISP_CHANGE_SUCCESSFUL:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_SUCCESSFUL" << endl;
+		break;
+	case DISP_CHANGE_BADDUALVIEW:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADDUALVIEW" << endl;
+		break;
+	case DISP_CHANGE_BADFLAGS:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADFLAGS" << endl;
+		break;
+	case DISP_CHANGE_BADMODE:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADMODE" << endl;
+		break;
+	case DISP_CHANGE_BADPARAM:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_BADPARAM" << endl;
+		break;
+	case DISP_CHANGE_FAILED:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_FAILED" << endl;
+		break;
+	case DISP_CHANGE_NOTUPDATED:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_NOTUPDATED" << endl;
+		break;
+	case DISP_CHANGE_RESTART:
+		//cout << "ChangeDisplaySettingsEx returns DISP_CHANGE_RESTART" << endl;
+		break;
+	default:
+		//cout << "ChangeDisplaySettingsEx - Unexpected return value." << endl;
+		break;
+
+	}
+}
+
 BOOL CDMHelperDlg::PreTranslateMessage(MSG* pMsg) 
 {
 	/*
@@ -2470,7 +2586,7 @@ LRESULT CDMHelperDlg::OnHotKey(WPARAM wParam, LPARAM lParam)
 		}
 		case 200:
 		{
-			//call_your_function2();
+			OnFlipSecondaryScreen();
 			break;
 		}
 	}

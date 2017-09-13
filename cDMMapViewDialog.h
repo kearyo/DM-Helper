@@ -172,6 +172,10 @@ public:
 
 	CRect* m_pUpdateRect;
 
+	BOOL m_bDetachedWindow;
+
+	int m_nOrientation;
+
 	BOOL m_bCatchMe;	//this is a debugging variable
 
 	//DWORD m_dwRandomDungeonPartyID;
@@ -208,6 +212,7 @@ public:
 	void AddTile(int nTX, int nTY,  int nTile, int nRoomNumber, int nFlag);
 	void RemoveTile(int nTX, int nTY);
 	void ValidateTiles();
+	void DrawChildMap(Graphics *graphics, cDNDMap *pDNDChildMap, int nX, int nY);
 	BOOL IsOnScreen(int nTX, int nTY, int nRange = 0);
 	void Translate2DCoordinatesToIsometric(int nMX, int nMY, float fViewScale, int *nIsoX, int *nIsoY);
 	void TranslateIsoCoordinatesTo2D(int nMX, int nMY, int *nIsoX, int *nIsoY);
@@ -222,6 +227,8 @@ public:
 
 	void DrawCharacterIcon(Graphics *pGraphics, int nX, int nY, char *szFileName, BOOL bReversed);
 	void DrawMonsterIcon(Graphics *pGraphics, int nX, int nY, cDNDNonPlayerCharacter *pNPC, BOOL bReversed);
+
+	BOOL GetMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo);
 
 	DMMapEditDialog *m_pMapEditDlg; 
 	CDMEditMapLayersDialog *m_pEditMapLayersDialog;
@@ -398,6 +405,10 @@ public:
 	afx_msg void OnBnClickedIsometricCheck();
 	BOOL m_bLabelsCheck;
 	afx_msg void OnBnClickedLabelsCheck();
+	CButton m_cDetachButton;
+	afx_msg void OnBnClickedDetachButton();
+	afx_msg void OnBnClickedFlipButton();
+	CButton m_cFlipDisplayButton;
 };
 
 //{{AFX_INSERT_LOCATION}}

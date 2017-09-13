@@ -2677,18 +2677,44 @@ void CDMHelperApp::InitializeMonsters()
 	m_MonsterManualOrderedArray.RemoveAll();
 	m_PCMonsterManualIndexedMap.RemoveAll();
 
+	szTemp.Format("%sData/tables/MonsterPageIndexer.dat", m_szEXEPath.GetBuffer(0));
+	LoadMonsterPageIndexer(szTemp.GetBuffer(0));
 		
 	szTemp.Format("%sData/tables/MonsterManual.dat", m_szEXEPath.GetBuffer(0));
-	LoadMonsterManual(szTemp.GetBuffer(0), FALSE);
+	LoadMonsterManual(szTemp.GetBuffer(0), "MM", FALSE);
 
 	szTemp.Format("%sData/tables/MonsterManual_II.dat", m_szEXEPath.GetBuffer(0));
-	LoadMonsterManual(szTemp.GetBuffer(0), FALSE);
+	LoadMonsterManual(szTemp.GetBuffer(0), "MM2", FALSE);
 
 	szTemp.Format("%sData/tables/FiendFolio.dat", m_szEXEPath.GetBuffer(0));
-	LoadMonsterManual(szTemp.GetBuffer(0), FALSE);
+	LoadMonsterManual(szTemp.GetBuffer(0), "FF", FALSE);
 
 	szTemp.Format("%sData/tables/CustomMonsters.dat", m_szEXEPath.GetBuffer(0));
-	LoadMonsterManual(szTemp.GetBuffer(0), TRUE);
+	LoadMonsterManual(szTemp.GetBuffer(0), "CM", TRUE);
+
+	DeleteMonsterPageIndexer();
+
+	/*
+	FILE *pOutFile = fopen("C:\\Temp\\MonsterIndexer.dat", "wt");
+
+	if (pOutFile != NULL)
+	{
+		for (int i = 0; i < m_MonsterManualOrderedArray.GetSize(); ++i)
+		{
+			PDNDMONSTERMANUALENTRY pMonster = m_MonsterManualOrderedArray.GetAt(i);
+
+			if (pMonster != NULL)
+			{
+				CString szName = pMonster->m_szMMName;
+
+				fprintf(pOutFile, "%d,%s,%s pg. \n", pMonster->m_nMonsterID, szName, pMonster->m_szBook);
+			}
+		}
+
+		fclose(pOutFile);
+	}
+	*/
+
 }
 
 void CDMHelperApp::PrescanMonsterManual(char *path, char *path2)
@@ -3023,7 +3049,82 @@ void CDMHelperApp::AddMonsterMagicResistanceToMap(CString szInitialMR)
 	m_MagicResistanceMap.SetAt(nCount, pString);	
 }
 
+void CDMHelperApp::LoadMonsterPageIndexer(char *path)
+{
+	FILE *pInfile = fopen(path, "rt");
 
+	if (pInfile != NULL)
+	{
+		char szInLine[512];
+		int nIndex = 0;
+		CString szName = "";
+
+		while (!feof(pInfile))
+		{
+			fgets(szInLine, 512, pInfile);
+			CString szTemp = szInLine;
+
+			CString *szPage = NULL;
+
+			if (szTemp.FindOneOf("#") >= 0)
+				continue;
+
+			szTemp.Replace("\n", "");	//remove line feed
+			szTemp.Replace("\r", "");	//remove carriage return
+
+			CString sToken = _T("");
+			int i = 0; // substring index to extract
+			while (AfxExtractSubString(sToken, szTemp, i, ','))
+			{
+				sToken.Replace("	", "");	//remove tabs
+
+				switch (i)
+				{
+					case 0:  	nIndex = atoi(sToken.GetBuffer(0)); break;
+					case 1:  	szName = sToken; break;
+					case 2:
+					{
+						szPage = new CString();
+						*szPage = sToken;
+						break;
+					}
+				
+					default:
+					{
+						break;
+					}
+				}
+				i++;
+			}
+
+			if (szPage != NULL)
+			{
+				m_MonsterPageMap.SetAt(nIndex, szPage);
+			}
+		}
+
+		fclose(pInfile);
+	}
+
+}
+
+void CDMHelperApp::DeleteMonsterPageIndexer()
+{
+	for (POSITION pos = m_MonsterPageMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		CString *pString = NULL;
+		m_MonsterPageMap.GetNextAssoc(pos, wID, pString);
+
+		if (pString != NULL)
+		{
+			delete pString;
+		}
+	}
+	
+	m_MonsterPageMap.RemoveAll();
+
+}
 
 /*
 
@@ -3085,7 +3186,7 @@ void CDMHelperApp::AddMonsterMagicResistanceToMap(CString szInitialMR)
 
 */
 
-void CDMHelperApp::LoadMonsterManual(char *path, BOOL bCustom)
+void CDMHelperApp::LoadMonsterManual(char *path, char *szBook, BOOL bCustom)
 {
 	#if 0
 	#ifdef _DEBUG
@@ -3219,6 +3320,18 @@ void CDMHelperApp::LoadMonsterManual(char *path, BOOL bCustom)
 			}
 
 			pMonster->m_nMonsterID = nCount;
+
+			//pMonster->m_szBook = szBook;
+
+			CString *pszPage = NULL;
+			if (m_MonsterPageMap.Lookup(pMonster->m_nMonsterID, pszPage) && pszPage != NULL)
+			{
+				pMonster->m_szBook = *pszPage;
+			}
+			else
+			{
+				pMonster->m_szBook = "?? pg. ?";
+			}
 
 			m_MonsterManualOrderedArray.InsertAt(pMonster->m_nMonsterID, pMonster);
 			m_MonsterManualIndexedMap.SetAt(pMonster->m_nMonsterIndex, pMonster);
