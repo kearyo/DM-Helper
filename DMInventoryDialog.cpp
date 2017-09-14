@@ -2064,8 +2064,6 @@ void DMInventoryDialog::OnSelchangeInventoryList()
 			m_cDropWithXPPartyCheck.ShowWindow(SW_SHOW);
 		}
 
-		// shitter
-
 		CString szItemName = m_pSelectedInventorySlot->m_szType;
 
 		if (szItemName != _T(""))

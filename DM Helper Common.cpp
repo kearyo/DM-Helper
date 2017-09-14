@@ -237,7 +237,7 @@ POBJECTTYPE cDNDMagicTableItem::EnchantItem(int nMundane, int nMagicAdjustment, 
 		}
 	}
 
-	//magic sword abilities add here shitter !
+	//magic sword abilities add here !
 	if(pObj != NULL && pObj->m_nMagicAdj >= 1 && pObj->IsSword())
 	{
 		PopulateMagicSword(pObj);

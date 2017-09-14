@@ -1546,7 +1546,6 @@ BOOL CDMHelperDlg::FindAndSelectTab(DND_TAB_TYPES nTabType, DWORD dwFindID)
 
 		if(dwWindowID == dwFindID)
 		{ 
-			// SHIT 
 			m_cMainTab.SetCurSel(pTab->m_wSubTabId);
 			PickTab();
 			return TRUE;
