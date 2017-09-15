@@ -135,6 +135,9 @@
 #define IDD_PORTRAIT_SELECT_DIALOG      262
 #define IDD_MAP_LAYER_EDIT_DIALOG       263
 #define IDD_DETACHED_MAP_DIALOG         264
+#define IDD_MAP_SIZING_DIALOG           265
+#define IDD_DIALOG4                     267
+#define IDD_NAME_MAP_DIALOG             267
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -294,7 +297,6 @@
 #define IDC_ADD_XP_BUTTON_2             1070
 #define IDC_ADD_EDIT                    1070
 #define IDC_ERASE_BUTTON                1070
-#define IDC_DETACH_BUTTON2              1070
 #define IDC_FLIP_BUTTON                 1070
 #define IDC_MAP_PIXELS_X_EDIT           1071
 #define IDC_ADD_XP_BUTTON_3             1071
@@ -1083,8 +1085,11 @@
 #define IDC_EDIT_LAYER_4                1563
 #define IDC_TILE_HEIGHT_STATIC          1563
 #define IDC_DELETE_LAYER_1              1564
+#define IDC_RESIZE_CELL_BUTTON          1564
 #define IDC_DELETE_LAYER_2              1565
+#define IDC_RESIZE_MAP_BUTTON           1565
 #define IDC_DELETE_LAYER_3              1566
+#define IDC_PROGRESS1                   1566
 #define IDC_DELETE_LAYER_4              1567
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
@@ -1116,9 +1121,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        265
+#define _APS_NEXT_RESOURCE_VALUE        268
 #define _APS_NEXT_COMMAND_VALUE         32796
-#define _APS_NEXT_CONTROL_VALUE         1564
+#define _APS_NEXT_CONTROL_VALUE         1567
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

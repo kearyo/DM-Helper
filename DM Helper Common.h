@@ -3021,11 +3021,11 @@ public:
 		memset(m_Tiles, 0, MAX_MAP_TILES * sizeof(cDNDMapTile));
 		memset(m_nReserved2, 0, MAP_RESERVED_DATA_SIZE_2 * sizeof(int)); 
 
-		m_nRows = 0;
-		m_nColumns = 0;
+		m_nRows = 1;
+		m_nColumns = 1;
 
-		m_nPixelSizeX = 0;
-		m_nPixelSizeY = 0;
+		m_nPixelSizeX = 512;
+		m_nPixelSizeY = 512;
 
 		m_fScaleX = 1.0f;
 		m_fScaleY = 1.0f;

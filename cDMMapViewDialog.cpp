@@ -19,6 +19,7 @@
 #include "DungeonGen.h"
 #include "DMEditMapLayersDialog.h"
 #include "DMNPCPortraitSelectDialog.h"
+#include "cDMMapSizingDialog.h"
 
 /* Notes for weather generation
 
@@ -403,6 +404,11 @@ BOOL cDMMapViewDialog::OnInitDialog()
 	m_cIsometricCheck.ShowWindow(SW_HIDE);
 #endif
 	*/
+
+	if (m_pDNDMap->m_szMapName[0] == 0 && m_pDNDMap->m_szLoadedFilename[0] == 0)
+	{
+		// OnEditButton();
+	}
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -2451,7 +2457,6 @@ void cDMMapViewDialog::OnRButtonDblClk(UINT nFlags, CPoint point)
 	if(m_pDNDMap->m_nPixelSizeX == 0 || m_pDNDMap->m_nPixelSizeY == 0)
 		return;
 
-
 	if(m_nSelectedMapTile >= 10)
 	{
 		int nTX = 0;
@@ -2472,6 +2477,7 @@ void cDMMapViewDialog::OnRButtonDblClk(UINT nFlags, CPoint point)
 	}
 	
 
+
 	int nMapX = (int)((float)(-m_nCornerX + point.x) / m_fViewScale);
 	int nMapY = (int)((float)(-m_nCornerY + point.y) / m_fViewScale);
 
@@ -2479,6 +2485,15 @@ void cDMMapViewDialog::OnRButtonDblClk(UINT nFlags, CPoint point)
 	int nCellY = nMapY / m_pDNDMap->m_nPixelSizeY;
 
 	TRACE("MAP CELL %d %d\n", nCellX, nCellY);
+
+	if (nCellX == 0 && nCellY == 0)
+	{
+		if (strcmp(m_pDNDMap->m_szMapName, "New Map") == 0 || m_pDNDMap->m_szMapName[0] == 0)
+		{
+			AfxMessageBox("Please name this map !", MB_OK);
+			return;
+		}
+	}
 
 
 	cDNDMapCell *pCell = &m_pDNDMap->m_Cells[nCellX][nCellY];
@@ -2530,8 +2545,28 @@ void cDMMapViewDialog::OnRButtonDblClk(UINT nFlags, CPoint point)
 		pCell->m_pBitmap = new Bitmap(wcsFile , FALSE);
 
 		szPath.Replace(m_pApp->m_szEXEPath, "<$DMAPATH>");
-
 		strcpy(pCell->m_szBitmapPath, szPath.GetBuffer(0));
+
+		if (nCellX == 0 && nCellY == 0)
+		{
+			int nImageWidth = pCell->m_pBitmap->GetWidth();
+			int nImageHeight = pCell->m_pBitmap->GetHeight();
+
+			if (nImageWidth > m_pDNDMap->m_nPixelSizeX || nImageHeight > m_pDNDMap->m_nPixelSizeY)
+			{
+				cDMMapSizingDialog *pDlg = new cDMMapSizingDialog(m_pDNDMap, this);
+				pDlg->DoModal();
+				delete pDlg;
+			}
+			else if (m_pDNDMap->m_nRows == 1 && m_pDNDMap->m_nColumns == 1)
+			{
+				if (nImageWidth < m_pDNDMap->m_nPixelSizeX || nImageHeight < m_pDNDMap->m_nPixelSizeY)
+				{
+					m_pDNDMap->m_nPixelSizeX = nImageWidth;
+					m_pDNDMap->m_nPixelSizeY = nImageHeight;
+				}
+			}
+		}
 
 		InvalidateRect(NULL);
 
@@ -2960,6 +2995,11 @@ void cDMMapViewDialog::OnSaveButton()
 	if(FileDesc.m_bSuccess)
 	{
 		SaveMapToFile(FileDesc.m_szReturnedPath.GetBuffer(0));
+
+		if (m_pDNDMap->m_szLoadedFilename[0] == 0)
+		{
+			strcpy(m_pDNDMap->m_szLoadedFilename, FileDesc.m_szReturnedPath.Left(511));
+		}
 	}	
 }
 

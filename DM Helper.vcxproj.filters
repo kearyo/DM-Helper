@@ -189,6 +189,12 @@
     <ClCompile Include="cDMDetachedMapDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cDMMapSizingDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMMapNameDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -374,6 +380,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cDMDetachedMapDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMMapSizingDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMMapNameDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

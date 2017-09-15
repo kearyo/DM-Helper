@@ -21,6 +21,7 @@
 #include "DMCustomArmorDialog.h"
 #include "DMCustomSpellDialog.h"
 #include "DMCustomMonsterDialog.h"
+#include "cDMMapNameDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -659,7 +660,13 @@ void CDMHelperDlg::OnNewMap()
 
 	cDMMapViewDialog *pDlg = new cDMMapViewDialog(this, NULL, &m_cMainTab);
 
-	strcpy(pDlg->m_pDNDMap->m_szMapName, "New Map");
+	//strcpy(pDlg->m_pDNDMap->m_szMapName, "New Map");
+
+	cDMMapNameDialog *pNameDlg = new cDMMapNameDialog(pDlg->m_pDNDMap, this);
+	pNameDlg->DoModal();
+	delete pNameDlg;
+
+	pDlg->SetWindowText(pDlg->m_pDNDMap->m_szMapName);
 
 	AddTab(pDlg, DND_TAB_TYPE_MAP, TRUE);
 
@@ -669,7 +676,6 @@ void CDMHelperDlg::OnNewMap()
 		m_bInitialMaximize = TRUE;
 	}
 
-	//Sleep(1000); //WTF KEARY ?
 }
 
 

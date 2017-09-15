@@ -158,6 +158,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cDMDetachedMapDialog.cpp" />
+    <ClCompile Include="cDMMapNameDialog.cpp" />
+    <ClCompile Include="cDMMapSizingDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
     <ClCompile Include="ColoredListCtrl.cpp" />
     <ClCompile Include="DM Helper Common.cpp" />
@@ -224,6 +226,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cDMDetachedMapDialog.h" />
+    <ClInclude Include="cDMMapNameDialog.h" />
+    <ClInclude Include="cDMMapSizingDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
     <ClInclude Include="ColoredListCtrl.h" />
     <ClInclude Include="DM Helper Common.h" />
