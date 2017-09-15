@@ -200,6 +200,10 @@
 - 1.0.029	5/19/17
 	* Fixed bug where saving throws were not being calculated correctly for dual classed characters
 	* Added 'stat block' party summaries that can be copy/pasted from the program
+
+- 1.0.030	9/14/17
+	* Added capability to detach maps from the main program for display on external monitor
+	* Added functionality to cut cell maps from large bitmap directly from map editor
 */
 
 #define PCSTRING CString*
