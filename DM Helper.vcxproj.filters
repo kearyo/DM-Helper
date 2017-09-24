@@ -528,6 +528,9 @@
     <Image Include="res\npc_portrait_backdrop.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\fog_of_war.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\DM Helper.rc2">

@@ -309,6 +309,7 @@
     <Image Include="res\expand_down.bmp" />
     <Image Include="res\expand_up.bmp" />
     <Image Include="res\fighter.bmp" />
+    <Image Include="res\fog_of_war.bmp" />
     <Image Include="res\folder_icon.bmp" />
     <Image Include="res\Furyondy.bmp" />
     <Image Include="res\inventory.bmp" />

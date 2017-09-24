@@ -116,6 +116,7 @@ int _MapControlStater[][2] =
 #if ISOMETRIC_MAPS
 	IDC_ISOMETRIC_CHECK,				TRUE,
 #endif
+	IDC_FOG_OF_WAR_CHECK,				TRUE,
 
 	IDC_LABELS_CHECK,					TRUE,
 
@@ -142,6 +143,7 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	, m_nIconScale(0)
 	, m_bIsometricCheck(FALSE)
 	, m_bLabelsCheck(FALSE)
+	, m_bFogOfWarCheck(FALSE)
 {
 	//{{AFX_DATA_INIT(cDMMapViewDialog)
 	m_szMapLegend = _T("");
@@ -221,6 +223,8 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 
 	m_nOrientation = DMDO_DEFAULT;
 
+	m_pFogOfWarBitmap = NULL;
+
 	Create(cDMMapViewDialog::IDD, pParent);
 }
 
@@ -269,6 +273,8 @@ void cDMMapViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_LABELS_CHECK, m_bLabelsCheck);
 	DDX_Control(pDX, IDC_DETACH_BUTTON, m_cDetachButton);
 	DDX_Control(pDX, IDC_FLIP_BUTTON, m_cFlipDisplayButton);
+	DDX_Control(pDX, IDC_FOG_OF_WAR_CHECK, m_cFogOfWarCheck);
+	DDX_Check(pDX, IDC_FOG_OF_WAR_CHECK, m_bFogOfWarCheck);
 }
 
 
@@ -335,10 +341,18 @@ BEGIN_MESSAGE_MAP(cDMMapViewDialog, CDialog)
 	ON_BN_CLICKED(IDC_LABELS_CHECK, &cDMMapViewDialog::OnBnClickedLabelsCheck)
 	ON_BN_CLICKED(IDC_DETACH_BUTTON, &cDMMapViewDialog::OnBnClickedDetachButton)
 	ON_BN_CLICKED(IDC_FLIP_BUTTON, &cDMMapViewDialog::OnBnClickedFlipButton)
+	ON_BN_CLICKED(IDC_FOG_OF_WAR_CHECK, &cDMMapViewDialog::OnBnClickedFogOfWarCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // cDMMapViewDialog message handlers
+
+Bitmap *cDMMapViewDialog::ResourceToBitmap(const HINSTANCE hInstance, const int id)
+{
+	HBITMAP hBmp = ::LoadBitmap(hInstance, MAKEINTRESOURCE(id));
+	if (hBmp == NULL) return NULL;
+	return Bitmap::FromHBITMAP(hBmp, NULL);
+}
 
 BOOL cDMMapViewDialog::OnInitDialog() 
 {
@@ -404,6 +418,8 @@ BOOL cDMMapViewDialog::OnInitDialog()
 	m_cIsometricCheck.ShowWindow(SW_HIDE);
 #endif
 	*/
+
+	m_pFogOfWarBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_FOG_OF_WAR_BITMAP);
 
 	if (m_pDNDMap->m_szMapName[0] == 0 && m_pDNDMap->m_szLoadedFilename[0] == 0)
 	{
@@ -532,13 +548,6 @@ void cDMMapViewDialog::Refresh()
 
 void cDMMapViewDialog::OnPaint() 
 {
-	/* this is a bad fucking idea 
-	if(m_bMapPaint)
-	{
-		TRACE("REFUSE MAP PAINT !\n");
-		return;
-	}
-	*/
 
 	if(IsIconic())
 	{
@@ -871,6 +880,7 @@ void cDMMapViewDialog::OnPaint()
 		}
 	}
 
+	
 	if(m_pDNDMap->m_bTiles)
 	{
 		m_cIsometricCheck.EnableWindow(TRUE);
@@ -963,6 +973,48 @@ void cDMMapViewDialog::OnPaint()
 	{
 		TRACE("CAUGHT ME !\n");
 		//m_bCatchMe = FALSE;
+	}
+
+	if (m_bFogOfWarCheck)
+	{
+		int nCols = m_pDNDMap->m_nColumns;
+		int nRows = m_pDNDMap->m_nRows;
+
+		int nRemX = (m_pDNDMap->m_nPixelSizeX * nCols) % 32;
+		int nRemY = (m_pDNDMap->m_nPixelSizeY * nRows) % 32;
+
+		int nFOWSizeX = ((m_pDNDMap->m_nPixelSizeX * nCols + nRemX) / 32)+1;
+		int nFOWSizeY = ((m_pDNDMap->m_nPixelSizeY * nRows + nRemY) / 32)+1;
+
+		int nPixelSizeX = (int)(32.0f * m_fViewScale);
+		int nPixelSizeY = (int)(32.0f * m_fViewScale);
+
+		for (int xx = 0; xx < nFOWSizeX; ++xx)
+		{
+			for (int yy = 0; yy < nFOWSizeY; ++yy)
+			{
+				int x1 = xx * nPixelSizeX + m_nCornerX;
+				int y1 = yy * nPixelSizeY + m_nCornerY;
+
+				int x2 = x1 + nPixelSizeX;
+				int y2 = y1 + nPixelSizeY;
+
+				if (NULL != m_pFogOfWarBitmap)
+				{
+					if (m_pDNDMap->m_nFogOfWarCell[yy % 100][xx % 100] == 0)
+					{
+						//graphics.DrawImage(m_pFogOfWarBitmap, x1, y1, nPixelSizeX, nPixelSizeY);
+						float fAlpha = 0.7f;
+						if (m_bDetachedWindow)
+						{
+							fAlpha = 1.0f;
+						}
+
+						DrawTransparentBitmap(&graphics, m_pFogOfWarBitmap, x1, y1, nPixelSizeX, nPixelSizeY, 32,32, fAlpha);
+					}
+				}
+			}
+		}
 	}
 
 	//////////////////////////////////
@@ -1918,6 +1970,8 @@ void cDMMapViewDialog::OnLButtonUp(UINT nFlags, CPoint point)
 
 				pSelectedCharacter->MarkChanged();
 			}
+
+			UpdateDetachedMaps();
 		}
 
 		cDNDNonPlayerCharacter *pSelectedNPC = NULL;
@@ -1969,6 +2023,8 @@ void cDMMapViewDialog::OnLButtonUp(UINT nFlags, CPoint point)
 
 
 		m_dwDraggedCharacterID = 0;
+
+		UpdateDetachedMaps();
 
 		InvalidateRect(NULL);
 	}
@@ -2060,6 +2116,8 @@ void cDMMapViewDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 					m_pSelectedCharacter->MarkChanged();
 				}
+
+				UpdateDetachedMaps();
 			}
 
 			m_MapMode = DND_MAP_MODE_UNDEF;
@@ -2106,6 +2164,8 @@ void cDMMapViewDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 				}
 
 				m_pDNDMap->MarkChanged();
+
+				UpdateDetachedMaps();
 			}
 	
 			m_MapMode = DND_MAP_MODE_UNDEF;
@@ -2145,6 +2205,8 @@ void cDMMapViewDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 					
 				}
+
+				UpdateDetachedMaps();
 			}
 
 			break;
@@ -2641,6 +2703,8 @@ void cDMMapViewDialog::UpdateMapLegend()
 
 void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point) 
 {
+	BOOL bUpdateDetachedMaps = FALSE;
+
 	ValidateSelectedParty();
 
 	if (m_dwDraggedCharacterID)
@@ -2683,9 +2747,12 @@ void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 	if(!(nFlags & MK_SHIFT))
 	{
 		m_bMouseDrag = FALSE;
+
+		m_nUnshiftedMouseX = m_nMouseX;
+		m_nUnshiftedMouseY = m_nMouseY;
 	}
 
-	if(nFlags && MK_LBUTTON)
+	if(nFlags & MK_LBUTTON)
 	{
 		if(m_bMouseDrag == FALSE)
 		{
@@ -2756,8 +2823,101 @@ void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 
 		InvalidateRect(m_pUpdateRect);
 	}
+	else if ((nFlags & MK_SHIFT) && m_bFogOfWarCheck)
+	{
+		int nStartX = m_nUnshiftedMouseX;
+		int nEndX = m_nMouseX;
+		
+		if (m_nMouseX < m_nUnshiftedMouseX)
+		{
+			nStartX = m_nMouseX; 
+			nEndX = m_nUnshiftedMouseX;
+		}
+
+		int nStartY = m_nUnshiftedMouseY;
+		int nEndY = m_nMouseY;
+
+		if (m_nMouseY < m_nUnshiftedMouseY)
+		{
+			nStartY = m_nMouseY;
+			nEndY = m_nUnshiftedMouseY;
+		}
+
+		for (int nXX = nStartX; nXX < nEndX; ++nXX)
+		{
+			for (int nYY = nStartY; nYY < nEndY; ++nYY)
+			{
+				int nFogX = max(0, (int)(nXX / m_fViewScale / 32.0f)) % 100;
+				int nFogY = max(0, (int)(nYY / m_fViewScale / 32.0f)) % 100;
+
+				int nOldFog = m_pDNDMap->m_nFogOfWarCell[nFogY][nFogX];
+
+				if (nFlags & MK_CONTROL)
+				{
+					m_pDNDMap->m_nFogOfWarCell[nFogY][nFogX] = 0;
+				}
+				else
+				{
+					m_pDNDMap->m_nFogOfWarCell[nFogY][nFogX] = 1;
+				}
+
+				if (m_pDNDMap->m_nFogOfWarCell[nFogY][nFogX] != nOldFog)
+				{
+					bUpdateDetachedMaps = TRUE;
+				}
+			}
+		}
+
+		if (bUpdateDetachedMaps)
+		{
+			InvalidateRect(NULL);
+			UpdateDetachedMaps();
+
+			m_pDNDMap->MarkChanged();
+		}
+	}
 	
 	CDialog::OnMouseMove(nFlags, point);
+}
+
+void cDMMapViewDialog::UpdateDetachedMaps()
+{
+	for (POSITION pos = m_pApp->m_DetachedMapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_pApp->m_DetachedMapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL && pMapDlg->m_pDNDMap != NULL && pMapDlg->m_pDNDMap->m_dwMapID == m_pDNDMap->m_dwMapID)
+		{
+			SyncDetachedMaps(this, pMapDlg);
+		}
+	}
+
+	for (POSITION pos = m_pApp->m_MapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_pApp->m_MapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != this && pMapDlg != NULL && pMapDlg->m_pDNDMap != NULL && pMapDlg->m_pDNDMap->m_dwMapID == m_pDNDMap->m_dwMapID)
+		{
+			SyncDetachedMaps(this, pMapDlg);
+		}
+	}
+}
+
+void cDMMapViewDialog::SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2)
+{
+	pMapDlg1->m_pDNDMap->m_nFogOfWarFlag = (pMapDlg1->m_pDNDMap->m_nFogOfWarFlag + 1) % 32000;
+
+	pMapDlg2->m_pDNDMap->m_nFogOfWarFlag = pMapDlg1->m_pDNDMap->m_nFogOfWarFlag;
+
+	memcpy(pMapDlg2->m_pDNDMap->m_nFogOfWarCell, pMapDlg1->m_pDNDMap->m_nFogOfWarCell, 100 * 100 * sizeof(int));
+
+	pMapDlg2->m_nIconScale = pMapDlg1->m_nIconScale;
+
+	pMapDlg2->InvalidateRect(NULL);
 }
 
 void cDMMapViewDialog::OnEditButton() 
@@ -3093,6 +3253,7 @@ void cDMMapViewDialog::OnClose()
 	if(m_pDNDMap != NULL)
 	{
 		m_pApp->m_MapViewMap.RemoveKey((WORD)m_pDNDMap->m_dwMapID);
+		m_pApp->m_DetachedMapViewMap.RemoveKey((WORD)m_pDNDMap->m_dwMapID);
 
 		delete m_pDNDMap;
 		m_pDNDMap = NULL;
@@ -3888,6 +4049,12 @@ void cDMMapViewDialog::OnCancel()
 	//CDialog::OnCancel();
 }
 
+void cDMMapViewDialog::OnBnClickedFogOfWarCheck()
+{
+	UpdateData(TRUE);
+
+	InvalidateRect(NULL);
+}
 
 
 void cDMMapViewDialog::OnTravelButton() 
@@ -5538,7 +5705,28 @@ void cDMMapViewDialog::DrawMonsterIcon(Graphics *pGraphics, int nX, int nY, cDND
 	
 }
 
+void cDMMapViewDialog::DrawTransparentBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha)
+{
+	Status rc;
 
+	ColorMatrix ClrMatrix = {
+		1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, fAlpha, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	ImageAttributes ImgAttr;
+
+	ImgAttr.SetColorMatrix(&ClrMatrix, ColorMatrixFlagsDefault,
+		ColorAdjustTypeBitmap);
+
+	Rect destRect(nX, nY, nSizeX, nSizeY);
+
+	g->DrawImage(pBitmap, destRect, 0, 0, nBitmapSizeX, nBitmapSizeY, Gdiplus::UnitPixel, &ImgAttr);
+	//g->DrawImage(m_pFogOfWarBitmap, nX, nY, nSizeX, nSizeY);
+}
 
 
 
@@ -5549,6 +5737,8 @@ void cDMMapViewDialog::OnNMReleasedcaptureScaleSlider2(NMHDR *pNMHDR, LRESULT *p
 	UpdateData(TRUE);
 
 	InvalidateRect(NULL);
+
+	UpdateDetachedMaps();
 }
 
 
@@ -5585,6 +5775,8 @@ void cDMMapViewDialog::OnBnClickedDetachButton()
 	::SetWindowPos(m_hWnd, 0, 0, 0, 0, 0, 39);
 
 	m_bDetachedWindow = TRUE;
+
+	m_pApp->m_DetachedMapViewMap.SetAt(m_pDNDMap->m_dwMapID, this);
 
 	m_pParent = NULL;
 	SetParent(NULL);
@@ -5747,3 +5939,5 @@ void cDMMapViewDialog::OnBnClickedFlipButton()
 
 #endif
 }
+
+

@@ -417,10 +417,11 @@ BEGIN
     CONTROL         "",IDC_SCALE_SLIDER2,"msctls_trackbar32",WS_TABSTOP,45,153,125,12
     LTEXT           "Icon Scale:",IDC_SCALE_STATIC2,9,156,34,8
     LTEXT           "1/10x                    1x                     10x",IDC_TICKS_STATIC2,50,166,115,8
-    CONTROL         "Isometric",IDC_ISOMETRIC_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,142,42,10
+    CONTROL         "Isometric",IDC_ISOMETRIC_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,153,42,10
     CONTROL         "Labels",IDC_LABELS_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,43,36,10
     PUSHBUTTON      "Detach",IDC_DETACH_BUTTON,5,235,31,14
     PUSHBUTTON      "Flip",IDC_FLIP_BUTTON,5,251,31,14,NOT WS_VISIBLE | WS_DISABLED
+    CONTROL         "Fog of War",IDC_FOG_OF_WAR_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,142,42,10
 END
 
 IDD_SOUND_FX_DIALOG DIALOG 0, 0, 428, 337
@@ -2337,6 +2338,7 @@ IDB_FOLDER_ICON_BITMAP  BITMAP                  "res\\folder_icon.bmp"
 IDB_UP_FOLDER_ICON_BITMAP BITMAP                  "res\\up_folder_bitmap.bmp"
 IDB_MINI_PORTRAIT_BACKDROP_BITMAP BITMAP                  "res\\mini_portrait_backdrop.bmp"
 IDB_NPC_PORTRAIT_BACKDROP_BITMAP BITMAP                  "res\\npc_portrait_backdrop.bmp"
+IDB_FOG_OF_WAR_BITMAP   BITMAP                  "res\\fog_of_war.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

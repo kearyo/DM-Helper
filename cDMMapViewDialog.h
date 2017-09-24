@@ -186,6 +186,7 @@ public:
 	void SaveExternal();
 	void SaveMapToFile(char *szFileName);
 	void LoadMapCaches(char *szFileName);
+	Bitmap *ResourceToBitmap(const HINSTANCE hInstance, const int id);
 
 	void DrawMapText(char * szData, int x, int y, CDC *memdc);
 
@@ -227,6 +228,9 @@ public:
 
 	void DrawCharacterIcon(Graphics *pGraphics, int nX, int nY, char *szFileName, BOOL bReversed);
 	void DrawMonsterIcon(Graphics *pGraphics, int nX, int nY, cDNDNonPlayerCharacter *pNPC, BOOL bReversed);
+	void DrawTransparentBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha);
+	void UpdateDetachedMaps();
+	void SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2);
 
 	BOOL GetMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo);
 
@@ -250,6 +254,8 @@ public:
 	Bitmap* m_pBitmap_1;
 	Bitmap* m_pBitmap_2;
 
+	Bitmap* m_pFogOfWarBitmap;
+
 	CBitmap m_bmp;
 
 	float m_fViewScale;
@@ -262,6 +268,9 @@ public:
 
 	int m_nMouseX;
 	int m_nMouseY;
+
+	int m_nUnshiftedMouseX;
+	int m_nUnshiftedMouseY;
 
 	int m_nMousePointX;
 	int m_nMousePointY;
@@ -409,6 +418,9 @@ public:
 	afx_msg void OnBnClickedDetachButton();
 	afx_msg void OnBnClickedFlipButton();
 	CButton m_cFlipDisplayButton;
+	CButton m_cFogOfWarCheck;
+	BOOL m_bFogOfWarCheck;
+	afx_msg void OnBnClickedFogOfWarCheck();
 };
 
 //{{AFX_INSERT_LOCATION}}

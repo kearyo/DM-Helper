@@ -136,8 +136,9 @@
 #define IDD_MAP_LAYER_EDIT_DIALOG       263
 #define IDD_DETACHED_MAP_DIALOG         264
 #define IDD_MAP_SIZING_DIALOG           265
-#define IDD_DIALOG4                     267
 #define IDD_NAME_MAP_DIALOG             267
+#define IDB_BITMAP2                     268
+#define IDB_FOG_OF_WAR_BITMAP           268
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -674,6 +675,7 @@
 #define IDC_SOUND_BUTTON_12             1194
 #define IDC_INC_YEAR_BUTTON2            1194
 #define IDC_START_CLOCK_BUTTON          1194
+#define IDC_FOG_OF_WAR_CHECK            1194
 #define IDC_SOUND_BUTTON_13             1195
 #define IDC_VIEW_CALENDAR_BUTTON        1195
 #define IDC_SOUND_BUTTON_14             1196
@@ -1121,7 +1123,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        268
+#define _APS_NEXT_RESOURCE_VALUE        269
 #define _APS_NEXT_COMMAND_VALUE         32796
 #define _APS_NEXT_CONTROL_VALUE         1567
 #define _APS_NEXT_SYMED_VALUE           101

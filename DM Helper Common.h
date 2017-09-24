@@ -9,7 +9,7 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10030
+#define DMH_CURRENT_VERSION 10031
 
 #define USE_CANTRIPS	TRUE
 
@@ -204,6 +204,9 @@
 - 1.0.030	9/14/17
 	* Added capability to detach maps from the main program for display on external monitor
 	* Added functionality to cut cell maps from large bitmap directly from map editor
+
+- 1.0.031	X/XX/17
+	* Added fog of war capability for detached maps
 */
 
 #define PCSTRING CString*
@@ -2929,7 +2932,7 @@ public:
 
 #define MAP_RESERVED_DATA_SIZE 32629  // was 32765
 #define MAX_MAP_TILES	8192
-#define MAP_RESERVED_DATA_SIZE_2 32767
+#define MAP_RESERVED_DATA_SIZE_2 22766
 
 class cDNDMapTile
 {
@@ -3013,6 +3016,8 @@ public:
 
 	cDNDMapTile m_Tiles[MAX_MAP_TILES];
 
+	int m_nFogOfWarFlag;
+	int m_nFogOfWarCell[100][100];
 	int m_nReserved2[MAP_RESERVED_DATA_SIZE_2];
 
 	cDNDMap()
@@ -3054,6 +3059,9 @@ public:
 		m_nTransRed = 255;
 		m_nTransGreen = 255;
 		m_nTransBlue = 255;
+
+		m_nFogOfWarFlag = 0;
+		memset(m_nFogOfWarCell, 0, 100*100*sizeof(int));
 
 		memset(m_szLoadedFilename, 0, 512 * sizeof(char));
 

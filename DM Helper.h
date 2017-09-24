@@ -536,6 +536,7 @@ public:
 	PCHARVIEWMAP m_CharacterViewMap;
 	PNPCVIEWMAP	m_NPCViewMap;
 	PMAPVIEWMAP m_MapViewMap;
+	PMAPVIEWMAP m_DetachedMapViewMap;
 
 	int m_nTotalMonsterCount;
 	PMONSTERMANUALARRAY m_MonsterManualOrderedArray;
