@@ -499,7 +499,7 @@ BOOL CDMHelperApp::InitInstance()
 	//  the specific initialization routines you do not need.
 
 	TRACE("MAX_PATH = %d\n", MAX_PATH);
-	TRACE("sizes %d %d %d ( %d )\n", sizeof(int), sizeof(char), sizeof(DND_CHARACTER_ALIGNMENTS), sizeof(cDNDObject));
+	TRACE("sizes %d %d %d ( %d ) %d\n", sizeof(int), sizeof(char), sizeof(DND_CHARACTER_ALIGNMENTS), sizeof(cDNDObject), sizeof(cDNDMapSFX));
 
 	ASSERT(sizeof(cDNDObject) == 4164); // pass this assertion or you are screwed !
 	/*
@@ -4831,6 +4831,23 @@ void CDMHelperApp::SaveSettings()
 		fwrite(&m_Settings, sizeof(cDNDSettings), 1, pOutFile);
 
 		fclose(pOutFile);
+	}
+}
+
+void CDMHelperApp::PlaySoundFX(CString szDesc)
+{
+	for (int i = 0; i < MAX_SOUNDBOARD_PAGES; ++i)
+	{
+		for (int j = 0; j < SOUNDBOARD_SOUNDS_PER_PAGE; ++j)
+		{
+			if (strcmp(m_Settings.m_SoundFX[i][j].m_szDesc, szDesc) == 0)
+			{
+				CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
+				szPath.Replace("<$DMAPATH>", m_szEXEPath);
+				PlaySound((LPCSTR)szPath.GetBuffer(0), AfxGetInstanceHandle(), SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+				return;
+			}
+		}
 	}
 }
 

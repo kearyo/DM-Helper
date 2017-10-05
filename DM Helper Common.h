@@ -2727,7 +2727,67 @@ char *GetMagicSwordExtraordinaryPowers(int nIndex, int nDieRoll);
 char *GetMagicSwordSpecialPurpose(int nIndex, int nDieRoll);
 char *GetMagicSwordSpecialPurposePower(int nIndex, int nDieRoll);
 
+typedef enum
+{
+	DND_SFX_STATE_UNDEF = 0,
+	DND_SFX_STATE_READY,
+	DND_SFX_STATE_TRIGGERED_START,
+	DND_SFX_STATE_TRIGGERED,
 
+} DND_SFX_STATES;
+
+#define MAX_MAP_SFX	32
+
+class cDNDMapSFX
+{
+public:
+
+	char m_szSFXName[32];
+	char m_szGFXFileName[256];
+	char m_szSFXFileName[32];
+
+	DND_SFX_STATES m_SFXState;
+	BOOL m_bCycle;
+	BOOL m_bAnimated;
+
+	int m_nMapX;
+	int m_nMapY;
+
+	float m_fScale;
+
+	LPVOID m_pDataPtr;
+
+	int m_nReserved[32];
+
+	cDNDMapSFX()
+	{
+		Init();
+	}
+
+	void Init()
+	{
+		memset(m_szSFXName, 0, 32 * sizeof(char));
+		memset(m_szGFXFileName, 0, 256 * sizeof(char));
+		memset(m_szSFXFileName, 0, 32 * sizeof(char));
+
+		m_SFXState = DND_SFX_STATE_UNDEF;
+		m_bCycle = FALSE;
+		m_bAnimated = FALSE;
+
+		m_nMapX = 0;
+		m_nMapY = 0;
+
+		m_fScale = 1.0f;
+
+		m_pDataPtr = NULL;
+
+		memset(m_nReserved, 0, 32 * sizeof(int));
+	}
+
+	~cDNDMapSFX()
+	{
+	}
+};
 
 #define MAX_MAP_CELLS	128
 
@@ -2932,7 +2992,7 @@ public:
 
 #define MAP_RESERVED_DATA_SIZE 32629  // was 32765
 #define MAX_MAP_TILES	8192
-#define MAP_RESERVED_DATA_SIZE_2 22766
+#define MAP_RESERVED_DATA_SIZE_2 18989
 
 class cDNDMapTile
 {
@@ -3018,6 +3078,9 @@ public:
 
 	int m_nFogOfWarFlag;
 	int m_nFogOfWarCell[100][100];
+
+	cDNDMapSFX m_MapSFX[MAX_MAP_SFX];
+
 	int m_nReserved2[MAP_RESERVED_DATA_SIZE_2];
 
 	cDNDMap()

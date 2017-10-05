@@ -652,6 +652,7 @@ public:
 	void LoadSettings();
 	void SaveSettings();
 
+	void PlaySoundFX(CString szDesc);
 	void PlayWeaponSFX(int nWeaponID, int nIndex);
 	void PlaySpellSFX(int nSpellID);
 

@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClCompile Include="cDMDetachedMapDialog.cpp" />
     <ClCompile Include="cDMMapNameDialog.cpp" />
+    <ClCompile Include="cDMMapSFXDialog.cpp" />
     <ClCompile Include="cDMMapSizingDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
     <ClCompile Include="ColoredListCtrl.cpp" />
@@ -215,6 +216,7 @@
     <ClCompile Include="DMTimeEditDialog.cpp" />
     <ClCompile Include="DMTreasureTypeDialog.cpp" />
     <ClCompile Include="DungeonGen.cpp" />
+    <ClCompile Include="ImageEx.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -227,6 +229,7 @@
   <ItemGroup>
     <ClInclude Include="cDMDetachedMapDialog.h" />
     <ClInclude Include="cDMMapNameDialog.h" />
+    <ClInclude Include="cDMMapSFXDialog.h" />
     <ClInclude Include="cDMMapSizingDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
     <ClInclude Include="ColoredListCtrl.h" />
@@ -283,6 +286,7 @@
     <ClInclude Include="DMTimeEditDialog.h" />
     <ClInclude Include="DMTreasureTypeDialog.h" />
     <ClInclude Include="DungeonGen.h" />
+    <ClInclude Include="ImageEx.h" />
     <ClInclude Include="memdc.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StdAfx.h" />
@@ -319,6 +323,7 @@
     <Image Include="res\large_right_black_button.bmp" />
     <Image Include="res\large_right_button.bmp" />
     <Image Include="res\left_icon.bmp" />
+    <Image Include="res\lighting_alpha.bmp" />
     <Image Include="res\magicuser.bmp" />
     <Image Include="res\mini_portrait_backdrop.bmp" />
     <Image Include="res\moon_cells.bmp" />
@@ -327,9 +332,12 @@
     <Image Include="res\parchment.bmp" />
     <Image Include="res\PlayersHandbook.bmp" />
     <Image Include="res\print_icon.bmp" />
+    <Image Include="res\rain_bitmap.bmp" />
     <Image Include="res\right_icon.bmp" />
     <Image Include="res\save_icon.bmp" />
     <Image Include="res\scroll_gray.bmp" />
+    <Image Include="res\sfx_button.bmp" />
+    <Image Include="res\snow_bitmap.bmp" />
     <Image Include="res\spellbook.bmp" />
     <Image Include="res\swap_icon.bmp" />
     <Image Include="res\thief.bmp" />

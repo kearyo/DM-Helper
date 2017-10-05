@@ -195,6 +195,12 @@
     <ClCompile Include="cDMMapNameDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImageEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMMapSFXDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -388,6 +394,12 @@
     <ClInclude Include="cDMMapNameDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ImageEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMMapSFXDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\bitmap2.bmp">
@@ -529,6 +541,18 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\fog_of_war.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\sfx_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\lighting_alpha.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\rain_bitmap.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\snow_bitmap.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

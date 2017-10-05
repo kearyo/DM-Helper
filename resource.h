@@ -10,7 +10,15 @@
 #define IDC_ROLL_BUTTON                 3
 #define IDC_CLEAR_SFX                   4
 #define IDC_ADD_ROLL_BUTTON             4
+#define IDREPOSITION                    4
 #define IDC_CLEAR_BUTTON                5
+#define IDPREVIEW                       5
+#define ID_UP                           6
+#define ID_DOWN                         7
+#define ID_LEFT                         8
+#define ID_RIGHT                        9
+#define ID_SCALE_UP                     10
+#define ID_SCALE_DOWN                   11
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
@@ -137,8 +145,13 @@
 #define IDD_DETACHED_MAP_DIALOG         264
 #define IDD_MAP_SIZING_DIALOG           265
 #define IDD_NAME_MAP_DIALOG             267
-#define IDB_BITMAP2                     268
 #define IDB_FOG_OF_WAR_BITMAP           268
+#define IDD_MAP_SFX_DIALOG              269
+#define IDB_SFX_BUTTON_BITMAP           270
+#define IDB_LIGHTING_ALPHA_BITMAP       271
+#define IDB_RAIN_BITMAP                 272
+#define IDB_BITMAP3                     273
+#define IDB_SNOW_BITMAP                 273
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -678,11 +691,14 @@
 #define IDC_FOG_OF_WAR_CHECK            1194
 #define IDC_SOUND_BUTTON_13             1195
 #define IDC_VIEW_CALENDAR_BUTTON        1195
+#define IDC_SCALE_SLIDER3               1195
 #define IDC_SOUND_BUTTON_14             1196
 #define IDC_VIEW_LOG_BUTTON             1196
+#define IDC_SCALE_STATIC3               1196
 #define IDC_MONTH_EDIT                  1197
 #define IDC_SOUND_BUTTON_15             1197
 #define IDC_GRANT_PARTY_XP_BUTTON       1197
+#define IDC_TICKS_STATIC3               1197
 #define IDC_INC_MONTH_BUTTON            1198
 #define IDC_SOUND_BUTTON_16             1198
 #define IDC_DEC_MONTH_BUTTON            1199
@@ -924,6 +940,7 @@
 #define IDC_MISSILE_CHECK               1440
 #define IDC_DELETE_FILE_CHECK           1440
 #define IDC_FILETYPES_CHECK             1440
+#define IDC_SFX_CYCLE_CHECK             1440
 #define IDC_PP_BUTTON                   1441
 #define IDC_GRID_CHECK                  1441
 #define IDC_EMPATH_CHECK                1441
@@ -1093,6 +1110,9 @@
 #define IDC_DELETE_LAYER_3              1566
 #define IDC_PROGRESS1                   1566
 #define IDC_DELETE_LAYER_4              1567
+#define IDC_EFFECT_NAME_EDIT            1567
+#define IDC_EFFECT_GFX_EDIT             1568
+#define IDC_SOUND_FX_COMBO              1569
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1123,9 +1143,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        269
+#define _APS_NEXT_RESOURCE_VALUE        274
 #define _APS_NEXT_COMMAND_VALUE         32796
-#define _APS_NEXT_CONTROL_VALUE         1567
+#define _APS_NEXT_CONTROL_VALUE         1570
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

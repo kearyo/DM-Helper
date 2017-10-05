@@ -39,6 +39,8 @@ using namespace Gdiplus;
 #pragma comment (lib,"Gdiplus.lib")
 
 #include <gdiplusbitmap.h>
+#include "ImageEx.h"
+
 
 #include <vector>
 

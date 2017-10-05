@@ -61,6 +61,32 @@ typedef enum
 } DND_MAP_MODES;
 
 
+#define _PARTICLE_WEATHER	FALSE
+
+#if _PARTICLE_WEATHER
+#define MAX_PARTICLES	256
+#define MAX_PARTICLE_DEPTH	256
+
+class CDMParticle
+{
+public:
+
+	float m_fX;
+	float m_fY;
+	float m_fZ;
+	float m_fSize;
+
+	CDMParticle()
+	{
+		m_fX = 0;
+		m_fY = 0;
+		m_fZ = 0;
+		m_fSize = 8.0f;
+	};
+
+};
+#endif
+
 class CDMPartyHotSpot
 {
 public:
@@ -230,7 +256,11 @@ public:
 	void DrawMonsterIcon(Graphics *pGraphics, int nX, int nY, cDNDNonPlayerCharacter *pNPC, BOOL bReversed);
 	void DrawTransparentBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha);
 	void UpdateDetachedMaps();
-	void SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2);
+	void SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2, BOOL bSyncSFX);
+
+	void CleanupMapSFX();
+	void DrawMapSFX(Graphics* g);
+	void UpdateParticles();
 
 	BOOL GetMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo);
 
@@ -251,12 +281,18 @@ public:
 	cDNDCharacter *m_pSelectedCharacter;
 	DWORD m_dwDraggedCharacterID;
 
-	Bitmap* m_pBitmap_1;
-	Bitmap* m_pBitmap_2;
+	//Bitmap* m_pBitmap_1;
+	//Bitmap* m_pBitmap_2;
 
+	Bitmap* m_pLightingAlphaBitmap;
 	Bitmap* m_pFogOfWarBitmap;
+	Bitmap* m_pSFXButtonBitmap;
+
+	float m_fLightingAlpha;
 
 	CBitmap m_bmp;
+
+	//ImageEx*			m_image;
 
 	float m_fViewScale;
 
@@ -293,6 +329,19 @@ public:
 
 	int m_nRandomDungeonOccupancy;
 
+	BOOL m_bShuttingDown;
+
+	#if _PARTICLE_WEATHER
+	Bitmap* m_pRainParticleBitmap;
+	Bitmap* m_pSnowParticleBitmap;
+	Bitmap* m_pParticleBufferBitmap;
+
+	CDMParticle m_Particle[MAX_PARTICLES];
+
+	CWinThread *m_pParticleThread;
+	#endif
+	
+	
 // Dialog Data
 	//{{AFX_DATA(cDMMapViewDialog)
 	enum { IDD = IDD_MAP_VIEW_DIALOG };
@@ -421,7 +470,13 @@ public:
 	CButton m_cFogOfWarCheck;
 	BOOL m_bFogOfWarCheck;
 	afx_msg void OnBnClickedFogOfWarCheck();
+	int m_nLightingSlider;
+	CSliderCtrl m_cLightingSlider;
+	afx_msg void OnNMReleasedcaptureScaleSlider3(NMHDR *pNMHDR, LRESULT *pResult);
 };
+
+
+UINT DMParticleThreadProc(LPVOID pData);
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
