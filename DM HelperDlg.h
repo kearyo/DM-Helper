@@ -90,6 +90,8 @@ public:
 	BOOL StartDungeonMaestroUpdate();
 	BOOL DoCreateProcess(const char *pcszProcName, const char *pcszArgs);
 
+	void PositionMapViews();
+
 // Dialog Data
 	//{{AFX_DATA(CDMHelperDlg)
 	enum { IDD = IDD_DMHELPER_DIALOG };
@@ -192,6 +194,7 @@ public:
 	afx_msg void OnCustomizationsCustomweaponeditor();
 	afx_msg void OnSubpartiesSortsubparties();
 	afx_msg void OnSubpartiesSortsubpartiesnumerically();
+	afx_msg void OnMove(int x, int y);
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -61,32 +61,6 @@ typedef enum
 } DND_MAP_MODES;
 
 
-#define _PARTICLE_WEATHER	FALSE
-
-#if _PARTICLE_WEATHER
-#define MAX_PARTICLES	256
-#define MAX_PARTICLE_DEPTH	256
-
-class CDMParticle
-{
-public:
-
-	float m_fX;
-	float m_fY;
-	float m_fZ;
-	float m_fSize;
-
-	CDMParticle()
-	{
-		m_fX = 0;
-		m_fY = 0;
-		m_fZ = 0;
-		m_fSize = 8.0f;
-	};
-
-};
-#endif
-
 class CDMPartyHotSpot
 {
 public:
@@ -258,9 +232,14 @@ public:
 	void UpdateDetachedMaps();
 	void SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2, BOOL bSyncSFX);
 
+	void CleanUp();
 	void CleanupMapSFX();
 	void DrawMapSFX(Graphics* g);
-	void UpdateParticles();
+
+	//void CreateWeatherWindow();
+	void PositionWeatherWindow();
+	void WaitWeatherThreadExit();
+	BOOL MapHasDetachedChildren();
 
 	BOOL GetMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo);
 
@@ -278,8 +257,16 @@ public:
 
 	DWORD m_dwSelectedSubPartyID;
 
+	DWORD m_dwDraggedPartyID;
+
 	cDNDCharacter *m_pSelectedCharacter;
 	DWORD m_dwDraggedCharacterID;
+	int m_nDraggedSFXIndex;
+	int m_nLastSFXPosX;
+	int m_nLastSFXPosY;
+
+	int m_nLastLeftMouseClickX;
+	int m_nLastLeftMouseClickY;
 
 	//Bitmap* m_pBitmap_1;
 	//Bitmap* m_pBitmap_2;
@@ -331,15 +318,9 @@ public:
 
 	BOOL m_bShuttingDown;
 
-	#if _PARTICLE_WEATHER
-	Bitmap* m_pRainParticleBitmap;
-	Bitmap* m_pSnowParticleBitmap;
-	Bitmap* m_pParticleBufferBitmap;
+	HWND	m_WeatherWindowHWnd;
 
-	CDMParticle m_Particle[MAX_PARTICLES];
-
-	CWinThread *m_pParticleThread;
-	#endif
+	BOOL m_bWeatherThreadRunning;
 	
 	
 // Dialog Data
@@ -473,10 +454,17 @@ public:
 	int m_nLightingSlider;
 	CSliderCtrl m_cLightingSlider;
 	afx_msg void OnNMReleasedcaptureScaleSlider3(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedRainCheck();
+	afx_msg void OnBnClickedSnowCheck();
+	BOOL m_bRainCheck;
+	CButton m_cRainCheck;
+	CButton m_cSnowCheck;
+	BOOL m_bSnowCheck;
+	afx_msg void OnMove(int x, int y);
 };
 
 
-UINT DMParticleThreadProc(LPVOID pData);
+
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.

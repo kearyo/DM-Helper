@@ -201,6 +201,9 @@
     <ClCompile Include="cDMMapSFXDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cDMWeatherDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -400,6 +403,9 @@
     <ClInclude Include="cDMMapSFXDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cDMWeatherDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\bitmap2.bmp">
@@ -553,6 +559,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\snow_bitmap.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\rain_splat.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

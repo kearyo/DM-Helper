@@ -41,6 +41,7 @@ To enable/disable Edit and Continue
 #define NEW_FILE_MANAGEMENT_WINDOW	TRUE
 
 #define DND_WM_MESSAGE  (WM_APP + 1)
+#define DND_WEATHER_MESSAGE (DND_WM_MESSAGE + 0x0001)
 
 
 int GetSelectedListCtrlItem(CListCtrl *plctrl);
@@ -54,6 +55,13 @@ int GetSelectedListBoxItemsCount(CListBox *plctrl);
 void CleanMemorizedSpellListBox(CListBox *plctrl);
 
 
+typedef enum
+{
+	DND_WEATHER_TYPE_RAIN = 0,
+
+	DND_WEATHER_TYPE_SNOW,
+
+} DND_WEATHER_TYPES;
 
 
 typedef enum
@@ -681,6 +689,8 @@ public:
 	void CollapseWeaponArray(PWEAPONTYPEARRAY pWeaponArray, BOOL bIndexed);
 
 	void CallFileManagementDialog(DMLoadFileDescriptor *pFileDesc);
+
+	HWND CreateWeatherDialog(cDMMapViewDialog *pParent, DND_WEATHER_TYPES nWeather);
 
 // Overrides
 	// ClassWizard generated virtual function overrides

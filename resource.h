@@ -150,8 +150,10 @@
 #define IDB_SFX_BUTTON_BITMAP           270
 #define IDB_LIGHTING_ALPHA_BITMAP       271
 #define IDB_RAIN_BITMAP                 272
-#define IDB_BITMAP3                     273
 #define IDB_SNOW_BITMAP                 273
+#define IDD_WEATHER_DIALOG              275
+#define IDB_BITMAP2                     276
+#define IDB_RAIN_SPLAT_BITMAP           276
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -701,8 +703,10 @@
 #define IDC_TICKS_STATIC3               1197
 #define IDC_INC_MONTH_BUTTON            1198
 #define IDC_SOUND_BUTTON_16             1198
+#define IDC_RAIN_CHECK                  1198
 #define IDC_DEC_MONTH_BUTTON            1199
 #define IDC_SOUND_BUTTON_17             1199
+#define IDC_SNOW_CHECK                  1199
 #define IDC_SOUND_BUTTON_18             1200
 #define IDC_SOUND_BUTTON_19             1201
 #define IDC_SOUND_BUTTON_20             1202
@@ -1143,7 +1147,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        274
+#define _APS_NEXT_RESOURCE_VALUE        277
 #define _APS_NEXT_COMMAND_VALUE         32796
 #define _APS_NEXT_CONTROL_VALUE         1570
 #define _APS_NEXT_SYMED_VALUE           101

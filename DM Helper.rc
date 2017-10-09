@@ -365,7 +365,7 @@ IDD_MAP_VIEW_DIALOG DIALOGEX 0, 0, 544, 385
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "Arial Black", 0, 0, 0x1
 BEGIN
-    LTEXT           "",IDC_BDROP,0,0,292,222,WS_BORDER | NOT WS_GROUP,WS_EX_CLIENTEDGE
+    LTEXT           "",IDC_BDROP,0,0,292,223,WS_BORDER | NOT WS_GROUP,WS_EX_CLIENTEDGE
     COMBOBOX        IDC_PARTY_COMBO,3,15,70,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        IDC_CHARACTER_COMBO,77,36,70,90,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Place Party",IDC_PLACE_PARTY_BUTTON,3,52,64,14
@@ -417,7 +417,7 @@ BEGIN
     CONTROL         "",IDC_SCALE_SLIDER2,"msctls_trackbar32",WS_TABSTOP,45,153,125,12
     LTEXT           "Icon Scale:",IDC_SCALE_STATIC2,9,156,34,8
     LTEXT           "1/10x                    1x                     10x",IDC_TICKS_STATIC2,50,166,115,8
-    CONTROL         "Isometric",IDC_ISOMETRIC_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,153,42,10
+    CONTROL         "Isometric",IDC_ISOMETRIC_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,174,42,10
     CONTROL         "Labels",IDC_LABELS_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,43,36,10
     PUSHBUTTON      "Detach",IDC_DETACH_BUTTON,5,235,31,14
     PUSHBUTTON      "Flip",IDC_FLIP_BUTTON,5,251,31,14,NOT WS_VISIBLE | WS_DISABLED
@@ -425,6 +425,8 @@ BEGIN
     CONTROL         "",IDC_SCALE_SLIDER3,"msctls_trackbar32",WS_TABSTOP,45,181,125,12
     LTEXT           "Lighting:",IDC_SCALE_STATIC3,9,184,27,8
     LTEXT           "1.0                       0.5                     0.0",IDC_TICKS_STATIC3,50,193,115,8
+    CONTROL         "Rain",IDC_RAIN_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,153,42,10
+    CONTROL         "Snow",IDC_SNOW_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,241,163,42,10
 END
 
 IDD_SOUND_FX_DIALOG DIALOG 0, 0, 428, 337
@@ -1849,6 +1851,15 @@ BEGIN
     PUSHBUTTON      "Scale -",ID_SCALE_DOWN,226,100,34,14
 END
 
+IDD_WEATHER_DIALOG DIALOGEX 0, 0, 320, 176
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP
+EXSTYLE WS_EX_TRANSPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "WEATHER",IDOK,0,0,50,14,NOT WS_VISIBLE
+    PUSHBUTTON      "Cancel",IDCANCEL,269,162,50,14,NOT WS_VISIBLE,WS_EX_RTLREADING
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -2325,6 +2336,11 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 170
     END
+
+    IDD_WEATHER_DIALOG, DIALOG
+    BEGIN
+        RIGHTMARGIN, 319
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -2380,6 +2396,7 @@ IDB_SFX_BUTTON_BITMAP   BITMAP                  "res\\sfx_button.bmp"
 IDB_LIGHTING_ALPHA_BITMAP BITMAP                  "res\\lighting_alpha.bmp"
 IDB_RAIN_BITMAP         BITMAP                  "res\\rain_bitmap.bmp"
 IDB_SNOW_BITMAP         BITMAP                  "res\\snow_bitmap.bmp"
+IDB_RAIN_SPLAT_BITMAP   BITMAP                  "res\\rain_splat.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

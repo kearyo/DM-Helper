@@ -153,6 +153,7 @@ void cDMMapSFXDialog::OnEnSetfocusEffectGfxEdit()
 
 void cDMMapSFXDialog::OnBnClickedChooseFileButton()
 {
+	g_MVGFX_szFilename[0] = 0;
 
 	ZeroMemory(&g_ofn, sizeof(OPENFILENAME));
 	g_ofn.lStructSize = sizeof(OPENFILENAME);
@@ -261,6 +262,8 @@ void cDMMapSFXDialog::OnBnClickedOk()
 	}
 
 	m_pMapViewDialog->UpdateDetachedMaps();
+
+	m_pMapViewDialog->m_pDNDMap->MarkChanged();
 	
 	CDialog::OnOK();
 }

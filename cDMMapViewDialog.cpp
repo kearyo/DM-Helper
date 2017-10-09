@@ -22,6 +22,7 @@
 #include "cDMMapSizingDialog.h"
 #include "cDMMapSFXDialog.h"
 
+
 /* Notes for weather generation
 
 pixelY 2000.0 is equiv to latitude 40 deg N
@@ -127,6 +128,9 @@ int _MapControlStater[][2] =
 	IDC_SCALE_STATIC3,					TRUE,
 	IDC_TICKS_STATIC3,					TRUE,
 
+	IDC_RAIN_CHECK,						TRUE,
+	IDC_SNOW_CHECK,						TRUE,
+
 	-1,									TRUE
 };
 
@@ -151,6 +155,8 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	, m_bLabelsCheck(FALSE)
 	, m_bFogOfWarCheck(FALSE)
 	, m_nLightingSlider(0)
+	, m_bRainCheck(FALSE)
+	, m_bSnowCheck(FALSE)
 {
 	//{{AFX_DATA_INIT(cDMMapViewDialog)
 	m_szMapLegend = _T("");
@@ -192,8 +198,16 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 
 	m_pEditMapLayersDialog = NULL;
 
+	m_dwDraggedPartyID = 0;
+
 	m_pSelectedCharacter = NULL;
 	m_dwDraggedCharacterID = 0;
+	m_nDraggedSFXIndex = -1;
+	m_nLastSFXPosX = 0;
+	m_nLastSFXPosY = 0;
+
+	m_nLastLeftMouseClickX = 0;
+	m_nLastLeftMouseClickY = 0;
 
 	m_nCornerX = 0;
 	m_nCornerY = 0;
@@ -230,11 +244,6 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 
 	m_nOrientation = DMDO_DEFAULT;
 
-	#if _PARTICLE_WEATHER
-	m_pRainParticleBitmap = NULL;
-	m_pSnowParticleBitmap = NULL;
-	#endif
-
 	m_pLightingAlphaBitmap = NULL;
 	m_pFogOfWarBitmap = NULL;
 	m_pSFXButtonBitmap = NULL;
@@ -243,20 +252,8 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 
 	m_bShuttingDown = FALSE;
 
-	//m_image = NULL;
-
-	#if _PARTICLE_WEATHER
-
-	m_pParticleBufferBitmap = NULL;
-
-	for (int i = 0; i < MAX_PARTICLES; i++) 
-	{
-		m_Particle[i].m_fX = 0;
-		m_Particle[i].m_fY = 0;
-		m_Particle[i].m_fZ = MAX_PARTICLE_DEPTH * 2;
-	}
-
-	#endif
+	m_bWeatherThreadRunning = FALSE;
+	m_WeatherWindowHWnd = NULL;
 
 	Create(cDMMapViewDialog::IDD, pParent);
 }
@@ -311,6 +308,10 @@ void cDMMapViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Slider(pDX, IDC_SCALE_SLIDER3, m_nLightingSlider);
 	DDV_MinMaxInt(pDX, m_nLightingSlider, 0, 100);
 	DDX_Control(pDX, IDC_SCALE_SLIDER3, m_cLightingSlider);
+	DDX_Check(pDX, IDC_RAIN_CHECK, m_bRainCheck);
+	DDX_Control(pDX, IDC_RAIN_CHECK, m_cRainCheck);
+	DDX_Control(pDX, IDC_SNOW_CHECK, m_cSnowCheck);
+	DDX_Check(pDX, IDC_SNOW_CHECK, m_bSnowCheck);
 }
 
 
@@ -379,6 +380,9 @@ BEGIN_MESSAGE_MAP(cDMMapViewDialog, CDialog)
 	ON_BN_CLICKED(IDC_FLIP_BUTTON, &cDMMapViewDialog::OnBnClickedFlipButton)
 	ON_BN_CLICKED(IDC_FOG_OF_WAR_CHECK, &cDMMapViewDialog::OnBnClickedFogOfWarCheck)
 	ON_NOTIFY(NM_RELEASEDCAPTURE, IDC_SCALE_SLIDER3, &cDMMapViewDialog::OnNMReleasedcaptureScaleSlider3)
+	ON_BN_CLICKED(IDC_RAIN_CHECK, &cDMMapViewDialog::OnBnClickedRainCheck)
+	ON_BN_CLICKED(IDC_SNOW_CHECK, &cDMMapViewDialog::OnBnClickedSnowCheck)
+	ON_WM_MOVE()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -458,11 +462,6 @@ BOOL cDMMapViewDialog::OnInitDialog()
 
 	m_pLightingAlphaBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_LIGHTING_ALPHA_BITMAP);
 
-	#if _PARTICLE_WEATHER
-	m_pRainParticleBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_RAIN_BITMAP);
-	m_pSnowParticleBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_SNOW_BITMAP);
-	#endif
-
 	m_pFogOfWarBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_FOG_OF_WAR_BITMAP);
 	m_pSFXButtonBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_SFX_BUTTON_BITMAP);
 
@@ -470,10 +469,6 @@ BOOL cDMMapViewDialog::OnInitDialog()
 	{
 		// OnEditButton();
 	}
-
-	#if _PARTICLE_WEATHER
-	m_pParticleThread = AfxBeginThread(DMParticleThreadProc, this);
-	#endif
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -597,6 +592,11 @@ void cDMMapViewDialog::Refresh()
 
 void cDMMapViewDialog::OnPaint() 
 {
+	if (m_bShuttingDown)
+	{
+		return;
+	}
+
 	if(IsIconic())
 	{
 		TRACE("POOT!\n");
@@ -1071,21 +1071,13 @@ void cDMMapViewDialog::OnPaint()
 
 	//////////////////////////////////
 
-	#if _PARTICLE_WEATHER
-	if (m_pParticleBufferBitmap != NULL)
-	{
-		delete m_pParticleBufferBitmap;
-		m_pParticleBufferBitmap = NULL;
-	}
-	#endif
-
-	/////////////////////////////////
-
-
 	if (NULL != m_pLightingAlphaBitmap && m_fLightingAlpha > 0.0f)
 	{
 		//nighttime ?
-		DrawTransparentBitmap(&graphics, m_pLightingAlphaBitmap, 0, 0, m_pDNDMap->m_nPixelSizeX * m_pDNDMap->m_nColumns, m_pDNDMap->m_nPixelSizeY *m_pDNDMap->m_nRows, 32, 32, m_fLightingAlpha);
+		CRect rect;
+		GetClientRect(&rect);
+
+		DrawTransparentBitmap(&graphics, m_pLightingAlphaBitmap, 0, 0, rect.right, rect.bottom, 127, 127, m_fLightingAlpha);
 	}
 
 	//////////////////////////////////
@@ -1112,7 +1104,7 @@ void cDMMapViewDialog::OnPaint()
 			}
 			else
 			{
-				//miles to pixels
+				//miles to pixelsm
 				fX =  ((pPartyDlg->m_pParty->m_fPartyLocationX - m_pDNDMap->m_fParentMapOriginX) / m_pDNDMap->m_fScaleX) * m_fViewScale;
 				fY =  ((pPartyDlg->m_pParty->m_fPartyLocationY - m_pDNDMap->m_fParentMapOriginY) / m_pDNDMap->m_fScaleY) * m_fViewScale;
 			}
@@ -1497,6 +1489,7 @@ void cDMMapViewDialog::OnPaint()
 		m_pUpdateRect = NULL;
 	}
 
+	PositionWeatherWindow();
 
 	ProcessMapModes();
 
@@ -1509,7 +1502,6 @@ void cDMMapViewDialog::OnPaint()
 
 void cDMMapViewDialog::DrawChildMap(Graphics *graphics, cDNDMap *pDNDChildMap, int nX, int nY)
 {
-	TRACE("SHATNER!\n");
 
 	if (pDNDChildMap->m_bMapScaleFeet == 0)
 		return;
@@ -1955,7 +1947,9 @@ void cDMMapViewDialog::DrawMapTile(Graphics *pg, int nCell, int nX, int nY, int 
 void cDMMapViewDialog::OnSize(UINT nType, int cx, int cy) 
 {
 	CDialog::OnSize(nType, cx, cy);
-	
+
+	PositionWeatherWindow();
+
 	InvalidateRect(NULL);
 }
 
@@ -1964,10 +1958,22 @@ void cDMMapViewDialog::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	SetFocus();
 
+	m_nLastLeftMouseClickX = point.x;
+	m_nLastLeftMouseClickY = point.y;
+
 	if(nFlags & MK_SHIFT)
 	{
 		m_bMouseDrag = TRUE;
 		m_DragPoint = point;
+	}
+
+	for (int i = 0; i < m_nMapParties; ++i)
+	{
+		if (abs(m_PartyHotSpots[i].m_nX - point.x) < 10 && abs(m_PartyHotSpots[i].m_nY - point.y) < 10)
+		{
+			m_dwDraggedPartyID = m_PartyHotSpots[i].m_pParty->m_dwPartyID;
+			break;
+		}
 	}
 
 	for (int i = 0; i < m_nMapCharacters; ++i)
@@ -1975,8 +1981,44 @@ void cDMMapViewDialog::OnLButtonDown(UINT nFlags, CPoint point)
 		if (abs(m_CharacterHotSpots[i].m_nX - point.x) < 10 && abs(m_CharacterHotSpots[i].m_nY - point.y) < 10)
 		{
 			m_dwDraggedCharacterID = m_CharacterHotSpots[i].m_dwCharacterID;
+			break;
 		}
 	}
+
+	int nTX = 0;
+	int nTY = 0;
+
+	if (m_bIsometricCheck)
+	{
+		TranslateIsoCoordinatesTo2D(point.x, point.y, &nTX, &nTY);
+	}
+	else
+	{
+		nTX = (int)((point.x - m_nCornerX) / m_fViewScale);
+		nTY = (int)((point.y - m_nCornerY) / m_fViewScale);
+	}
+
+	for (int i = 0; i < MAX_MAP_SFX && m_pDNDMap->m_MapSFX[i].m_SFXState != DND_SFX_STATE_UNDEF; ++i)
+	{
+		int nX1 = m_pDNDMap->m_MapSFX[i].m_nMapX;
+		int nY1 = m_pDNDMap->m_MapSFX[i].m_nMapY;
+
+		int nX2 = nX1 + 32;
+		int nY2 = nY1 + 16;
+
+		int nDX = nTX - nX1;
+		int nDY = nTY - nY1;
+
+		if (nTX >= nX1 && nTX <= nX2 && nTY >= nY1 && nTY <= nY2)
+		{
+			m_nLastSFXPosX = nX1;
+			m_nLastSFXPosY = nY1;
+
+			m_nDraggedSFXIndex = i; // found one !
+			break;
+		}
+	}
+
 
 	CDialog::OnLButtonDown(nFlags, point);
 }
@@ -1987,6 +2029,66 @@ void cDMMapViewDialog::OnLButtonUp(UINT nFlags, CPoint point)
 	{
 		m_bMouseDrag = FALSE;
 		InvalidateRect(NULL);
+	}
+
+	if (m_dwDraggedPartyID != 0)
+	{
+		cDNDParty *pSelectedParty = NULL;
+		for (POSITION pos = m_pApp->m_PartyViewMap.GetStartPosition(); pos != NULL;)
+		{
+			WORD wID;
+			PDNDPARTYVIEWDLG pPartyDlg = NULL;
+			m_pApp->m_PartyViewMap.GetNextAssoc(pos, wID, pPartyDlg);
+
+			if (pPartyDlg != NULL && pPartyDlg->m_pParty != NULL)
+			{
+				if (pPartyDlg->m_pParty->m_dwPartyID == m_dwDraggedPartyID)
+				{
+					pSelectedParty = pPartyDlg->m_pParty;
+				}
+			}
+		}
+
+		if (pSelectedParty != NULL)
+		{
+			if (m_pDNDMap->m_bMapScaleFeet)
+			{
+				//pixels to feet
+				float fX = (float)(point.x - m_nCornerX) * m_pDNDMap->m_fScaleX / m_fViewScale;
+				float fY = (float)(point.y - m_nCornerY) * m_pDNDMap->m_fScaleY / m_fViewScale;
+
+				if (m_bIsometricCheck)
+				{
+					int nIsoX = 0;
+					int nIsoY = 0;
+					TranslateIsoCoordinatesTo2D(point.x, point.y, &nIsoX, &nIsoY);
+
+					fX = ((float)nIsoX)* m_pDNDMap->m_fScaleX;
+					fY = ((float)nIsoY)* m_pDNDMap->m_fScaleY;
+				}
+
+				
+				pSelectedParty->m_fPartyLocalLocationX = fX;
+				pSelectedParty->m_fPartyLocalLocationY = fY;
+
+				pSelectedParty->MarkChanged();
+			}
+			else
+			{
+				//pixels to miles
+				float fX = (float)(point.x - m_nCornerX) * m_pDNDMap->m_fScaleX / m_fViewScale + m_pDNDMap->m_fParentMapOriginX;
+				float fY = (float)(point.y - m_nCornerY) * m_pDNDMap->m_fScaleY / m_fViewScale + m_pDNDMap->m_fParentMapOriginY;
+
+				pSelectedParty->m_fPartyLocationX = fX;
+				pSelectedParty->m_fPartyLocationY = fY;
+
+				pSelectedParty->MarkChanged();
+			}
+
+			UpdateDetachedMaps();
+		}
+
+		m_dwDraggedPartyID = 0;
 	}
 
 	if (m_dwDraggedCharacterID != 0)
@@ -2066,7 +2168,6 @@ void cDMMapViewDialog::OnLButtonUp(UINT nFlags, CPoint point)
 				float fX = (float)(point.x - m_nCornerX) * m_pDNDMap->m_fScaleX / m_fViewScale;
 				float fY = (float)(point.y - m_nCornerY) * m_pDNDMap->m_fScaleY / m_fViewScale;
 
-				//kieran
 				if (m_bIsometricCheck)
 				{
 					int nIsoX = 0;
@@ -2098,6 +2199,57 @@ void cDMMapViewDialog::OnLButtonUp(UINT nFlags, CPoint point)
 		UpdateDetachedMaps();
 
 		InvalidateRect(NULL);
+	}
+
+	if (m_nDraggedSFXIndex >= 0)
+	{
+		BOOL bSet = FALSE;
+		if (m_pDNDMap->m_bMapScaleFeet)
+		{
+			//pixels to feet
+			float fX = (float)(point.x - m_nCornerX) * m_pDNDMap->m_fScaleX / m_fViewScale;
+			float fY = (float)(point.y - m_nCornerY) * m_pDNDMap->m_fScaleY / m_fViewScale;
+
+			if (m_bIsometricCheck)
+			{
+				int nIsoX = 0;
+				int nIsoY = 0;
+				TranslateIsoCoordinatesTo2D(point.x, point.y, &nIsoX, &nIsoY);
+
+				fX = ((float)nIsoX)* m_pDNDMap->m_fScaleX;
+				fY = ((float)nIsoY)* m_pDNDMap->m_fScaleY;
+			}
+
+			if (abs(point.x - m_nLastLeftMouseClickX) > 1 || abs(point.y - m_nLastLeftMouseClickY) > 1)
+			{
+				m_pDNDMap->m_MapSFX[m_nDraggedSFXIndex].m_nMapX = (int)fX;
+				m_pDNDMap->m_MapSFX[m_nDraggedSFXIndex].m_nMapY = (int)fY;
+
+				bSet = TRUE;
+			}
+		}
+		else
+		{
+			//pixels to miles
+			float fX = (float)(point.x - m_nCornerX) * m_pDNDMap->m_fScaleX / m_fViewScale + m_pDNDMap->m_fParentMapOriginX;
+			float fY = (float)(point.y - m_nCornerY) * m_pDNDMap->m_fScaleY / m_fViewScale + m_pDNDMap->m_fParentMapOriginY;
+
+			if (abs(point.x - m_nLastLeftMouseClickX) > 1 || abs(point.y - m_nLastLeftMouseClickY) > 1)
+			{
+				m_pDNDMap->m_MapSFX[m_nDraggedSFXIndex].m_nMapX = (int)fX;
+				m_pDNDMap->m_MapSFX[m_nDraggedSFXIndex].m_nMapY = (int)fY;
+
+				bSet = TRUE;
+			}
+		}
+
+		if (bSet)
+		{
+			UpdateDetachedMaps();
+			InvalidateRect(NULL);
+		}
+
+		m_nDraggedSFXIndex = -1;
 	}
 
 	CDialog::OnLButtonUp(nFlags, point);
@@ -2462,6 +2614,9 @@ void cDMMapViewDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 					}
 					else if (nSFXIndex >= 0)
 					{
+						m_pDNDMap->m_MapSFX[nSFXIndex].m_nMapX = m_nLastSFXPosX;
+						m_pDNDMap->m_MapSFX[nSFXIndex].m_nMapY = m_nLastSFXPosY;
+
 						switch (m_pDNDMap->m_MapSFX[nSFXIndex].m_SFXState)
 						{
 							case DND_SFX_STATE_READY:				m_pDNDMap->m_MapSFX[nSFXIndex].m_SFXState = DND_SFX_STATE_TRIGGERED_START; break;
@@ -2829,11 +2984,16 @@ void cDMMapViewDialog::UpdateMapLegend()
 
 void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point) 
 {
+	if (m_bShuttingDown)
+	{
+		return;
+	}
+
 	BOOL bUpdateDetachedMaps = FALSE;
 
 	ValidateSelectedParty();
 
-	if (m_dwDraggedCharacterID)
+	if (m_dwDraggedCharacterID || m_dwDraggedPartyID || m_nDraggedSFXIndex >= 0)
 	{
 		CDialog::OnMouseMove(nFlags, point);
 		return;
@@ -3057,6 +3217,56 @@ void cDMMapViewDialog::SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG 
 			memcpy(&pMapDlg2->m_pDNDMap->m_MapSFX[i], &pMapDlg1->m_pDNDMap->m_MapSFX[i], sizeof(cDNDMapSFX));
 			pMapDlg2->m_pDNDMap->m_MapSFX[i].m_pDataPtr = NULL;
 		}
+
+		if (pMapDlg1->m_bRainCheck || pMapDlg1->m_bSnowCheck)
+		{
+			if (pMapDlg2->m_WeatherWindowHWnd == NULL)
+			{
+				pMapDlg2->m_WeatherWindowHWnd = m_pApp->CreateWeatherDialog(pMapDlg2, DND_WEATHER_TYPE_RAIN);
+			}
+
+			pMapDlg2->m_bRainCheck = pMapDlg1->m_bRainCheck;
+			pMapDlg2->m_bSnowCheck = pMapDlg1->m_bSnowCheck;
+
+			if (pMapDlg2->m_bRainCheck)
+			{
+				::PostMessage(pMapDlg2->m_WeatherWindowHWnd, DND_WEATHER_MESSAGE, DND_WEATHER_TYPE_RAIN, 0);
+			}
+			if (pMapDlg2->m_bSnowCheck)
+			{
+				::PostMessage(pMapDlg2->m_WeatherWindowHWnd, DND_WEATHER_MESSAGE, DND_WEATHER_TYPE_SNOW, 0);
+			}
+
+			pMapDlg2->UpdateData(FALSE);
+		}
+		else
+		{
+			if (pMapDlg2->m_WeatherWindowHWnd != NULL)
+			{
+				::PostMessage(pMapDlg2->m_WeatherWindowHWnd, WM_CLOSE, 0, 0);
+				pMapDlg2->m_WeatherWindowHWnd = NULL;
+			}
+		}
+
+		/*
+		BOOL bOldRain = pMapDlg2->m_bRainCheck;
+		BOOL bOldSnow = pMapDlg2->m_bSnowCheck;
+
+		pMapDlg2->m_bRainCheck = pMapDlg1->m_bRainCheck;
+		pMapDlg2->m_bSnowCheck = pMapDlg1->m_bSnowCheck;
+
+		if (bOldRain != pMapDlg2->m_bRainCheck)
+		{
+			pMapDlg2->UpdateData(FALSE);
+			pMapDlg2->OnBnClickedRainCheck();
+		}
+		if (bOldSnow != pMapDlg2->m_bSnowCheck)
+		{
+			pMapDlg2->UpdateData(FALSE);
+			pMapDlg2->OnBnClickedSnowCheck();
+		}
+		*/
+
 	}
 
 	pMapDlg2->InvalidateRect(NULL);
@@ -3391,97 +3601,104 @@ void cDMMapViewDialog::SaveMapToFile(char *szFileName)
 	}
 }
 
+void cDMMapViewDialog::WaitWeatherThreadExit()
+{
+	if (m_bWeatherThreadRunning)
+	{
+		int nLoops = 0;
+		do
+		{
+			Sleep(100);
+			++nLoops;
 
+		} while (m_bWeatherThreadRunning && nLoops < 500);
+	}
+}
 
 void cDMMapViewDialog::OnClose() 
 {
-	m_bShuttingDown = TRUE;
-
 	KillTimer(m_nWindowTimer);
 
-	if(m_pDNDMap != NULL)
-	{
-		CleanupMapSFX();
-
-		m_pApp->m_MapViewMap.RemoveKey((WORD)m_pDNDMap->m_dwMapID);
-		m_pApp->m_DetachedMapViewMap.RemoveKey((WORD)m_pDNDMap->m_dwMapID);
-
-		delete m_pDNDMap;
-		m_pDNDMap = NULL;
-	}
-
-	if(m_pMapEditDlg != NULL)
-	{
-		m_pMapEditDlg->PostMessageA(WM_CLOSE);
-		m_pMapEditDlg = NULL;
-	}
-
-	if(m_pTreasureCaches != NULL)
-	{
-		for(int i = 0; i < MAX_MAP_CACHES; ++i)
-		{
-			if(m_pTreasureCaches->m_Caches[i].m_dwCacheID != 0)
-			{
-				m_pApp->m_NPCViewMap.SetAt((WORD)m_pTreasureCaches->m_Caches[i].m_dwCacheID, NULL);
-				m_pApp->m_NPCViewMap.RemoveKey((WORD)m_pTreasureCaches->m_Caches[i].m_dwCacheID);
-			}
-		}
-
-		delete m_pTreasureCaches;
-		m_pTreasureCaches = NULL;
-	}
-
-	m_pApp->ResetDataPicker(&m_MonsterNameIndexer);
-
-	#if _PARTICLE_WEATHER
-	if (m_pRainParticleBitmap != NULL)
-	{
-		delete m_pRainParticleBitmap;
-	}
-
-	if (m_pSnowParticleBitmap != NULL)
-	{
-		delete m_pSnowParticleBitmap;
-	}
-	#endif
-
-	if (m_pLightingAlphaBitmap != NULL)
-	{
-		delete m_pLightingAlphaBitmap;
-	}
-
-	if (m_pFogOfWarBitmap != NULL)
-	{
-		delete m_pFogOfWarBitmap;
-	}
-
-	if (m_pSFXButtonBitmap != NULL)
-	{
-		delete m_pSFXButtonBitmap;
-	}
-	
 	CDialog::OnClose();
+
+	CleanUp();
 
 	delete this;
 }
 
 void cDMMapViewDialog::PostNcDestroy() 
 {
-	m_bShuttingDown = TRUE;
-
-	if(m_pDNDMap != NULL)
-	{
-		CleanupMapSFX();
-
-		m_pApp->m_MapViewMap.RemoveKey((WORD)m_pDNDMap->m_dwMapID);
-
-		delete m_pDNDMap;
-		m_pDNDMap = NULL;
-	}
-	
 	CDialog::PostNcDestroy();
 
+	CleanUp();
+
 	delete this;
+}
+
+void cDMMapViewDialog::CleanUp()
+{
+	if (m_bShuttingDown == FALSE)
+	{
+		m_bShuttingDown = TRUE;
+
+		if (m_WeatherWindowHWnd != NULL)
+		{
+			::PostMessage(m_WeatherWindowHWnd, WM_CLOSE, 0, 0);
+			m_WeatherWindowHWnd = NULL;
+
+			WaitWeatherThreadExit();
+		}
+
+		if (m_pDNDMap != NULL)
+		{
+			CleanupMapSFX();
+
+			m_pApp->m_MapViewMap.RemoveKey((WORD)m_pDNDMap->m_dwMapID);
+			m_pApp->m_DetachedMapViewMap.RemoveKey((WORD)m_pDNDMap->m_dwMapID);
+
+			delete m_pDNDMap;
+			m_pDNDMap = NULL;
+		}
+
+		if (m_pMapEditDlg != NULL)
+		{
+			m_pMapEditDlg->PostMessageA(WM_CLOSE);
+			m_pMapEditDlg = NULL;
+		}
+
+		if (m_pTreasureCaches != NULL)
+		{
+			for (int i = 0; i < MAX_MAP_CACHES; ++i)
+			{
+				if (m_pTreasureCaches->m_Caches[i].m_dwCacheID != 0)
+				{
+					m_pApp->m_NPCViewMap.SetAt((WORD)m_pTreasureCaches->m_Caches[i].m_dwCacheID, NULL);
+					m_pApp->m_NPCViewMap.RemoveKey((WORD)m_pTreasureCaches->m_Caches[i].m_dwCacheID);
+				}
+			}
+
+			delete m_pTreasureCaches;
+			m_pTreasureCaches = NULL;
+		}
+
+		m_pApp->ResetDataPicker(&m_MonsterNameIndexer);
+
+		if (m_pLightingAlphaBitmap != NULL)
+		{
+			delete m_pLightingAlphaBitmap;
+		}
+
+		if (m_pFogOfWarBitmap != NULL)
+		{
+			delete m_pFogOfWarBitmap;
+		}
+
+		if (m_pSFXButtonBitmap != NULL)
+		{
+			delete m_pSFXButtonBitmap;
+		}
+	}
+
 }
 
 
@@ -5967,6 +6184,7 @@ void cDMMapViewDialog::OnBnClickedDetachButton()
 		return;
 	
 	SetWindowLong(m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+	//SetWindowLong(m_hWnd, GWL_STYLE, WS_POPUPWINDOW);
 
 	::SetWindowPos(m_hWnd, 0, 0, 0, 0, 0, 39);
 
@@ -5978,6 +6196,18 @@ void cDMMapViewDialog::OnBnClickedDetachButton()
 
 	m_pParent = NULL;
 	SetParent(NULL);
+
+	if (m_WeatherWindowHWnd != NULL)
+	{
+		if (m_WeatherWindowHWnd != NULL)
+		{
+			::PostMessage(m_WeatherWindowHWnd, WM_CLOSE, 0, 0);
+			m_WeatherWindowHWnd = NULL;
+
+			m_bRainCheck = FALSE;
+			m_bSnowCheck = FALSE;
+		}
+	}
 
 	cDNDDisplayTab *pDeleteTab = m_pApp->m_SubTabArray[nTabSelected];
 
@@ -6008,6 +6238,8 @@ void cDMMapViewDialog::OnBnClickedDetachButton()
 	m_cDetachButton.ShowWindow(SW_HIDE);
 
 	PostMessage(WM_SYSCOMMAND, SC_RESTORE, 0);
+
+	UpdateData(FALSE);
 
 }
 
@@ -6337,122 +6569,136 @@ void cDMMapViewDialog::DrawMapSFX(Graphics* g)
 	} while (nIndex < MAX_MAP_SFX);
 }
 
-#if _PARTICLE_WEATHER
-UINT DMParticleThreadProc(LPVOID pData)
+void cDMMapViewDialog::OnBnClickedRainCheck()
 {
-	cDMMapViewDialog *pMapViewDlg = (cDMMapViewDialog*)pData;
+	UpdateData(TRUE);
 
-	Sleep(5000);
+	m_bSnowCheck = FALSE;
 
-	do
+	if (m_WeatherWindowHWnd == NULL)
 	{
-		Sleep(10);
+		if (MapHasDetachedChildren() == FALSE)
+		{
+			m_WeatherWindowHWnd = m_pApp->CreateWeatherDialog(this, DND_WEATHER_TYPE_RAIN);
+		}
+	}
+	else
+	{
+		if ((!m_bRainCheck && !m_bSnowCheck) || MapHasDetachedChildren() == TRUE)
+		{
+			if (m_WeatherWindowHWnd != NULL)
+			{
+				::PostMessage(m_WeatherWindowHWnd, WM_CLOSE, 0, 0);
+				m_WeatherWindowHWnd = NULL;
+			}
+		}
+	}
 
-		pMapViewDlg->UpdateParticles();
+	if (m_WeatherWindowHWnd)
+	{
+		::PostMessage(m_WeatherWindowHWnd, DND_WEATHER_MESSAGE, DND_WEATHER_TYPE_RAIN, 0);
+	}
 
-	} while (pMapViewDlg->m_bShuttingDown == FALSE);
+	UpdateData(FALSE);
 
-	return 0;
+	InvalidateRect(NULL);
+
+	UpdateDetachedMaps();
 }
 
-void cDMMapViewDialog::UpdateParticles()
+
+void cDMMapViewDialog::OnBnClickedSnowCheck()
 {
-	HDC hDC = ::GetDC(m_hWnd);
-	if (hDC)
+	UpdateData(TRUE);
+
+	m_bRainCheck = FALSE;
+	
+	if (m_WeatherWindowHWnd == NULL)
 	{
-		Graphics graphics(hDC);
-
-		int nSizeX = (m_pDNDMap->m_nColumns * m_pDNDMap->m_nPixelSizeX) * m_fViewScale;
-		int nSizeY = (m_pDNDMap->m_nRows * m_pDNDMap->m_nPixelSizeY)* m_fViewScale;
-		
-		if (m_bMapPaint == FALSE) // rain and snow
+		if (MapHasDetachedChildren() == FALSE)
 		{
-			POINT pointScreen;
-			pointScreen.x = 0;
-			pointScreen.y = 0;
-
-			ClientToScreen(&pointScreen);
-
-			int nCols = m_pDNDMap->m_nColumns;
-			int nRows = m_pDNDMap->m_nRows;
-
-			if (m_pParticleBufferBitmap == NULL)
+			m_WeatherWindowHWnd = m_pApp->CreateWeatherDialog(this, DND_WEATHER_TYPE_SNOW);
+		}
+	}
+	else
+	{
+		if ((!m_bRainCheck && !m_bSnowCheck) || MapHasDetachedChildren() == TRUE)
+		{
+			if (m_WeatherWindowHWnd != NULL)
 			{
-				HDC scrdc, memdc;
-				HBITMAP membit;
-				scrdc = ::GetDC(0);
-
-				memdc = CreateCompatibleDC(scrdc);
-				membit = CreateCompatibleBitmap(scrdc, nSizeX, nSizeY);
-				HBITMAP hOldBitmap = (HBITMAP)SelectObject(memdc, membit);
-				BitBlt(memdc, 0, 0, nSizeX, nSizeY, scrdc, pointScreen.x, pointScreen.y, SRCCOPY);
-
-				m_pParticleBufferBitmap = new Bitmap(membit, NULL);
-
-				SelectObject(memdc, hOldBitmap);
-
-				DeleteObject(memdc);
-				DeleteObject(membit);
-				::ReleaseDC(0, scrdc);
+				::PostMessage(m_WeatherWindowHWnd, WM_CLOSE, 0, 0);
+				m_WeatherWindowHWnd = NULL;
 			}
 		}
+	}
 
-		
+	if (m_WeatherWindowHWnd)
+	{
+		::PostMessage(m_WeatherWindowHWnd, DND_WEATHER_MESSAGE, DND_WEATHER_TYPE_SNOW, 0);
+	}
 
-		POINT pointScreen;
-		pointScreen.x = 0;
-		pointScreen.y = 0;
+	UpdateData(FALSE);
 
-		//ClientToScreen(&pointScreen);
+	InvalidateRect(NULL);
 
-		if (m_bMapPaint == FALSE && m_pParticleBufferBitmap != NULL)
-		{
-			graphics.DrawImage(m_pParticleBufferBitmap, 0, 0, nSizeX, nSizeY);
-		}
+	UpdateDetachedMaps();
+}
 
-		int halfWidth = nSizeX / 2;
-		int halfHeight = nSizeY / 2;
+void cDMMapViewDialog::PositionWeatherWindow()
+{
+	if (m_WeatherWindowHWnd != NULL)
+	{
+		//::InvalidateRect(m_WeatherWindowHWnd, NULL, FALSE);
 
-		ImageAttributes attr;
-		attr.SetColorKey(Color(255, 0, 255), Color(255, 0, 255), ColorAdjustTypeBitmap);
+		RECT rect;
 
-		for (int i = 0; i < MAX_PARTICLES; i++)
-			//for (int i = 0; i < 2; i++)
-		{
-			m_Particle[i].m_fZ += 5.0;
+		//if (m_bDetachedWindow)
+		//{
+		//GetClientRect(&rect);
+		//}
+		//else
+		//{
+		GetWindowRect(&rect);
+		//}
 
-			if (m_Particle[i].m_fZ > MAX_PARTICLE_DEPTH)
-			{
-				m_Particle[i].m_fX = (rand() % nSizeX) - halfWidth;
-				m_Particle[i].m_fY = (rand() % nSizeY) - halfHeight;
-				m_Particle[i].m_fZ = (rand() % MAX_PARTICLE_DEPTH);
-				m_Particle[i].m_fSize = 8.0f;
-			}
+		::SetWindowPos(m_WeatherWindowHWnd, HWND_TOP, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top - 20, SWP_SHOWWINDOW);
+		//::SetWindowPos(m_WeatherWindowHWnd, HWND_TOP, 0, 0, rect.right, rect.bottom, SWP_SHOWWINDOW);
 
-			m_Particle[i].m_fSize -= 0.2f;
+		/*
+		::MoveWindow(
+		m_WeatherWindowHWnd,
+		rect.left,
+		rect.top,
+		rect.right,
+		rect.bottom,
 
-			float k = 128.0 / m_Particle[i].m_fZ;
-
-			float px = m_Particle[i].m_fX * k + halfWidth;
-			float py = m_Particle[i].m_fY  * k + halfHeight;
-
-			RectF dst;
-			dst.X = (int)(px + m_nCornerX)* m_fViewScale;
-			dst.Y = (int)(py + m_nCornerY)* m_fViewScale;
-			dst.Width = max((int)m_Particle[i].m_fSize,1);
-			dst.Height = max((int)m_Particle[i].m_fSize, 1);
-
-			if (m_bMapPaint == FALSE)
-			{
-				if (i % 2)
-					graphics.DrawImage(m_pRainParticleBitmap, dst, 0, 0, 8, 8, UnitPixel, &attr); //, UnitPixel);
-				else
-					graphics.DrawImage(m_pSnowParticleBitmap, dst, 0, 0, 8, 8, UnitPixel, &attr); //, UnitPixel);
-			}
-		}
-
-		
+		FALSE
+		);
+		*/
 	}
 }
-#endif
+
+void cDMMapViewDialog::OnMove(int x, int y)
+{
+	CDialog::OnMove(x, y);
+
+	PositionWeatherWindow();
+}
+
+BOOL cDMMapViewDialog::MapHasDetachedChildren()
+{
+	for (POSITION pos = m_pApp->m_DetachedMapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_pApp->m_DetachedMapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL && pMapDlg->m_pDNDMap != NULL && pMapDlg->m_pDNDMap->m_dwMapID == m_pDNDMap->m_dwMapID)
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
 

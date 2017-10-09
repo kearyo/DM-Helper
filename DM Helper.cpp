@@ -13,6 +13,8 @@
 #include "DMPartyDialog.h"
 #include "DMSaveConfirmDialog.h"
 #include "DMFileManagementDialog.h"
+#include "cDMWeatherDialog.h"
+#include "cDMMapViewDialog.h"
 
 
 #ifdef _DEBUG
@@ -812,7 +814,6 @@ int CDMHelperApp::ExitInstance()
 		delete m_pIsometricDungeonTilesBitmap;
 		m_pIsometricDungeonTilesBitmap = NULL;
 	}
-
 
 	SaveSettings();
 
@@ -6406,4 +6407,12 @@ void CDMHelperApp::CallFileManagementDialog(DMLoadFileDescriptor *pFileDesc)
 
 	pDlg->DoModal();
 	delete pDlg;
+}
+
+HWND CDMHelperApp::CreateWeatherDialog(cDMMapViewDialog *pParent, DND_WEATHER_TYPES nWeather)
+{
+	cDMWeatherDialog *pDlg = new cDMWeatherDialog((CWnd*)pParent);
+	pDlg->m_WeatherType = nWeather;
+
+	return pDlg->m_hWnd;
 }

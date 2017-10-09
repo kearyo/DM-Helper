@@ -127,6 +127,10 @@ CDMHelperDlg::CDMHelperDlg(CWnd* pParent /*=NULL*/)
 	, m_bUseWeapons_vs_AC_Chart(FALSE)
 	, m_bUseSmallFont(FALSE)
 {
+
+	m_pApp = (CDMHelperApp *)AfxGetApp();
+	m_pApp->m_pMainWindow = this;
+
 	//{{AFX_DATA_INIT(CDMHelperDlg)
 	m_bUseUnearthedArcana = TRUE;
 	m_bUseDemiHumanLevelLimits = TRUE;
@@ -247,6 +251,7 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_CUSTOMIZATIONS_CUSTOMWEAPONEDITOR, &CDMHelperDlg::OnCustomizationsCustomweaponeditor)
 	ON_COMMAND(ID_SUBPARTIES_SORTSUBPARTIES, &CDMHelperDlg::OnSubpartiesSortsubparties)
 	ON_COMMAND(ID_SUBPARTIES_SORTSUBPARTIESNUMERICALLY, &CDMHelperDlg::OnSubpartiesSortsubpartiesnumerically)
+	ON_WM_MOVE()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -256,11 +261,6 @@ BOOL CDMHelperDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	// Add "About..." menu item to system menu.
-
-	m_pApp = (CDMHelperApp *)AfxGetApp();
-
-	m_pApp->m_pMainWindow = this;
 
 	RegisterHotKey(m_hWnd, 100, MOD_CONTROL, 'R');	// dice roller hotkey
 	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, 'F');	// flip secondary screen hotkey
@@ -2177,6 +2177,20 @@ void CDMHelperDlg::OnClose()
 		return;
 	}
 
+	for (POSITION pos = m_pApp->m_DetachedMapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_pApp->m_DetachedMapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL)
+		{
+			pMapDlg->PostMessage(WM_CLOSE);
+			Sleep(1000);
+		}
+	}
+	m_pApp->m_DetachedMapViewMap.RemoveAll();
+
 	CheckSaveData();
 
 	delete m_brRed;
@@ -2376,14 +2390,36 @@ void CDMHelperDlg::OnCloseSoundboard()
 }
 
 
+void CDMHelperDlg::PositionMapViews()
+{
+	for (POSITION pos = m_pApp->m_MapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_pApp->m_MapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL)
+		{
+			pMapDlg->InvalidateRect(NULL);
+		}
+	}
+}
+
 void CDMHelperDlg::OnSize(UINT nType, int cx, int cy) 
 {
 	CDialog::OnSize(nType, cx, cy);
-	
-	// TODO: Add your message handler code here
+
+	PositionMapViews();
 
 	InvalidateRect(NULL);
-	
+}
+
+
+void CDMHelperDlg::OnMove(int x, int y)
+{
+	CDialog::OnMove(x, y);
+
+	PositionMapViews();
 }
 
 
@@ -2966,6 +3002,7 @@ void CDMHelperDlg::OnCustomizationsCustomweaponeditor()
 
 	delete pDlg;
 }
+
 
 
 

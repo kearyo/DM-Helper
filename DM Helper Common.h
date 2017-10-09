@@ -207,6 +207,7 @@
 
 - 1.0.031	X/XX/17
 	* Added fog of war capability for detached maps
+	* Added special effect capability for maps (SFX)
 */
 
 #define PCSTRING CString*
@@ -3120,7 +3121,7 @@ public:
 		m_nMapIconScale = 0;
 
 		m_nTransRed = 255;
-		m_nTransGreen = 255;
+		m_nTransGreen = 0;
 		m_nTransBlue = 255;
 
 		m_nFogOfWarFlag = 0;

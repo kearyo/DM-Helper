@@ -162,6 +162,7 @@
     <ClCompile Include="cDMMapSFXDialog.cpp" />
     <ClCompile Include="cDMMapSizingDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
+    <ClCompile Include="cDMWeatherDialog.cpp" />
     <ClCompile Include="ColoredListCtrl.cpp" />
     <ClCompile Include="DM Helper Common.cpp" />
     <ClCompile Include="DM Helper.cpp" />
@@ -232,6 +233,7 @@
     <ClInclude Include="cDMMapSFXDialog.h" />
     <ClInclude Include="cDMMapSizingDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
+    <ClInclude Include="cDMWeatherDialog.h" />
     <ClInclude Include="ColoredListCtrl.h" />
     <ClInclude Include="DM Helper Common.h" />
     <ClInclude Include="DM Helper.h" />
@@ -333,6 +335,7 @@
     <Image Include="res\PlayersHandbook.bmp" />
     <Image Include="res\print_icon.bmp" />
     <Image Include="res\rain_bitmap.bmp" />
+    <Image Include="res\rain_splat.bmp" />
     <Image Include="res\right_icon.bmp" />
     <Image Include="res\save_icon.bmp" />
     <Image Include="res\scroll_gray.bmp" />
