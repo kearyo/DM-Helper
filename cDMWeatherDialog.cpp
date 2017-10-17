@@ -164,17 +164,17 @@ void cDMWeatherDialog::UpdateParticles(BOOL bVisible)
 				case DND_WEATHER_TYPE_RAIN:
 				{
 					fSpeed = 10.0f;
-					fDecrease = 0.2f;
+					fDecrease = 1.0f;
 					nMaxParticles = MAX_PARTICLES/2;
-					fMaxSize = 6.0f;
+					fMaxSize = 11.0f;
 					break;
 				}
 				case DND_WEATHER_TYPE_SNOW:
 				{
 					fSpeed = 5.0f;
-					fDecrease = 0.1f;
+					fDecrease = 0.5f;
 					nMaxParticles = MAX_PARTICLES;
-					fMaxSize = 6.0f;
+					fMaxSize = 8.0f;
 					break;
 				}
 			}
@@ -245,19 +245,29 @@ void cDMWeatherDialog::UpdateParticles(BOOL bVisible)
 				RectF dst;
 				dst.X = (int)(px + 0)* 1.0f;
 				dst.Y = (int)(py + 0)* 1.0f;
-				dst.Width = max((int)m_Particle[i].m_fSize, 1);
-				dst.Height = max((int)m_Particle[i].m_fSize, 1);
+				dst.Width = 12;
+				dst.Height = 12;
+				//dst.Width = max((int)m_Particle[i].m_fSize, 1);
+				//dst.Height = max((int)m_Particle[i].m_fSize, 1);
+
+				int nFrame = (int)(m_Particle[i].m_fSize + 0.5f);
+				if (nFrame > 11)
+					nFrame = 11;
+				if (nFrame < 0)
+					nFrame = 0;
+				nFrame = 11 - nFrame;
+
 
 				switch (m_WeatherType)
 				{
 					case DND_WEATHER_TYPE_RAIN:
 					{
-						graphics.DrawImage(m_pRainParticleBitmap, dst, 0, 0, 6, 6, UnitPixel, &attr); //, UnitPixel);
+						graphics.DrawImage(m_pRainParticleBitmap, dst, nFrame*32+1, 1, 12, 12, UnitPixel, &attr); //, UnitPixel);
 						break;
 					}
 					case DND_WEATHER_TYPE_SNOW:
 					{
-						graphics.DrawImage(m_pSnowParticleBitmap, dst, 0, 0, 6, 6, UnitPixel, &attr); //, UnitPixel);
+						graphics.DrawImage(m_pSnowParticleBitmap, dst, nFrame * 32 + 1, 1, 12, 12, UnitPixel, &attr); //, UnitPixel);
 						break;
 					}
 				}
