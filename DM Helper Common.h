@@ -9,7 +9,7 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10031
+#define DMH_CURRENT_VERSION 10032
 
 #define USE_CANTRIPS	TRUE
 
@@ -208,6 +208,7 @@
 - 1.0.031	X/XX/17
 	* Added fog of war capability for detached maps
 	* Added special effect capability for maps (SFX)
+	* Double sided printing enabled for character sheets
 */
 
 #define PCSTRING CString*

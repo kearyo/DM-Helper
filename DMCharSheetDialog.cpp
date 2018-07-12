@@ -18,7 +18,7 @@
 // static char THIS_FILE[] = __FILE__;
 // #endif
 
-#define MAX_CS_PAGES	4
+#define MAX_CS_PAGES	3
 
 static OPENFILENAME    g_ofn;
 char g_CS_szFilename[MAX_PATH];
@@ -111,6 +111,7 @@ BEGIN_MESSAGE_MAP(DMCharSheetDialog, CDialog)
 	ON_BN_CLICKED(IDC_PAGE_BACK_BUTTON, OnPageBackButton)
 	//}}AFX_MSG_MAP
 	ON_WM_VSCROLL()
+	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -149,7 +150,7 @@ void DMCharSheetDialog::OnCancel()
 }
 
 
-void DMCharSheetDialog::DrawContainerCoins(POBJECTTYPE pObj, int *pnItemCount, int *pnStartX, int *pnStartY, CDC *pmemdc, int nLevel)
+void DMCharSheetDialog::DrawContainerCoins(POBJECTTYPE pObj, int *pnItemCount, int *pnStartX, int *pnStartY, CDC *pmemdc, int nLevel, int nShiftY)
 {
 	CString szCoins = _T("");
 	CString szTabs = _T("");
@@ -206,15 +207,15 @@ void DMCharSheetDialog::DrawContainerCoins(POBJECTTYPE pObj, int *pnItemCount, i
 
 	*pnStartY += 16;
 
-	if(*pnStartY > 320)
+	if(*pnStartY > 320 + nShiftY)
 	{
-		*pnStartY = 106;
+		*pnStartY = 106 + nShiftY;
 		*pnStartX += 246;
 	}
 
 }
 
-void DMCharSheetDialog::DrawSubInventory(int *pnItemCount, DWORD dwContainerID, int *pnStartX, int *pnStartY, CDC *pmemdc, int nLevel)  // we can go recursive with this sumbitch
+void DMCharSheetDialog::DrawSubInventory(int *pnItemCount, DWORD dwContainerID, int *pnStartX, int *pnStartY, CDC *pmemdc, int nLevel, int nShiftY)  // we can go recursive with this sumbitch
 {
 
 	if(nLevel > MAX_CHARACTER_INVENTORY)
@@ -355,20 +356,20 @@ void DMCharSheetDialog::DrawSubInventory(int *pnItemCount, DWORD dwContainerID, 
 
 			*pnStartY += 16;
 
-			if(*pnStartY > 320)
+			if (*pnStartY > 320 + nShiftY)
 			{
-				*pnStartY = 106;
+				*pnStartY = 106 + nShiftY;
 				*pnStartX += 246;
 			}
 
 			if(pObj->IsCoinContainer())
 			{
-				DrawContainerCoins(pObj, pnItemCount, pnStartX, pnStartY, pmemdc, nLevel);
+				DrawContainerCoins(pObj, pnItemCount, pnStartX, pnStartY, pmemdc, nLevel, nShiftY);
 			}
 
 			if(pObj->IsContainer())
 			{
-				DrawSubInventory(pnItemCount, pObj->m_dwObjectID, pnStartX, pnStartY, pmemdc, nLevel+1);
+				DrawSubInventory(pnItemCount, pObj->m_dwObjectID, pnStartX, pnStartY, pmemdc, nLevel + 1, nShiftY);
 			}
 		}
 	}
@@ -382,11 +383,21 @@ void DMCharSheetDialog::OnPaint()
 
 	CString szTemp;
 	
-	CBitmap bmp; 
+	int nPrintPages = 1;
+
+	CBitmap bmp;		// shatner
+	//CBitmap base_bmp;		// shatner
 	CBitmap *poldbmp;
 	CDC memdc;
 	CDC* pDC;
 	pDC = &dc;
+
+
+	nMaxSizeY = 1088;
+	if (m_nPage == 0)
+	{
+		nMaxSizeY = 2176;
+	}
 
 	int nDisplayWeapons = 4;
 	int nAdjustWeaponLabelX = 0;
@@ -420,22 +431,22 @@ void DMCharSheetDialog::OnPaint()
 
 	int nBitMapResource = 0;
 
-	if(m_nPage == 4)
-	{
-		bmp.LoadBitmap( IDB_SCROLL_BITMAP );
-	}
-	else if(m_nPage == 3)
+	if(m_nPage == 3)
 	{
 		bmp.LoadBitmap( IDB_SCROLL_BITMAP );
 	}
 	else if(m_nPage == 2)
 	{
-		bmp.LoadBitmap( IDB_SPELLBOOK_BITMAP );
+		bmp.LoadBitmap( IDB_SCROLL_BITMAP );
 	}
 	else if(m_nPage == 1)
 	{
-		bmp.LoadBitmap( IDB_INVENTORY_BITMAP );
+		bmp.LoadBitmap( IDB_SPELLBOOK_BITMAP );
 	}
+	//else if(m_nPage == 1)
+	//{
+	//	bmp.LoadBitmap( IDB_INVENTORY_BITMAP );
+	//}
 	else if(m_pCharacter->m_Class[1])
 	{
 		bmp.LoadBitmap( IDB_MULTICLASS_BITMAP );
@@ -535,11 +546,13 @@ void DMCharSheetDialog::OnPaint()
 		
 	}
 
+	//base_bmp.LoadBitmap(IDB_CHAR_SHEET_BASE_BITMAP);
+
 	// Create a compatible memory DC
 	memdc.CreateCompatibleDC( pDC );
 
 	// Select the bitmap into the DC
-	poldbmp = memdc.SelectObject( &bmp );
+	poldbmp = memdc.SelectObject(&bmp);
 
 	CFont newfont;
 	CFont* oldfont;
@@ -553,6 +566,8 @@ void DMCharSheetDialog::OnPaint()
 
 	if(m_nPage == 0)
 	{
+		nPrintPages = 2;
+
 		if(m_nSliderOffset > 0)
 		{
 			m_cPortraitButton.ShowWindow(SW_HIDE);
@@ -563,6 +578,7 @@ void DMCharSheetDialog::OnPaint()
 		}
 
 		Graphics graphics(memdc);
+
 		if(m_pCharacter->m_szPortraitPath[0] && m_pPortraitBitmap != NULL)
 		{
 			try
@@ -1097,20 +1113,22 @@ void DMCharSheetDialog::OnPaint()
 
 		//////////////////////////////
 
-	} // m_nPage == 0
-	else if(m_nPage == 1)
-	{
-		m_cPortraitButton.ShowWindow(SW_HIDE);
+	//} // m_nPage == 0
+	//else if(m_nPage == 1)
+	//{
+		//m_cPortraitButton.ShowWindow(SW_HIDE);
 
-		CFont newfont3;
+		int nShiftY = 1088;
+
+		CFont newfont5;
 		nSize = 10;   // 10 point font
-		success = newfont3.CreatePointFont(nSize * 10, "HamletOrNot", pDC);
-		memdc.SelectObject(&newfont3);
+		success = newfont5.CreatePointFont(nSize * 10, "HamletOrNot", pDC);
+		memdc.SelectObject(&newfont5);
 
 		int nItemCount = 0;
 
 		int nStartX = 80;
-		int nStartY = 106;
+		int nStartY = 106 + nShiftY;
 
 		CString szTemp;
 		CString szWeight;
@@ -1240,20 +1258,20 @@ void DMCharSheetDialog::OnPaint()
 
 				nStartY += 16;
 
-				if(nStartY > 320)
+				if (nStartY > 320 + nShiftY)
 				{
-					nStartY = 106;
+					nStartY = 106 + nShiftY;
 					nStartX += 246;
 				}
 
 				if(pObj->IsCoinContainer())
 				{
-					DrawContainerCoins(pObj, &nItemCount, &nStartX, &nStartY, &memdc, 0);
+					DrawContainerCoins(pObj, &nItemCount, &nStartX, &nStartY, &memdc, 0, nShiftY);
 				}
 
 				if(pObj->IsContainer())
 				{
-					DrawSubInventory(&nItemCount, pObj->m_dwObjectID, &nStartX, &nStartY, &memdc, 1);
+					DrawSubInventory(&nItemCount, pObj->m_dwObjectID, &nStartX, &nStartY, &memdc, 1, nShiftY);
 				}
 			}
 		}
@@ -1261,16 +1279,16 @@ void DMCharSheetDialog::OnPaint()
 		int nMaxWeight = 0;
 		int nEncumbrance = CalculateEncumbrance(m_pCharacter, &nMaxWeight);
 
-		DrawCSText(nMaxWeight-350, 180, 338, &memdc);
+		DrawCSText(nMaxWeight - 350, 180, 338 + nShiftY, &memdc);
 
 		//nMaxWeight, nMaxWeight+350, nMaxWeight+700, nMaxWeight+1050, nMaxWeight+1400
-		DrawCSText(nMaxWeight, 320, 338, &memdc);
-		DrawCSText(nMaxWeight+350, 380, 338, &memdc);
-		DrawCSText(nMaxWeight+700, 445, 338, &memdc);
-		DrawCSText(nMaxWeight+1050, 520, 338, &memdc);
+		DrawCSText(nMaxWeight, 320, 338 + nShiftY, &memdc);
+		DrawCSText(nMaxWeight + 350, 380, 338 + nShiftY, &memdc);
+		DrawCSText(nMaxWeight + 700, 445, 338 + nShiftY, &memdc);
+		DrawCSText(nMaxWeight + 1050, 520, 338 + nShiftY, &memdc);
 
 		szTemp.Format("%d", nEncumbrance);
-		DrawCSText(szTemp.GetBuffer(0), 720, 342, &memdc);
+		DrawCSText(szTemp.GetBuffer(0), 720, 342 + nShiftY, &memdc);
 
 		//Experience
 		int nNumClasses = 1;
@@ -1278,35 +1296,35 @@ void DMCharSheetDialog::OnPaint()
 		float fExpBonus = ((float)nExpBonus) / 1000.0f;
 		szTemp.Format("%0.0f", fExpBonus);
 
-		DrawCSText(szTemp.GetBuffer(0), 755, 509, &memdc);
+		DrawCSText(szTemp.GetBuffer(0), 755, 509 + nShiftY, &memdc);
 
 		LONG lNextXP = GetExperiencePointsForLevelByClass(m_pCharacter->m_Class[m_pCharacter->m_nDualClassClass], m_pCharacter->m_nLevel[m_pCharacter->m_nDualClassClass] + 1);
-		DrawCSText(lNextXP, 710, 496, &memdc);
+		DrawCSText(lNextXP, 710, 496 + nShiftY, &memdc);
 
 		for(int i = 0; i < 3; ++i)
 		{
 			if(m_pCharacter->m_Class[i] != DND_CHARACTER_CLASS_UNDEF)
 			{
-				DrawCSText(m_pCharacter->m_lExperience[i], 484, 522+i*15, &memdc);
+				DrawCSText(m_pCharacter->m_lExperience[i], 484, 522 + i * 15 + nShiftY, &memdc);
 
 				if(m_pCharacter->m_lEarnedXP)
 				{
-					DrawCSText(m_pCharacter->m_lEarnedXP / nNumClasses, 570, 522+i*15, &memdc);
+					DrawCSText(m_pCharacter->m_lEarnedXP / nNumClasses, 570, 522 + i * 15 + nShiftY, &memdc);
 				}
 
-				DrawCSText(m_pCharacter->m_lExperience[i] + m_pCharacter->m_lEarnedXP / nNumClasses, 720, 522+i*15, &memdc);
+				DrawCSText(m_pCharacter->m_lExperience[i] + m_pCharacter->m_lEarnedXP / nNumClasses, 720, 522 + i * 15 + nShiftY, &memdc);
 			}
 
 		}
 		
 		//Money money money
-		DrawCSText(m_pCharacter->m_lCopperCarried, 130, 515, &memdc);
-		DrawCSText(m_pCharacter->m_lSilverCarried, 130, 535, &memdc);
-		DrawCSText(m_pCharacter->m_lElectrumCarried, 145, 555, &memdc);
-		DrawCSText(m_pCharacter->m_lGoldCarried, 120, 575, &memdc);
-		DrawCSText(m_pCharacter->m_lPlatinumCarried, 140, 595, &memdc);
+		DrawCSText(m_pCharacter->m_lCopperCarried, 130, 515 + nShiftY, &memdc);
+		DrawCSText(m_pCharacter->m_lSilverCarried, 130, 535 + nShiftY, &memdc);
+		DrawCSText(m_pCharacter->m_lElectrumCarried, 145, 555 + nShiftY, &memdc);
+		DrawCSText(m_pCharacter->m_lGoldCarried, 120, 575 + nShiftY, &memdc);
+		DrawCSText(m_pCharacter->m_lPlatinumCarried, 140, 595 + nShiftY, &memdc);
 
-		DrawCSText(m_pCharacter->m_lCopperCarried + m_pCharacter->m_lSilverCarried + m_pCharacter->m_lElectrumCarried + m_pCharacter->m_lGoldCarried + m_pCharacter->m_lPlatinumCarried, 260, 494, &memdc);
+		DrawCSText(m_pCharacter->m_lCopperCarried + m_pCharacter->m_lSilverCarried + m_pCharacter->m_lElectrumCarried + m_pCharacter->m_lGoldCarried + m_pCharacter->m_lPlatinumCarried, 260, 494 + nShiftY, &memdc);
 
 
 		if(m_pCharacter->m_nSex == 0)
@@ -1314,12 +1332,12 @@ void DMCharSheetDialog::OnPaint()
 		else
 			szTemp = "female";
 
-		DrawCSText(szTemp.GetBuffer(0), 80, 708, &memdc);
+		DrawCSText(szTemp.GetBuffer(0), 80, 708 + nShiftY, &memdc);
 
 		if(m_pCharacter->m_nWeight)
 		{
 			szTemp.Format("%d lbs", m_pCharacter->m_nWeight);
-			DrawCSText(szTemp.GetBuffer(0), 80, 730, &memdc);
+			DrawCSText(szTemp.GetBuffer(0), 80, 730 + nShiftY, &memdc);
 		}
 
 		if(m_pCharacter->m_nHeight)
@@ -1328,27 +1346,27 @@ void DMCharSheetDialog::OnPaint()
 			int nInches = m_pCharacter->m_nHeight % 12;
 
 			szTemp.Format("%d ft %d in", nFeet, nInches);
-			DrawCSText(szTemp.GetBuffer(0), 80, 754, &memdc);
+			DrawCSText(szTemp.GetBuffer(0), 80, 754 + nShiftY, &memdc);
 		}
 
 		szTemp.Format("%d", m_pCharacter->m_nAge);
-		DrawCSText(szTemp.GetBuffer(0), 280, 688, &memdc);
+		DrawCSText(szTemp.GetBuffer(0), 280, 688 + nShiftY, &memdc);
 
 		szTemp.Format("%d", m_pCharacter->m_nAge + m_pCharacter->m_nAgeAdj);
-		DrawCSText(szTemp.GetBuffer(0), 360, 683, &memdc);
+		DrawCSText(szTemp.GetBuffer(0), 360, 683 + nShiftY, &memdc);
 
 		szTemp.Format("%d years", m_pCharacter->m_nAgeAdj);
-		DrawCSText(szTemp.GetBuffer(0), 445, 683, &memdc);
+		DrawCSText(szTemp.GetBuffer(0), 445, 683 + nShiftY, &memdc);
 
-		DrawCSText(m_pCharacter->m_szHairColor, 610, 686, &memdc);
-		DrawCSText(m_pCharacter->m_szEyeColor, 715, 686, &memdc);
+		DrawCSText(m_pCharacter->m_szHairColor, 610, 686 + nShiftY, &memdc);
+		DrawCSText(m_pCharacter->m_szEyeColor, 715, 686 + nShiftY, &memdc);
 
 
-		CFont newfont4;
+		CFont newfont6;
 		nSize = 8;   // 7 point font
 		//success = newfont4.CreatePointFont(nSize * 10, "SmallFonts", pDC);
-		success = newfont4.CreatePointFont(nSize * 10, "HamletOrNot", pDC);
-		memdc.SelectObject(&newfont4);
+		success = newfont6.CreatePointFont(nSize * 10, "HamletOrNot", pDC);
+		memdc.SelectObject(&newfont6);
 
 		//birthday
 		if(m_pApp->m_pSelectedCalendar != NULL)
@@ -1358,19 +1376,19 @@ void DMCharSheetDialog::OnPaint()
 				int nBirthMonth = abs(m_pCharacter->m_nDOBMonth-1) % m_pApp->m_pSelectedCalendar->m_nMonthsInYear;
 				szTemp.Format("Born the %d%s day of %s in the year %d", m_pCharacter->m_nDOBDay, GetNumberSuffix(m_pCharacter->m_nDOBDay), m_pApp->m_pSelectedCalendar->m_szMonthNames[nBirthMonth], m_pCharacter->m_nDOBYear);
 
-				DrawCSText(szTemp.GetBuffer(0), 116, 965, &memdc);
+				DrawCSText(szTemp.GetBuffer(0), 116, 965 + nShiftY, &memdc);
 			}
 		}
 
 		TRACE("OBJECT SIZE = %d %d\n", sizeof(cDNDObject), sizeof(unsigned long));
 
 		//last will and testament
-		DrawCSText(m_pCharacter->m_szCharacterName, 140, 1015, &memdc);
+		DrawCSText(m_pCharacter->m_szCharacterName, 140, 1015 + nShiftY, &memdc);
 
-		DrawCSText(m_pCharacter->m_szWill, 294, 1015, &memdc);
+		DrawCSText(m_pCharacter->m_szWill, 294, 1015 + nShiftY, &memdc);
 
 	}
-	else if(m_nPage == 2)
+	else if(m_nPage == 1)
 	{
 		m_cPortraitButton.ShowWindow(SW_HIDE);
 
@@ -1539,7 +1557,7 @@ void DMCharSheetDialog::OnPaint()
 
 
 	}
-	else if(m_nPage == 3) // scrolls
+	else if(m_nPage == 2) // scrolls
 	{
 		m_cPortraitButton.ShowWindow(SW_HIDE);
 
@@ -1604,8 +1622,8 @@ void DMCharSheetDialog::OnPaint()
 			}
 		}
 
-	} // end page 3, scrolls
-	else if(m_nPage == 4) // notes
+	} // end page 2, scrolls
+	else if(m_nPage == 3) // notes
 	{
 		m_cPortraitButton.ShowWindow(SW_HIDE);
 
@@ -1748,7 +1766,7 @@ void DMCharSheetDialog::OnPaint()
 			}
 		}
 
-	} // end page 4, notes
+	} // end page 3, notes
 
 	//offset here !
 	pDC->BitBlt( 0, -m_nSliderOffset, nMaxSizeX+1, nMaxSizeY, &memdc, 0, 0, SRCCOPY );
@@ -1763,7 +1781,7 @@ void DMCharSheetDialog::OnPaint()
 	if(m_bPrintSheet)
 	{
 		m_bPrintSheet = FALSE;
-		PrintBitmap(&memdc, &bmp);		
+		PrintBitmap(&memdc, &bmp, nPrintPages);		// shatner
 	}
 
 	if(m_bSaveSheet)
@@ -2201,13 +2219,36 @@ void DMCharSheetDialog::OnPortraitButton()
 }
 
 
-void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap)
+void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap, int nPrintPages)
 {
 	CString szFileName; // = "c:/dword.bmp";
 
 	szFileName.Format("%sData/temp/%u.bmp", m_pApp->m_szEXEPath, GetUniqueID());
 
-	 CPrintDialog printDlg(FALSE);
+	DWORD dwFlags = PD_ALLPAGES | PD_USEDEVMODECOPIES | PD_NOPAGENUMS | PD_HIDEPRINTTOFILE | PD_NOSELECTION;
+
+	if (nPrintPages == 2)
+	{
+		dwFlags = PD_ALLPAGES | PD_PAGENUMS | PD_NOSELECTION | PD_HIDEPRINTTOFILE;
+	}
+
+	CPrintDialog printDlg(FALSE, dwFlags);
+
+	if (nPrintPages == 2)
+	{
+		printDlg.m_pd.nMinPage = 1;
+		printDlg.m_pd.nMaxPage = 2;
+		printDlg.m_pd.nFromPage = 1;
+		printDlg.m_pd.nToPage = 2;
+	}
+	else
+	{
+		printDlg.m_pd.nMinPage = 1;
+		printDlg.m_pd.nMaxPage = 1;
+		printDlg.m_pd.nFromPage = 1;
+		printDlg.m_pd.nToPage = 1;
+	}
+
 	 //printDlg.GetDefaults(); 
 	 // Or get from user:
 	  if (printDlg.DoModal() == IDCANCEL)   
@@ -2236,7 +2277,10 @@ void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap)
 	 // and store in the m_rectDraw field of a 
 	 // CPrintInfo object
 	 CPrintInfo Info;
-	 Info.SetMaxPage(1); // just one page 
+
+	 //Info.SetMinPage(1);
+	 Info.SetMaxPage(printDlg.m_pd.nToPage); // just one page 
+
 	 int maxw = dc.GetDeviceCaps(HORZRES);
 	 int maxh = dc.GetDeviceCaps(VERTRES); 
 	 Info.m_rectDraw.SetRect(0, 0, maxw, maxh); 
@@ -2264,7 +2308,24 @@ void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap)
 	   memDC.SetMapMode(dc.GetMapMode());
 	   dc.SetStretchBltMode(HALFTONE);
 	   // now stretchblt to maximum width on page
-	   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, 0, w, h, SRCCOPY); 
+
+	   if (nPrintPages == 1)
+	   {
+		   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, 0, w, h, SRCCOPY);
+	   }
+	   else
+	   {
+		   if (page == 1)
+		   {
+			   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, 0, w, h/2, SRCCOPY);
+		   }
+		   else  if (page == 2)
+		   {
+			   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, h/2, w, h / 2, SRCCOPY);
+		   }
+	   }
+
+
 	   // clean up
 	   memDC.SelectObject(pBmp);
 	   bPrintingOK = (dc.EndPage() > 0);   // end page
@@ -2273,7 +2334,7 @@ void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap)
 	   dc.EndDoc(); // end a print job
 	 else dc.AbortDoc();           // abort job. 
 
-	 DeleteFile(szFileName); 
+	DeleteFile(szFileName); 
 
 }
 
@@ -2456,3 +2517,19 @@ void DMCharSheetDialog::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBa
 	CDialog::OnVScroll(nSBCode, nPos, pScrollBar);
 }
 
+
+
+BOOL DMCharSheetDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	m_nSliderOffset -= zDelta;
+
+	if (m_nSliderOffset < 0)
+		m_nSliderOffset = 0;
+
+	if (m_nSliderOffset > 1440)
+		m_nSliderOffset = 1440;
+
+	InvalidateRect(NULL);
+
+	return CDialog::OnMouseWheel(nFlags, zDelta, pt);
+}

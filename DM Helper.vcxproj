@@ -298,6 +298,7 @@
     <Image Include="res\bitmap2.bmp" />
     <Image Include="res\calendar_cell.bmp" />
     <Image Include="res\camera_icon.bmp" />
+    <Image Include="res\char_sheet_base.bmp" />
     <Image Include="res\cleric.bmp" />
     <Image Include="res\d100_button.bmp" />
     <Image Include="res\d10_button.bmp" />
