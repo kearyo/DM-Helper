@@ -29,7 +29,7 @@ public:
 	CDMCharViewDialog *m_pCharViewDialog;
 	CString m_szFileName;
 
-	void PrintBitmap(CDC *memdc, CBitmap *bmp);
+	void PrintBitmap(CDC *memdc, CBitmap *bmp, int nPrintPages);
 
 	void DrawTurnUndead(CDC *memdc, int nOffX, int nOffY, int nCellX);
 	void DrawSpellList(int nBitMapResource, CDC *memdc);
@@ -37,8 +37,8 @@ public:
 	void DrawCSText(int val, int x, int y, CDC *memdc, BOOL bPlus=FALSE);
 	void DrawLFText(char * szData, int x, int y, CDC *memdc);
 
-	void DMCharSheetDialog::DrawContainerCoins(POBJECTTYPE pObj, int *pnItemCount, int *pnStartX, int *pnStartY, CDC *pmemdc, int nLevel);
-	void DrawSubInventory(int *pnItemCount, DWORD dwContainerID, int *pnStartX, int *nStartY, CDC *pmemdc, int nLevel);
+	void DMCharSheetDialog::DrawContainerCoins(POBJECTTYPE pObj, int *pnItemCount, int *pnStartX, int *pnStartY, CDC *pmemdc, int nLevel, int nShiftY);
+	void DrawSubInventory(int *pnItemCount, DWORD dwContainerID, int *pnStartX, int *nStartY, CDC *pmemdc, int nLevel, int nShiftY);
 	
 
 // Dialog Data
@@ -79,6 +79,7 @@ public:
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	int m_nSliderOffset;
 	CSliderCtrl m_cSliderOffset;
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
 
 //{{AFX_INSERT_LOCATION}}
