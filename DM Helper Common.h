@@ -205,7 +205,7 @@
 	* Added capability to detach maps from the main program for display on external monitor
 	* Added functionality to cut cell maps from large bitmap directly from map editor
 
-- 1.0.031	X/XX/17
+- 1.0.032	7/12/18
 	* Added fog of war capability for detached maps
 	* Added special effect capability for maps (SFX)
 	* Double sided printing enabled for character sheets
