@@ -80,6 +80,7 @@ public:
 	int m_nSliderOffset;
 	CSliderCtrl m_cSliderOffset;
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -60,4 +60,5 @@ public:
 	afx_msg void OnBnClickedMonsterManualIiCheck();
 	CString m_szNumLimit;
 	CEdit m_cNumLimit;
+	afx_msg void OnBnClickedDmgButton();
 };

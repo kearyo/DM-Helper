@@ -92,7 +92,10 @@ public:
 
 	void PositionMapViews();
 
-// Dialog Data
+	BOOL FileExists(CString szPath);
+	void OpenPDFDocument(CString szFileName, int nPage);
+
+// Dialog Data	
 	//{{AFX_DATA(CDMHelperDlg)
 	enum { IDD = IDD_DMHELPER_DIALOG };
 	CStatic	m_cCoverBitmap;
@@ -195,6 +198,13 @@ public:
 	afx_msg void OnSubpartiesSortsubparties();
 	afx_msg void OnSubpartiesSortsubpartiesnumerically();
 	afx_msg void OnMove(int x, int y);
+	afx_msg void OnDmlibraryDungeonmaster();
+	afx_msg void OnDmlibraryPlayer();
+	afx_msg void OnDmlibraryMonstermanual();
+	afx_msg void OnDmlibraryMonstermanual2();
+	afx_msg void OnDmlibraryFiendfolio();
+	afx_msg void OnDmlibraryUnearthedarcana();
+	afx_msg void OnDmlibraryFromfile();
 };
 
 //{{AFX_INSERT_LOCATION}}

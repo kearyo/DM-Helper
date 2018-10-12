@@ -232,6 +232,7 @@ BEGIN_MESSAGE_MAP(CDMRandomEncounterDialog, CDialog)
 	ON_CBN_SELCHANGE(IDC_TABLE_COMBO, &CDMRandomEncounterDialog::OnCbnSelchangeTableCombo)
 	ON_BN_CLICKED(IDC_FIEND_FOLIO_CHECK, &CDMRandomEncounterDialog::OnBnClickedFiendFolioCheck)
 	ON_BN_CLICKED(IDC_MONSTER_MANUAL_II_CHECK, &CDMRandomEncounterDialog::OnBnClickedMonsterManualIiCheck)
+	ON_BN_CLICKED(IDC_DMG_BUTTON, &CDMRandomEncounterDialog::OnBnClickedDmgButton)
 END_MESSAGE_MAP()
 
 
@@ -496,3 +497,10 @@ void CDMRandomEncounterDialog::OnBnClickedMonsterManualIiCheck()
 	Init();
 }
 
+
+
+void CDMRandomEncounterDialog::OnBnClickedDmgButton()
+{
+	CDMHelperDlg *pMainDlg = (CDMHelperDlg *)m_pApp->m_pMainWindow;
+	pMainDlg->OpenPDFDocument("PDF\\DMGuide.pdf", 175);
+}

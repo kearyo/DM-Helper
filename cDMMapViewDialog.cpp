@@ -167,6 +167,8 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	m_nScaleSlider = 0;
 	//}}AFX_DATA_INIT
 
+	m_pApp = (CDMHelperApp *)AfxGetApp();
+
 	if(pDNDMap == NULL)
 	{
 		m_pDNDMap = new cDNDMap();
@@ -404,8 +406,6 @@ BOOL cDMMapViewDialog::OnInitDialog()
 
 	//m_pBitmap_1 = new Bitmap(L"c:/DMHelper/maps/furyondy.png", FALSE);
 
-	m_pApp = (CDMHelperApp *)AfxGetApp();
-
 	m_cShowButton.LoadBitmaps(IDB_LARGE_RIGHT_BITMAP, IDB_LARGE_LEFT_BITMAP);
 	m_cHideButton.LoadBitmaps(IDB_LARGE_LEFT_BITMAP, IDB_LARGE_RIGHT_BITMAP);
 
@@ -627,7 +627,7 @@ void cDMMapViewDialog::OnPaint()
 	}
 
 	CDC* pDC = &_dc;
-	CMemDC pmDC(pDC, bBuffer, m_pUpdateRect);
+	CGDIMemDC pmDC(pDC, bBuffer, m_pUpdateRect);
 #else
 	CDC* pmDC = &_dc;
 #endif

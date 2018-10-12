@@ -9,11 +9,13 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10032
+#define DMH_CURRENT_VERSION 10033
 
 #define USE_CANTRIPS	TRUE
 
 #define ISOMETRIC_MAPS	TRUE
+
+#define KEARY_BUILD	FALSE
 
 //Dragon Magazines at http://www.annarchive.com/
 
@@ -205,10 +207,13 @@
 	* Added capability to detach maps from the main program for display on external monitor
 	* Added functionality to cut cell maps from large bitmap directly from map editor
 
-- 1.0.032	7/12/18
+- 1.0.033	10/11/18
 	* Added fog of war capability for detached maps
-	* Added special effect capability for maps (SFX)
+	* Added special effect capability for maps (SFX) (adding animated GIF's to a map)
 	* Double sided printing enabled for character sheets
+	* Bug fixes for errors caused by adding and removing / copy/ pasting NPCs into parties
+
+
 */
 
 #define PCSTRING CString*

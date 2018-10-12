@@ -22,6 +22,7 @@
 #include "DMCustomSpellDialog.h"
 #include "DMCustomMonsterDialog.h"
 #include "cDMMapNameDialog.h"
+#include "cDMPDFViewDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -29,6 +30,9 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+
+static OPENFILENAME    g_PDF_ofn;
+char g_PDF_szFilename[MAX_PATH];
 
 static int _MainTabControls[] = 
 {
@@ -252,6 +256,13 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_SUBPARTIES_SORTSUBPARTIES, &CDMHelperDlg::OnSubpartiesSortsubparties)
 	ON_COMMAND(ID_SUBPARTIES_SORTSUBPARTIESNUMERICALLY, &CDMHelperDlg::OnSubpartiesSortsubpartiesnumerically)
 	ON_WM_MOVE()
+	ON_COMMAND(ID_DMLIBRARY_DUNGEONMASTER, &CDMHelperDlg::OnDmlibraryDungeonmaster)
+	ON_COMMAND(ID_DMLIBRARY_PLAYER, &CDMHelperDlg::OnDmlibraryPlayer)
+	ON_COMMAND(ID_DMLIBRARY_MONSTERMANUAL, &CDMHelperDlg::OnDmlibraryMonstermanual)
+	ON_COMMAND(ID_DMLIBRARY_MONSTERMANUAL2, &CDMHelperDlg::OnDmlibraryMonstermanual2)
+	ON_COMMAND(ID_DMLIBRARY_FIENDFOLIO, &CDMHelperDlg::OnDmlibraryFiendfolio)
+	ON_COMMAND(ID_DMLIBRARY_UNEARTHEDARCANA, &CDMHelperDlg::OnDmlibraryUnearthedarcana)
+	ON_COMMAND(ID_DMLIBRARY_FROMFILE, &CDMHelperDlg::OnDmlibraryFromfile)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -261,9 +272,14 @@ BOOL CDMHelperDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	#if KEARY_BUILD
+	SetWindowText("Dungeon Maestro (AD&D First Edition) - Keary's Build");
+	#else
+	SetWindowText("Dungeon Maestro (AD&D First Edition)");
+	#endif
 
 	RegisterHotKey(m_hWnd, 100, MOD_CONTROL, 'R');	// dice roller hotkey
-	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, 'F');	// flip secondary screen hotkey
+	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, VK_F12);	// flip secondary screen hotkey
 
 	CMenu* pMenu = GetMenu();
 
@@ -2636,28 +2652,6 @@ LRESULT CDMHelperDlg::OnHotKey(WPARAM wParam, LPARAM lParam)
 }
 
 
-void CDMHelperDlg::OnHelpDungeonmaestrouser()
-{
-	CString szManualPath;
-	szManualPath.Format("%s\\data\\Manual\\DungeonMaestroManual.pdf", m_pApp->m_szEXEPath);
-
-
-	SHELLEXECUTEINFO ShExecInfo;
-
-	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-    ShExecInfo.fMask = NULL;
-    ShExecInfo.hwnd = NULL;
-    ShExecInfo.lpVerb = NULL;
-    ShExecInfo.lpFile = szManualPath.GetBuffer(0);
-    ShExecInfo.lpParameters = NULL;
-    ShExecInfo.lpDirectory = NULL;
-    ShExecInfo.nShow = SW_MAXIMIZE;
-    ShExecInfo.hInstApp = NULL;
-
-    ShellExecuteEx(&ShExecInfo);
-	
-}
-
 
 void CDMHelperDlg::OnBnClickedSaveButton()
 {
@@ -2993,7 +2987,6 @@ void CDMHelperDlg::OnCustomizationsCustomarmoreditor()
 	delete pDlg;
 }
 
-
 void CDMHelperDlg::OnCustomizationsCustomweaponeditor()
 {
 	CDMCustomWeaponDialog *pDlg = new CDMCustomWeaponDialog(this);
@@ -3003,7 +2996,207 @@ void CDMHelperDlg::OnCustomizationsCustomweaponeditor()
 	delete pDlg;
 }
 
+BOOL CDMHelperDlg::FileExists(CString szPath)
+{
+
+	FILE *pInFile = fopen(szPath, "rb");
+
+	if (NULL == pInFile)
+	{
+		return FALSE;
+	}
+
+	fclose(pInFile);
+
+	return TRUE;
+}
+
+void CDMHelperDlg::OpenPDFDocument(CString szFileName, int nPage)
+{
+	CString szPDFPath;
+
+	szPDFPath.Format("%s\\data\\PDF", m_pApp->m_szEXEPath);
+	CreateDirectory(szPDFPath, NULL);
+
+	#if KEARY_BUILD
+
+	WORD wID;
+	for (POSITION pos = m_pApp->m_PDFViewMap.GetStartPosition(); pos != NULL;)
+	{
+		PDNDPDFVIEWDLG pDlg = NULL;
+		m_pApp->m_PDFViewMap.GetNextAssoc(pos, wID, pDlg);
+
+		if (pDlg != NULL && pDlg->m_hWnd != NULL)
+		{
+			pDlg->Cleanup();
+			pDlg->PostMessage(WM_CLOSE);
+		}
+	}
+
+#if 0
+	// this doesn't work with a shit
+
+	CString szOCXPath = "\"" + m_pApp->m_szEXEPath + "\\PDFViewer.ocx" + "\"";
+
+	HINSTANCE hInst;
+	hInst = ShellExecute(NULL, "open", "regsvr32", szOCXPath, NULL, SW_HIDE);
+	// ** if registration failed: show a message box
+	
+	if ((int)hInst <= 32)
+	{
+		AfxMessageBox("Register PDFViewer.ocx failed");
+	}
+#endif
+
+	// gotta buy the ocx from:
+	// http://www.viscomsoft.com/purchase.php?id=1
+	
+	szPDFPath.Format("%s\\data\\%s", m_pApp->m_szEXEPath, szFileName);
+
+	cDMPDFViewDialog *pDlg = new cDMPDFViewDialog(szPDFPath, nPage);
+
+	m_pApp->m_PDFViewMap.SetAt((WORD)pDlg->m_dwPDFID, pDlg);
+
+	//pDlg->DoModal();
+	//delete pDlg;
+
+	#else
+
+	//DMGuide.pdf%20#page=9
 
 
+	szPDFPath.Format("%s\\data\\%s", m_pApp->m_szEXEPath, szFileName);
+
+	if (FALSE == FileExists(szPDFPath))
+	{
+		szFileName = "PDF\\PDFNotFound.pdf";
+	}
+
+	//start chrome "FILE:\\D:\SOURCE\DM HELPER\.\RELEASE\\data\PDF\DMGuide.pdf #page=9"
+	//szPDFPath.Format("chrome %s\\data\\%s%c20#page=%d", m_pApp->m_szEXEPath, szFileName,'%', nPage);
+	szPDFPath.Format("\"FILE:\\%s\\data\\%s #page=%d\"", m_pApp->m_szEXEPath, szFileName, nPage);
+
+	//UINT nOK = WinExec(szPDFPath, SW_SHOW);
+
+	CString szParms = "";
+	szParms.Format("?#page=%d", nPage);
+
+	//LONG lTry = ERROR_FILE_NOT_FOUND;
+	HINSTANCE hRet = ShellExecute(AfxGetMainWnd()->GetSafeHwnd(), "open", "chrome", szPDFPath, NULL, SW_SHOWNORMAL);
+
+	/*
+	SHELLEXECUTEINFO ShExecInfo;
+
+	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+	ShExecInfo.fMask = NULL;
+	ShExecInfo.hwnd = NULL;
+	ShExecInfo.lpVerb = NULL;
+	ShExecInfo.lpFile = szPDFPath.GetBuffer(0);
+	ShExecInfo.lpParameters = NULL;
+	ShExecInfo.lpDirectory = NULL;
+	ShExecInfo.nShow = SW_MAXIMIZE;
+	ShExecInfo.hInstApp = NULL;
+
+	ShellExecuteEx(&ShExecInfo);
+	*/
+	
+	#endif
+}
+
+void CDMHelperDlg::OnHelpDungeonmaestrouser()
+{
+	OpenPDFDocument("Manual\\DungeonMaestroManual.pdf", 1);
+
+	/*
+	CString szManualPath;
+	szManualPath.Format("%s\\data\\Manual\\DungeonMaestroManual.pdf", m_pApp->m_szEXEPath);
 
 
+	SHELLEXECUTEINFO ShExecInfo;
+
+	ShExecInfo.cbSize = sizeof(SHELLEXECUTEINFO);
+	ShExecInfo.fMask = NULL;
+	ShExecInfo.hwnd = NULL;
+	ShExecInfo.lpVerb = NULL;
+	ShExecInfo.lpFile = szManualPath.GetBuffer(0);
+	ShExecInfo.lpParameters = NULL;
+	ShExecInfo.lpDirectory = NULL;
+	ShExecInfo.nShow = SW_MAXIMIZE;
+	ShExecInfo.hInstApp = NULL;
+
+	ShellExecuteEx(&ShExecInfo);
+	*/
+
+}
+
+void CDMHelperDlg::OnDmlibraryDungeonmaster()
+{
+	OpenPDFDocument("PDF\\DMGuide.pdf", 1);
+}
+
+void CDMHelperDlg::OnDmlibraryPlayer()
+{
+	OpenPDFDocument("PDF\\PlayersHandbook.pdf", 1);
+}
+
+
+void CDMHelperDlg::OnDmlibraryMonstermanual()
+{
+	OpenPDFDocument("PDF\\MonsterManual.pdf", 1);
+}
+
+
+void CDMHelperDlg::OnDmlibraryMonstermanual2()
+{
+	OpenPDFDocument("PDF\\MonsterManual2.pdf", 1);
+}
+
+
+void CDMHelperDlg::OnDmlibraryFiendfolio()
+{
+	OpenPDFDocument("PDF\\FiendFolio.pdf", 1);
+}
+
+
+void CDMHelperDlg::OnDmlibraryUnearthedarcana()
+{
+	OpenPDFDocument("PDF\\UnearthedArcana.pdf", 1);
+}
+
+
+void CDMHelperDlg::OnDmlibraryFromfile()
+{
+	CString szPath;
+
+	CString szDirectory;
+	szDirectory.Format("%s//Data//PDF", m_pApp->m_szEXEPath.GetBuffer(0));
+
+	ZeroMemory(&g_PDF_ofn, sizeof(OPENFILENAME));
+	g_PDF_ofn.lStructSize = sizeof(OPENFILENAME);
+	g_PDF_ofn.nMaxFile = MAX_PATH;
+	g_PDF_ofn.nMaxFileTitle = MAX_PATH;
+	g_PDF_ofn.Flags = OFN_HIDEREADONLY | OFN_CREATEPROMPT | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+
+	g_PDF_ofn.hwndOwner = m_hWnd;
+	g_PDF_ofn.hInstance = m_pApp->m_hInstance;
+	g_PDF_ofn.lpstrFile = g_PDF_szFilename;
+	g_PDF_ofn.lpstrInitialDir = szDirectory.GetBuffer(0);
+	g_PDF_ofn.lpstrTitle = "Load PDF file";
+	//g_ofn.lpstrFilter = "Graphics Files (*.bmp)\0*.bmp\0(*.gif)\0*.gif\0(*.jpg)\0*.jpg\0All Files (*.*)\0*.*\0\0";
+	g_PDF_ofn.lpstrFilter = "PDF Files (*.pdf)\0*.pdf\0All Files (*.*)\0*.*\0\0";
+	g_PDF_ofn.lpstrDefExt = "pdf";
+
+	// Get action template file name
+	if (GetOpenFileName(&g_PDF_ofn))
+	{
+		szPath = g_PDF_szFilename;
+		szPath.MakeUpper();
+
+		int nPos = szPath.Find("PDF");
+
+		CString szPDF = szPath.Mid(nPos, szPath.GetLength());
+
+		OpenPDFDocument(szPDF, 1);
+
+	}
+}

@@ -157,11 +157,13 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cDMCharacterPortraitDialog.cpp" />
     <ClCompile Include="cDMDetachedMapDialog.cpp" />
     <ClCompile Include="cDMMapNameDialog.cpp" />
     <ClCompile Include="cDMMapSFXDialog.cpp" />
     <ClCompile Include="cDMMapSizingDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
+    <ClCompile Include="cDMPDFViewDialog.cpp" />
     <ClCompile Include="cDMWeatherDialog.cpp" />
     <ClCompile Include="ColoredListCtrl.cpp" />
     <ClCompile Include="DM Helper Common.cpp" />
@@ -218,6 +220,7 @@
     <ClCompile Include="DMTreasureTypeDialog.cpp" />
     <ClCompile Include="DungeonGen.cpp" />
     <ClCompile Include="ImageEx.cpp" />
+    <ClCompile Include="pdfviewerctrl1.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -228,11 +231,13 @@
     <ResourceCompile Include="DM Helper.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cDMCharacterPortraitDialog.h" />
     <ClInclude Include="cDMDetachedMapDialog.h" />
     <ClInclude Include="cDMMapNameDialog.h" />
     <ClInclude Include="cDMMapSFXDialog.h" />
     <ClInclude Include="cDMMapSizingDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
+    <ClInclude Include="cDMPDFViewDialog.h" />
     <ClInclude Include="cDMWeatherDialog.h" />
     <ClInclude Include="ColoredListCtrl.h" />
     <ClInclude Include="DM Helper Common.h" />
@@ -290,6 +295,7 @@
     <ClInclude Include="DungeonGen.h" />
     <ClInclude Include="ImageEx.h" />
     <ClInclude Include="memdc.h" />
+    <ClInclude Include="pdfviewerctrl1.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="TransparentListBox.h" />
@@ -348,6 +354,10 @@
     <Image Include="res\up_arrow.bmp" />
     <Image Include="res\up_arrow_pressed.bmp" />
     <Image Include="res\up_folder_bitmap.bmp" />
+    <Image Include="res\wide_left_button.bmp" />
+    <Image Include="res\wide_right_button.bmp" />
+    <Image Include="res\zoom_in_button.bmp" />
+    <Image Include="res\zoom_out_button.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\DM Helper.rc2" />
@@ -364,7 +374,7 @@
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties RESOURCE_FILE="DM Helper.rc" />
+      <UserProperties _x007B_D4F80D00-5F46-4902-8AFC-D00269320339_x007D_="CPdfviewerctrl1" _x007B_1F573201-F7C7-49CC-83E8-8C935591CD9C_x007D_="CDPDFReader" RESOURCE_FILE="DM Helper.rc" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

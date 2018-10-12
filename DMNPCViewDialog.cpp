@@ -155,8 +155,42 @@ void cDMBaseNPCViewDialog::OnRollStats()
 
 	Refresh();
 }
-	
 
+void cDMBaseNPCViewDialog::GetRandomName(BOOL bRename)
+{
+	PDNDMONSTERMANUALENTRY pMonster = NULL;
+
+	m_pApp->m_MonsterManualIndexedMap.Lookup(m_pNPC->m_nMonsterIndex, pMonster);
+
+	if (pMonster != NULL)
+	{
+		if (m_pApp->m_Settings.m_bUseRandomNames)
+		{
+			if (m_pNPC->m_szCharacterName[0] == 0 || strcmp(m_pNPC->m_szCharacterName , "New NPC") == 0 || bRename)
+			{
+				DND_CHARACTER_RACES nRace = m_pApp->GetCharacterRaceFromName(pMonster->m_szMMName);
+
+				CString szNewName = _T("");
+
+				if (nRace != DND_CHARACTER_RACES_UNDEF)
+				{
+					szNewName = m_pApp->GetRandomName(nRace, m_pNPC->m_nSex);
+				}
+				else
+				{
+					szNewName = m_pApp->GetRandomName((DND_CHARACTER_RACES)m_pNPC->m_nMonsterIndex, m_pNPC->m_nSex);
+				}
+
+				if (szNewName != _T(""))
+				{
+					strcpy(m_pNPC->m_szCharacterName, szNewName.Left(127));
+					m_pNPC->m_szCharacterName[127] = 0;
+				}
+			}
+		}
+	}
+}
+	
 
 void cDMBaseNPCViewDialog::ProcessCharStats()
 {
@@ -546,6 +580,9 @@ DMNPCViewDialog::DMNPCViewDialog(CDMHelperDlg* pMainDialog, cDNDNonPlayerCharact
 	m_pNPCPortraitBackdropBitmap = NULL;
 	m_pNPCPortraitBitmap = NULL;
 
+	m_nMonsterBook = 0;
+	m_szMonsterBook = _T("");
+
 	Create(DMNPCViewDialog::IDD, pParent);
 
 }
@@ -657,6 +694,7 @@ BEGIN_MESSAGE_MAP(DMNPCViewDialog, CDialog)
 	//}}AFX_MSG_MAP
 	ON_CBN_SELCHANGE(IDC_CHAR_SEX_COMBO, &DMNPCViewDialog::OnCbnSelchangeCharSexCombo)
 	ON_STN_CLICKED(IDC_NPC_PORTRAIT_BUTTON, &DMNPCViewDialog::OnStnClickedNpcPortraitButton)
+	ON_STN_DBLCLK(IDC_DESC_COMMENT, &DMNPCViewDialog::OnStnDblclickDescComment)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -880,6 +918,11 @@ void DMNPCViewDialog::Refresh()
 			case 2: m_szDescComment += _T("[ Monster Manual II <PAGE> ]"); break;
 			case 3: m_szDescComment += _T("[ Fiend Folio <PAGE> ]"); break;
 		}
+
+		m_nMonsterBook = nBook;
+		m_szMonsterBook = pMonster->m_szBook;
+
+		//hier Keary
 
 		CString szReplace = pMonster->m_szBook;
 		szReplace.Replace("MM ", "");
@@ -1959,7 +2002,41 @@ void DMNPCViewDialog::OnSelchangeCharAlignmentCombo()
 	Refresh();
 }
 	
+void DMNPCViewDialog::GetRandomName(BOOL bRename)
+{
+	PDNDMONSTERMANUALENTRY pMonster = NULL;
 
+	m_pApp->m_MonsterManualIndexedMap.Lookup(m_pNPC->m_nMonsterIndex, pMonster);
+
+	if (pMonster != NULL)
+	{
+		if (m_pApp->m_Settings.m_bUseRandomNames)
+		{
+			if (m_szCharacterName.GetLength() == 0 || m_szCharacterName == _T("New NPC") || bRename)
+			{
+				DND_CHARACTER_RACES nRace = m_pApp->GetCharacterRaceFromName(pMonster->m_szMMName);
+
+				CString szNewName = _T("");
+
+				if (nRace != DND_CHARACTER_RACES_UNDEF)
+				{
+					szNewName = m_pApp->GetRandomName(nRace, m_pNPC->m_nSex);
+				}
+				else
+				{
+					szNewName = m_pApp->GetRandomName((DND_CHARACTER_RACES)m_pNPC->m_nMonsterIndex, m_pNPC->m_nSex);
+				}
+
+				if (szNewName != _T(""))
+				{
+					m_szCharacterName = szNewName;
+					strcpy(m_pNPC->m_szCharacterName, m_szCharacterName.Left(127));
+					m_pNPC->m_szCharacterName[127] = 0;
+				}
+			}
+		}
+	}
+}
 
 void DMNPCViewDialog::OnRollStats() 
 {	
@@ -1972,33 +2049,9 @@ void DMNPCViewDialog::OnRollStats()
 	if(pMonster != NULL)
 	{
 		RollMonsterTreasure(m_pNPC, pMonster, FALSE, FALSE);
-	
-		if(m_pApp->m_Settings.m_bUseRandomNames)
-		{
-			if(m_szCharacterName.GetLength() == 0 || m_szCharacterName == _T("New NPC"))
-			{
-				DND_CHARACTER_RACES nRace = m_pApp->GetCharacterRaceFromName(pMonster->m_szMMName);
-				
-				CString szNewName = _T("");
-
-				if(nRace != DND_CHARACTER_RACES_UNDEF)
-				{
-					szNewName = m_pApp->GetRandomName(nRace, m_pNPC->m_nSex);
-				}
-				else
-				{
-					szNewName = m_pApp->GetRandomName((DND_CHARACTER_RACES)m_pNPC->m_nMonsterIndex, m_pNPC->m_nSex);
-				}
-
-				if(szNewName != _T(""))
-				{
-					m_szCharacterName = szNewName;
-					strcpy(m_pNPC->m_szCharacterName, m_szCharacterName.Left(127));
-					m_pNPC->m_szCharacterName[127] = 0;
-				}
-			}
-		}
 	}
+
+	GetRandomName(FALSE);
 
 	ProcessCharStats();
 
@@ -2977,4 +3030,26 @@ void DMNPCViewDialog::OnStnClickedNpcPortraitButton()
 
 		InvalidateRect(NULL);
 	}
+}
+
+
+void DMNPCViewDialog::OnStnDblclickDescComment()
+{
+	TRACE("POON %d %s!", m_nMonsterBook, m_szMonsterBook);
+
+	CString szPage = m_szMonsterBook;
+
+	szPage.Replace("MM pg.", "");
+	szPage.Replace("FF pg.", "");
+	szPage.Replace("MM2 pg.", "");
+
+	int nPage = atoi(szPage.GetBuffer(0));
+
+	switch (m_nMonsterBook)
+	{
+		case 1:	m_pMainDialog->OpenPDFDocument("PDF\\MonsterManual.pdf", nPage+1); break;
+		case 2:	m_pMainDialog->OpenPDFDocument("PDF\\MonsterManual2.pdf", nPage+1); break;
+		case 3:	m_pMainDialog->OpenPDFDocument("PDF\\FiendFolio.pdf", nPage+1); break;
+	}
+
 }

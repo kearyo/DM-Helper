@@ -1840,8 +1840,11 @@ void DMPartyDialog::AddPartyMember(DWORD dwReturnedID, DWORD dwSubPartyID)
 
 						m_pApp->ValidateNPCViewMap();
 
-						pNPCDlg->m_pNPC->m_dwCharacterID = GetUniqueID();  //this NPC is actually a duplicate, so we don't collide on IDs or delete the NPC from a "module"
-						pNPCDlg->m_dwNPCCharacterID = pNPCDlg->m_pNPC->m_dwCharacterID;
+						if (pNPCDlg->m_pNPC->m_dwCharacterID == 0)
+						{
+							pNPCDlg->m_pNPC->m_dwCharacterID = GetUniqueID();  //this NPC is actually a duplicate, so we don't collide on IDs or delete the NPC from a "module"
+							pNPCDlg->m_dwNPCCharacterID = pNPCDlg->m_pNPC->m_dwCharacterID;
+						}
 						m_pApp->m_NPCViewMap.SetAt((WORD)pNPCDlg->m_dwNPCCharacterID, pNPCDlg);
 
 						pNPCDlg->m_pNPC->m_dwSubPartyID = dwSubPartyID;
@@ -1919,6 +1922,9 @@ void DMPartyDialog::OnDeleteMemberButton()
 {
 	DWORD dwReturnedID = 0;
 	BOOL bAlreadyAsked = FALSE;
+
+	m_pApp->m_pBaseCopyCharacterDialog = NULL;  // just in case we deleted the buffer NPC
+	m_pApp->m_bCharacterCopyBufferIsNPC = FALSE;
 
 	if(m_pSelectedCharacterDialog != NULL)
 	{
@@ -4149,12 +4155,14 @@ void DMPartyDialog::OnBnClickedPasteMemberButton()
 
 			cDMBaseNPCViewDialog *pNPCDlg = new cDMBaseNPCViewDialog(m_pMainDialog, pNPC, NULL, &m_pMainDialog->m_cMainTab);
 			m_pMainDialog->AddTab(pNPCDlg, DND_TAB_TYPE_NPC, FALSE);
-
+	
+			pNPCDlg->GetRandomName(TRUE);
+			pNPCDlg->OnRollStats();
 			pNPCDlg->ProcessCharStats();
 			pNPCDlg->Refresh();
 
 			m_pApp->m_NPCViewMap.SetAt((WORD)pNPCDlg->m_pNPC->m_dwCharacterID, pNPCDlg);
-			AddPartyMember(pNPC->m_dwCharacterID, m_dwSubPartyID);
+			AddPartyMember(pNPC->m_dwCharacterID, m_dwSubPartyID);		
 
 			delete pNPC;			
 		}

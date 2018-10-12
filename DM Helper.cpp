@@ -15,6 +15,7 @@
 #include "DMFileManagementDialog.h"
 #include "cDMWeatherDialog.h"
 #include "cDMMapViewDialog.h"
+#include "cDMPDFViewDialog.h"
 
 
 #ifdef _DEBUG
@@ -646,6 +647,21 @@ int CDMHelperApp::ExitInstance()
 {
 	POSITION pos;
 	WORD wID;
+
+#if 0
+	for (pos = m_PDFViewMap.GetStartPosition(); pos != NULL;)
+	{
+		PDNDPDFVIEWDLG pDlg = NULL;
+		m_PDFViewMap.GetNextAssoc(pos, wID, pDlg);
+
+		if (pDlg != NULL && pDlg->m_hWnd != NULL)
+		{
+			pDlg->PostMessage(WM_CLOSE);
+		}
+	}
+#endif
+
+	/////////////
 
 	for (int i = 0; i < m_CalendarArray.GetSize(); ++i )
 	{

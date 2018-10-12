@@ -150,7 +150,7 @@ void CDMPartyLogDialog::OnPaint()
 #if USE_PL_MEMDC
 	bBuffer = TRUE;
 
-	CMemDC pmDC(pDC, bBuffer, &rect);
+	CGDIMemDC pmDC(pDC, bBuffer, &rect);
 
 	Graphics graphics(pmDC);
 

@@ -465,6 +465,7 @@ class CDMBaseCharViewDialog;
 //class DMNPCViewDialog;
 class cDMBaseNPCViewDialog;
 class cDMMapViewDialog;
+class cDMPDFViewDialog;
 
 
 #define PDNDPARTYVIEWDLG DMPartyDialog*
@@ -473,10 +474,12 @@ typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDPARTYVIEWDLG> PPARTYVIEWMAP;
 #define PDNDBASECHARVIEWDLG	CDMBaseCharViewDialog*
 #define PDNDCHARVIEWDLG CDMCharViewDialog*
 #define PDNDNPCVIEWDLG cDMBaseNPCViewDialog*
+#define PDNDPDFVIEWDLG cDMPDFViewDialog*
 
 typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDBASECHARVIEWDLG> PBASECHARVIEWMAP;
 typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDCHARVIEWDLG> PCHARVIEWMAP;
 typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDNPCVIEWDLG> PNPCVIEWMAP;
+typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDPDFVIEWDLG> PPDFVIEWMAP;
 
 #define PDNDMAPVIEWDLG cDMMapViewDialog*
 typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDMAPVIEWDLG> PMAPVIEWMAP;
@@ -545,6 +548,7 @@ public:
 	PNPCVIEWMAP	m_NPCViewMap;
 	PMAPVIEWMAP m_MapViewMap;
 	PMAPVIEWMAP m_DetachedMapViewMap;
+	PPDFVIEWMAP m_PDFViewMap;
 
 	int m_nTotalMonsterCount;
 	PMONSTERMANUALARRAY m_MonsterManualOrderedArray;

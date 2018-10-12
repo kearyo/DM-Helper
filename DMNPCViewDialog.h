@@ -50,6 +50,7 @@ public:
 	DMNPCViewDialog *m_pNPCViewDialog;
 
 	void InitView();
+	void GetRandomName(BOOL bRename);
 	void OnRollStats() ;
 	void ProcessCharStats();
 	void Refresh();
@@ -107,6 +108,9 @@ public:
 
 	DWORD m_dwMapID;  // if this NPCViewDialog is a cache, this is the map it belongs to
 
+	int m_nMonsterBook;		// for PDF lookup
+	CString m_szMonsterBook; // for PDF lookup
+
 	void FireAmmo();
 	void SwapWeapon();
 	void AddToRecoveryInventory(int nCharInventorySlot, int nAmount);
@@ -114,6 +118,7 @@ public:
 	void CollapseRecoveryInventory();
 
 	void Refresh();
+	void GetRandomName(BOOL bRename);
 	void ProcessCharStats();
 
 // Dialog Data
@@ -219,6 +224,7 @@ public:
 	CString m_szMonsterSize;
 	CString m_szTreasureType;
 	afx_msg void OnStnClickedNpcPortraitButton();
+	afx_msg void OnStnDblclickDescComment();
 };
 
 //{{AFX_INSERT_LOCATION}}

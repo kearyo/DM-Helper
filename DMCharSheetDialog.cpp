@@ -10,6 +10,7 @@
 #include "DMCharViewDialog.h"
 #include "DMNPCViewDialog.h"
 #include "DMCharSheetDialog.h"
+#include "cDMCharacterPortraitDialog.h"
 
 
 // #ifdef _DEBUG
@@ -112,6 +113,7 @@ BEGIN_MESSAGE_MAP(DMCharSheetDialog, CDialog)
 	//}}AFX_MSG_MAP
 	ON_WM_VSCROLL()
 	ON_WM_MOUSEWHEEL()
+	ON_WM_LBUTTONDBLCLK()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -594,7 +596,14 @@ void DMCharSheetDialog::OnPaint()
 		
 		DrawCSText(m_pCharacter->m_szCharacterName, 146, 155, &memdc);
 
-		for(int i = 0; i < 6; ++i)
+		int nDisplayedStats = 6;
+
+		if (g_bUseUnearthedArcana) // if displaying comeliness, it is displayed in a smaller font below
+		{
+			nDisplayedStats = 5;
+		}
+
+		for (int i = 0; i < nDisplayedStats; ++i)
 		{
 			DrawCSText(m_pCharacter->m_nDisplayStats[i], 98, 352+i*33, &memdc);
 		}
@@ -732,6 +741,13 @@ void DMCharSheetDialog::OnPaint()
 
 
 		/////////////////////////////////////////////////////////
+
+		//shitter
+		if (g_bUseUnearthedArcana) // if displaying comeliness, it is displayed in a smaller font here with charisma
+		{
+			DrawCSText(m_pCharacter->m_nDisplayStats[5], 98, 347 + 5 * 33, &memdc);
+			DrawCSText(m_pCharacter->m_nDisplayStats[6], 106, 357 + 5 * 33, &memdc);
+		}
 
 
 		if(m_pCharacter->m_nCurrentArmorClass < 0)
@@ -2532,4 +2548,20 @@ BOOL DMCharSheetDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	InvalidateRect(NULL);
 
 	return CDialog::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+
+void DMCharSheetDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	if (point.x >= 514 && point.x <= 700 && point.y >= 170 && point.y <= 340)
+	{
+		if (NULL != m_pPortraitBitmap)
+		{
+			cDMCharacterPortraitDialog *pDlg = new cDMCharacterPortraitDialog(m_pPortraitBitmap);
+			pDlg->DoModal();
+			delete pDlg;
+		}
+	}
+
+	CDialog::OnLButtonDblClk(nFlags, point);
 }

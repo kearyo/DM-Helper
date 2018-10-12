@@ -204,6 +204,15 @@
     <ClCompile Include="cDMWeatherDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cDMPDFViewDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pdfviewerctrl1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMCharacterPortraitDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -406,6 +415,15 @@
     <ClInclude Include="cDMWeatherDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cDMPDFViewDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pdfviewerctrl1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMCharacterPortraitDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\bitmap2.bmp">
@@ -565,6 +583,18 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\char_sheet_base.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\wide_left_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\wide_right_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\zoom_in_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\zoom_out_button.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

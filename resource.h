@@ -154,6 +154,13 @@
 #define IDD_WEATHER_DIALOG              275
 #define IDB_BITMAP2                     276
 #define IDB_RAIN_SPLAT_BITMAP           276
+#define IDD_PDF_VIEW_DIALOG             278
+#define IDB_WIDE_LEFT_BUTTON_BITMAP     280
+#define IDB_WIDE_RIGHT_BUTTON_BITMAP    281
+#define IDB_ZOOM_IN_BUTTON_BITMAP       282
+#define IDB_ZOOM_OUT_BUTTON_BITMAP      283
+#define IDD_DIALOG4                     284
+#define IDD_CHARACTER_PORTRAIT_DIALOG   284
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -236,16 +243,20 @@
 #define IDC_SOUND_BUTTON4               1044
 #define IDC_WEAPON_PLUS_EDIT_3          1044
 #define IDC_HP_EDIT_1_1                 1044
+#define IDC_PAGE_FWD_BUTTON             1044
 #define IDC_SOUND_BUTTON5               1045
 #define IDC_WEAPON_COMBO_4              1045
 #define IDC_HP_EDIT_1_2                 1045
+#define IDC_ZOOM_IN_BUTTON              1045
 #define IDC_SOUND_BUTTON6               1046
 #define IDC_WEAPON_PLUS_EDIT_4          1046
 #define IDC_HP_EDIT_1_3                 1046
+#define IDC_ZOOM_OUT_BUTTON             1046
 #define IDC_SOUND_BUTTON7               1047
 #define IDC_LOAD                        1047
 #define IDC_HP_EDIT_1_4                 1047
 #define IDC_NPC_PORTRAIT_BUTTON         1047
+#define IDC_SEARCH_BUTTON               1047
 #define IDC_SOUND_BUTTON8               1048
 #define IDC_SAVE                        1048
 #define IDC_HP_EDIT_1_5                 1048
@@ -1117,6 +1128,10 @@
 #define IDC_EFFECT_NAME_EDIT            1567
 #define IDC_EFFECT_GFX_EDIT             1568
 #define IDC_SOUND_FX_COMBO              1569
+#define IDC_PAGE_STATIC                 1571
+#define IDC_PAGE_EDIT                   1572
+#define IDC_SEARCH_EDIT                 1573
+#define IDC_DMG_BUTTON                  1575
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1142,14 +1157,21 @@
 #define ID_CUSTOMIZATIONS_CUSTOMWEAPONEDITOR 32793
 #define ID_SUBPARTIES_SORTSUBPARTIES    32794
 #define ID_SUBPARTIES_SORTSUBPARTIESNUMERICALLY 32795
+#define ID_DMLIBRARY_DUNGEONMASTER      32796
+#define ID_DMLIBRARY_PLAYER             32797
+#define ID_DMLIBRARY_MONSTERMANUAL      32798
+#define ID_DMLIBRARY_MONSTERMANUAL2     32799
+#define ID_DMLIBRARY_FIENDFOLIO         32800
+#define ID_DMLIBRARY_UNEARTHEDARCANA    32801
+#define ID_DMLIBRARY_FROMFILE           32802
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        278
-#define _APS_NEXT_COMMAND_VALUE         32796
-#define _APS_NEXT_CONTROL_VALUE         1570
+#define _APS_NEXT_RESOURCE_VALUE        286
+#define _APS_NEXT_COMMAND_VALUE         32803
+#define _APS_NEXT_CONTROL_VALUE         1576
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
