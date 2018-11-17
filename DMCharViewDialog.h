@@ -166,6 +166,7 @@ public:
 	void Refresh();
 
 	cDNDCharacter *LoadCharacter();
+	void InitClassListBox();
 	void PrePositionWindow();
 	BOOL LoadCharacterFromFile(char *szFileName);
 	void SaveExternal();
@@ -442,6 +443,8 @@ public:
 	afx_msg void OnEnChangeConcealedMoveEdit();
 	afx_msg void OnEnChangeClimbingMoveEdit();
 	afx_msg void OnEnChangeSpecialMoveEdit();
+	CComboBox m_cLightSourceCombo;
+	afx_msg void OnCbnSelchangeLightSourceCombo();
 };
 
 //{{AFX_INSERT_LOCATION}}

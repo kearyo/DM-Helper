@@ -161,6 +161,7 @@
 #define IDB_ZOOM_OUT_BUTTON_BITMAP      283
 #define IDD_DIALOG4                     284
 #define IDD_CHARACTER_PORTRAIT_DIALOG   284
+#define IDD_CUSTOM_CLASS_DIALOG         286
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -719,6 +720,7 @@
 #define IDC_SOUND_BUTTON_17             1199
 #define IDC_SNOW_CHECK                  1199
 #define IDC_SOUND_BUTTON_18             1200
+#define IDC_SEL_PARTY_CHECK             1200
 #define IDC_SOUND_BUTTON_19             1201
 #define IDC_SOUND_BUTTON_20             1202
 #define IDC_SOUND_BUTTON_21             1203
@@ -838,6 +840,7 @@
 #define IDC_HEAL_PARTY_BUTTON2          1356
 #define IDC_VERSION_STATIC              1356
 #define IDC_LOG_EVENT_BUTTON            1356
+#define IDC_PARTY_CHARACTERS_BUTTON     1356
 #define IDC_PARTY_INITIATIVE_BUTTON     1357
 #define IDC_CHARSHEET_SLIDER            1360
 #define IDC_D20_BUTTON                  1361
@@ -909,8 +912,11 @@
 #define IDC_ROLL_TARGETS_BUTTON         1405
 #define IDC_WEATHER_CHECK               1406
 #define IDC_COMELINESS_STATIC           1406
+#define IDC_HIT_BUTTON                  1406
 #define IDC_TYPE_RADIO1                 1407
+#define IDC_MISS_BUTTON                 1407
 #define IDC_TYPE_RADIO2                 1408
+#define IDC_SPELL_BUTTON                1408
 #define IDC_TYPE_RADIO3                 1409
 #define IDC_TYPE_RADIO4                 1410
 #define IDC_TYPE_RADIO5                 1411
@@ -956,24 +962,30 @@
 #define IDC_DELETE_FILE_CHECK           1440
 #define IDC_FILETYPES_CHECK             1440
 #define IDC_SFX_CYCLE_CHECK             1440
+#define IDC_PREREQ_ATTRIB_CHECK_0       1440
 #define IDC_PP_BUTTON                   1441
 #define IDC_GRID_CHECK                  1441
 #define IDC_EMPATH_CHECK                1441
 #define IDC_RATIONS_CHECK               1441
 #define IDC_KEEN_EARED_CHECK2           1441
 #define IDC_AMMO_CHECK                  1441
+#define IDC_PREREQ_ATTRIB_CHECK_1       1441
 #define IDC_GP_BUTTON                   1442
 #define IDC_PARTY_NAME_STATIC           1442
 #define IDC_SPEECH_CHECK                1442
 #define IDC_SWORD_CHECK                 1442
+#define IDC_PREREQ_ATTRIB_CHECK_2       1442
 #define IDC_EP_BUTTON                   1443
 #define IDC_ENCOUNTER_LIST              1443
 #define IDC_TELEPATH_CHECK              1443
 #define IDC_EXCEPT_STR_CHECK            1443
+#define IDC_PREREQ_ATTRIB_CHECK_3       1443
 #define IDC_SP_BUTTON                   1444
 #define IDC_ROLL_PARTY_STATIC           1444
+#define IDC_PREREQ_ATTRIB_CHECK_4       1444
 #define IDC_CP_BUTTON                   1445
 #define IDC_LEVEL_COMBO                 1445
+#define IDC_PREREQ_ATTRIB_CHECK_5       1445
 #define IDC_ALL_COINS_BUTTON            1446
 #define IDC_TABLE_COMBO                 1446
 #define IDC_TYPE_COMBO                  1446
@@ -1041,6 +1053,7 @@
 #define IDC_NEW_SPELL_BUTTON            1491
 #define IDC_DESC_COMBO                  1491
 #define IDC_NEW_ARMOR_BUTTON            1491
+#define IDC_LIGHT_SOURCE_COMBO          1491
 #define IDC_ALL_RADIO                   1492
 #define IDC_MONSTER_AC_EDIT             1492
 #define IDC_DELETE_ARMOR_BUTTON         1492
@@ -1116,6 +1129,7 @@
 #define IDC_DEBUG_TEXT                  1561
 #define IDC_EDIT_LAYER_3                1562
 #define IDC_TILE_HEIGHT_SLIDER          1562
+#define IDC_ATTACKS_TEXT                1562
 #define IDC_EDIT_LAYER_4                1563
 #define IDC_TILE_HEIGHT_STATIC          1563
 #define IDC_DELETE_LAYER_1              1564
@@ -1132,6 +1146,63 @@
 #define IDC_PAGE_EDIT                   1572
 #define IDC_SEARCH_EDIT                 1573
 #define IDC_DMG_BUTTON                  1575
+#define IDC_CLASS_NAME_COMBO            1576
+#define IDC_HD_TYPE_EDIT                1577
+#define IDC_BASE_LEVEL_XP_EDIT_1        1578
+#define IDC_MAX_LEVEL_XP_EDIT_1         1579
+#define IDC_HD_LEVEL_EDIT_1             1580
+#define IDC_BASE_LEVEL_XP_EDIT_2        1581
+#define IDC_MAX_LEVEL_XP_EDIT_2         1582
+#define IDC_HD_LEVEL_EDIT_2             1583
+#define IDC_BASE_LEVEL_XP_EDIT_3        1584
+#define IDC_MAX_LEVEL_XP_EDIT_3         1585
+#define IDC_HD_LEVEL_EDIT_3             1586
+#define IDC_BASE_LEVEL_XP_EDIT_4        1587
+#define IDC_MAX_LEVEL_XP_EDIT_4         1588
+#define IDC_HD_LEVEL_EDIT_4             1589
+#define IDC_BASE_LEVEL_XP_EDIT_5        1590
+#define IDC_MAX_LEVEL_XP_EDIT_5         1591
+#define IDC_HD_LEVEL_EDIT_5             1592
+#define IDC_BASE_LEVEL_XP_EDIT_6        1593
+#define IDC_MAX_LEVEL_XP_EDIT_6         1594
+#define IDC_HD_LEVEL_EDIT_6             1595
+#define IDC_BASE_LEVEL_XP_EDIT_7        1596
+#define IDC_MAX_LEVEL_XP_EDIT_7         1597
+#define IDC_HD_LEVEL_EDIT_7             1598
+#define IDC_BASE_LEVEL_XP_EDIT_8        1599
+#define IDC_MAX_LEVEL_XP_EDIT_8         1600
+#define IDC_HD_LEVEL_EDIT_8             1601
+#define IDC_BASE_LEVEL_XP_EDIT_9        1602
+#define IDC_MAX_LEVEL_XP_EDIT_9         1603
+#define IDC_HD_LEVEL_EDIT_9             1604
+#define IDC_BASE_LEVEL_XP_EDIT_10       1605
+#define IDC_MAX_LEVEL_XP_EDIT_10        1606
+#define IDC_HD_LEVEL_EDIT_10            1607
+#define IDC_BASE_LEVEL_XP_EDIT_11       1608
+#define IDC_MAX_LEVEL_XP_EDIT_11        1609
+#define IDC_HD_LEVEL_EDIT_11            1610
+#define IDC_BASE_LEVEL_XP_EDIT_12       1611
+#define IDC_MAX_LEVEL_XP_EDIT_12        1612
+#define IDC_HD_LEVEL_EDIT_12            1613
+#define IDC_MAX_LEVEL_XP_EDIT           1614
+#define IDC_HD_MAX_LEVEL_EDIT           1615
+#define IDC_HD_MIN_HP_EDIT              1616
+#define IDC_HD_MAX_HP_EDIT              1617
+#define IDC_SAVING_THROW_CLASS_COMBO    1618
+#define IDC_MAGIC_USE_CLASS_COMBO       1619
+#define IDC_MAGIC_LEVEL_EDIT            1620
+#define IDC_INIT_WEAPON_PROF_EDIT       1621
+#define IDC_COMBAT_CHART_COMBO          1622
+#define IDC_THIEF_SKILLS_CHECK          1623
+#define IDC_THIEF_LEVEL_EDIT            1624
+#define IDC_ASSASSIN_SKILLS_CHECK       1625
+#define IDC_ASSASSIN_LEVEL_EDIT         1626
+#define IDC_TURN_UNDEAD_CHECK           1627
+#define IDC_TURN_UNDEAD_LEVEL_EDIT      1628
+#define IDC_ADD_WEAPON_PROF_EDIT        1629
+#define IDC_ADD_WEAPON_PROF_LEVELS_EDIT 1630
+#define IDC_NON_WEAPON_PROF_PENALTY_EDIT 1631
+#define IDC_DEX_COMMENT_STATIC          1632
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1164,14 +1235,15 @@
 #define ID_DMLIBRARY_FIENDFOLIO         32800
 #define ID_DMLIBRARY_UNEARTHEDARCANA    32801
 #define ID_DMLIBRARY_FROMFILE           32802
+#define ID_CUSTOMIZATIONS_CUSTOMCLASSEDITOR 32803
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        286
-#define _APS_NEXT_COMMAND_VALUE         32803
-#define _APS_NEXT_CONTROL_VALUE         1576
+#define _APS_NEXT_RESOURCE_VALUE        287
+#define _APS_NEXT_COMMAND_VALUE         32804
+#define _APS_NEXT_CONTROL_VALUE         1633
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

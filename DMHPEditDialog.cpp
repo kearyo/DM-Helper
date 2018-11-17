@@ -198,6 +198,7 @@ BEGIN_MESSAGE_MAP(DMHPEditDialog, CDialog)
 	//{{AFX_MSG_MAP(DMHPEditDialog)
 	ON_WM_CLOSE()
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDOK, &DMHPEditDialog::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -235,6 +236,27 @@ BOOL DMHPEditDialog::OnInitDialog()
 					{
 						break;
 					}
+					#if CUSTOM_CLASSES
+					case DND_CHARACTER_CLASS_CUSTOM_1:
+					case DND_CHARACTER_CLASS_CUSTOM_2:
+					case DND_CHARACTER_CLASS_CUSTOM_3:
+					case DND_CHARACTER_CLASS_CUSTOM_4:
+					case DND_CHARACTER_CLASS_CUSTOM_5:
+					case DND_CHARACTER_CLASS_CUSTOM_6:
+					case DND_CHARACTER_CLASS_CUSTOM_7:
+					case DND_CHARACTER_CLASS_CUSTOM_8:
+					case DND_CHARACTER_CLASS_CUSTOM_9:
+					case DND_CHARACTER_CLASS_CUSTOM_10:
+					case DND_CHARACTER_CLASS_CUSTOM_11:
+					case DND_CHARACTER_CLASS_CUSTOM_12:
+					{
+						if (GetCustomClass(m_pCharacter->m_Class[j])->m_nFirstLevelHD > 1)
+						{
+							break;
+						}
+						continue;
+					}
+					#endif
 					default:
 					{
 						continue;
@@ -258,7 +280,7 @@ BOOL DMHPEditDialog::OnInitDialog()
 	}
 
 	CString szTemp;
-	szTemp.Format("Hitpoints - %s", m_pCharacter->m_szCharacterName);
+	szTemp.Format("Hitpoints per level - %s", m_pCharacter->m_szCharacterName);
 
 	SetWindowText(szTemp);
 
@@ -307,7 +329,6 @@ void DMHPEditDialog::OnCancel()
 
 void DMHPEditDialog::OnClose() 
 {
-	// TODO: Add your message handler code here and/or call default
 
 	if(m_pDMCharViewDialog != NULL)
 	{
@@ -315,4 +336,15 @@ void DMHPEditDialog::OnClose()
 	}
 	
 	CDialog::OnClose();
+}
+
+
+void DMHPEditDialog::OnBnClickedOk()
+{
+	if (m_pDMCharViewDialog != NULL)
+	{
+		m_pDMCharViewDialog->m_pHPEditDialog = NULL;
+	}
+	
+	CDialog::OnOK();
 }

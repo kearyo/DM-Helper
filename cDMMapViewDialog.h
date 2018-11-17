@@ -95,6 +95,8 @@ public:
 	int m_nY;
 
 	DWORD m_dwCharacterID;
+	int m_nLightRange;
+	DND_CHARACTER_VISION_TYPES m_VisionType;
 
 	CDMCharacterHotSpot()
 	{
@@ -102,6 +104,8 @@ public:
 		m_nY = 0;
 
 		m_dwCharacterID = 0L;
+		m_nLightRange = 0;
+		m_VisionType = DND_CHARACTER_VISION_UNDEF;
 	};
 
 	void Clear()
@@ -110,6 +114,8 @@ public:
 		m_nY = 0;
 
 		m_dwCharacterID = 0L;
+		m_nLightRange = 0;
+		m_VisionType = DND_CHARACTER_VISION_UNDEF;
 	};
 };
 
@@ -213,6 +219,7 @@ public:
 	void AddTile(int nTX, int nTY,  int nTile, int nRoomNumber, int nFlag);
 	void RemoveTile(int nTX, int nTY);
 	void ValidateTiles();
+	void UpdateCharacterHotspots();
 	void DrawChildMap(Graphics *graphics, cDNDMap *pDNDChildMap, int nX, int nY);
 	BOOL IsOnScreen(int nTX, int nTY, int nRange = 0);
 	void Translate2DCoordinatesToIsometric(int nMX, int nMY, float fViewScale, int *nIsoX, int *nIsoY);
@@ -229,6 +236,7 @@ public:
 	void DrawCharacterIcon(Graphics *pGraphics, int nX, int nY, char *szFileName, BOOL bReversed);
 	void DrawMonsterIcon(Graphics *pGraphics, int nX, int nY, cDNDNonPlayerCharacter *pNPC, BOOL bReversed);
 	void DrawTransparentBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha);
+	void DrawTransparentAlphaBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nCellX, int nCellY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha, BOOL bTransparent);
 	void UpdateDetachedMaps();
 	void SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2, BOOL bSyncSFX);
 
@@ -260,6 +268,7 @@ public:
 	DWORD m_dwDraggedPartyID;
 
 	cDNDCharacter *m_pSelectedCharacter;
+	cDNDCharacter *m_pMapCenteredCharacter;
 	DWORD m_dwDraggedCharacterID;
 	int m_nDraggedSFXIndex;
 	int m_nLastSFXPosX;
@@ -461,6 +470,8 @@ public:
 	CButton m_cSnowCheck;
 	BOOL m_bSnowCheck;
 	afx_msg void OnMove(int x, int y);
+	afx_msg void OnBnClickedPartyCharactersButton();
+	BOOL m_bShowSelectedPartyCheck;
 };
 
 

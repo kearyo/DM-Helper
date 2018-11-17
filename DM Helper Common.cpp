@@ -25,6 +25,9 @@ BOOL g_bUsed10Initiative;
 BOOL g_bUseSoundEffects;
 
 
+cDNDCustomClass _gCustomClass[12];	// yep global, so sue me
+
+
 WORD GetMinMapKey(CMapWordToPtr *pMap)
 {
 	WORD wMinWord = 0xFFFF;
@@ -2856,6 +2859,25 @@ int GetMaxHitDiceByClass(DND_CHARACTER_CLASSES nClass, int *nAdditionalHP)
 		case DND_CHARACTER_CLASS_THIEF:			*nAdditionalHP = 2; return 10;
 		case DND_CHARACTER_CLASS_THIEF_ACROBAT: *nAdditionalHP = 2; return 10;
 		case DND_CHARACTER_CLASS_ASSASSIN:		*nAdditionalHP = 1; return 15;	
+
+		#if CUSTOM_CLASSES
+		case DND_CHARACTER_CLASS_CUSTOM_1:
+		case DND_CHARACTER_CLASS_CUSTOM_2:
+		case DND_CHARACTER_CLASS_CUSTOM_3:
+		case DND_CHARACTER_CLASS_CUSTOM_4:
+		case DND_CHARACTER_CLASS_CUSTOM_5:
+		case DND_CHARACTER_CLASS_CUSTOM_6:
+		case DND_CHARACTER_CLASS_CUSTOM_7:
+		case DND_CHARACTER_CLASS_CUSTOM_8:
+		case DND_CHARACTER_CLASS_CUSTOM_9:
+		case DND_CHARACTER_CLASS_CUSTOM_10:
+		case DND_CHARACTER_CLASS_CUSTOM_11:
+		case DND_CHARACTER_CLASS_CUSTOM_12:
+		{
+																								
+			*nAdditionalHP = GetCustomClass(nClass)->m_nMaxChartLevelHP; return GetCustomClass(nClass)->m_nMaxChartHPLevel;
+		}
+		#endif
 	}
 
 	return 1;
@@ -2881,6 +2903,23 @@ BOOL IsBaseClass(DND_CHARACTER_CLASSES nClass)
 
 BOOL ClassIsValidMultiClass(DND_CHARACTER_CLASSES nClass1, DND_CHARACTER_CLASSES nClass2)
 {
+	#if CUSTOM_CLASSES
+	if (IsCustomClass(nClass1) || IsCustomClass(nClass2))
+	{
+		if (nClass1 == nClass2)
+		{
+			return FALSE;
+		}
+
+		if (IsDefinedClass((DND_CHARACTER_CLASSES)nClass2) == FALSE)
+		{
+			return FALSE;
+		}
+
+		return TRUE;
+	}
+	#endif
+
 	switch(nClass1)
 	{
 		case DND_CHARACTER_CLASS_FIGHTER:
@@ -3020,6 +3059,24 @@ int GetHitDieTypeByClass(DND_CHARACTER_CLASSES nClass)
 		case DND_CHARACTER_CLASS_THIEF:			return 6;	
 		case DND_CHARACTER_CLASS_THIEF_ACROBAT: return 6;
 		case DND_CHARACTER_CLASS_ASSASSIN:		return 6;
+
+		#if CUSTOM_CLASSES
+		case DND_CHARACTER_CLASS_CUSTOM_1:
+		case DND_CHARACTER_CLASS_CUSTOM_2:
+		case DND_CHARACTER_CLASS_CUSTOM_3:
+		case DND_CHARACTER_CLASS_CUSTOM_4:
+		case DND_CHARACTER_CLASS_CUSTOM_5:
+		case DND_CHARACTER_CLASS_CUSTOM_6:
+		case DND_CHARACTER_CLASS_CUSTOM_7:
+		case DND_CHARACTER_CLASS_CUSTOM_8:
+		case DND_CHARACTER_CLASS_CUSTOM_9:
+		case DND_CHARACTER_CLASS_CUSTOM_10:
+		case DND_CHARACTER_CLASS_CUSTOM_11:
+		case DND_CHARACTER_CLASS_CUSTOM_12:
+		{
+			return GetCustomClass(nClass)->m_nHitDieType;
+		}
+		#endif
 	}
 
 	return 6;
@@ -3027,6 +3084,41 @@ int GetHitDieTypeByClass(DND_CHARACTER_CLASSES nClass)
 
 BOOL CharacterIsFighter(cDNDCharacter *pCharacter)
 {
+	#if CUSTOM_CLASSES
+	for (int i = 0; i < 3; ++i)
+	{
+		switch (pCharacter->m_Class[i])
+		{
+			case DND_CHARACTER_CLASS_FIGHTER:		
+			case DND_CHARACTER_CLASS_RANGER:		
+			case DND_CHARACTER_CLASS_CAVALIER:	
+			case DND_CHARACTER_CLASS_PALADIN:		
+			case DND_CHARACTER_CLASS_BARBARIAN:
+			case DND_CHARACTER_CLASS_MONSTER:
+			{
+				return TRUE;
+			}
+			case DND_CHARACTER_CLASS_CUSTOM_1:
+			case DND_CHARACTER_CLASS_CUSTOM_2:
+			case DND_CHARACTER_CLASS_CUSTOM_3:
+			case DND_CHARACTER_CLASS_CUSTOM_4:
+			case DND_CHARACTER_CLASS_CUSTOM_5:
+			case DND_CHARACTER_CLASS_CUSTOM_6:
+			case DND_CHARACTER_CLASS_CUSTOM_7:
+			case DND_CHARACTER_CLASS_CUSTOM_8:
+			case DND_CHARACTER_CLASS_CUSTOM_9:
+			case DND_CHARACTER_CLASS_CUSTOM_10:
+			case DND_CHARACTER_CLASS_CUSTOM_11:
+			case DND_CHARACTER_CLASS_CUSTOM_12:
+			{
+				if(GetCustomClass(pCharacter->m_Class[i])->m_CombatClass == DND_CHARACTER_CLASS_FIGHTER)
+				{
+					return TRUE;
+				}
+			}
+		}
+	}
+	#else
 	switch(pCharacter->m_Class[0])
 	{
 		case DND_CHARACTER_CLASS_FIGHTER:		
@@ -3063,6 +3155,7 @@ BOOL CharacterIsFighter(cDNDCharacter *pCharacter)
 			return TRUE;
 		}
 	}
+	#endif
 
 
 	return FALSE;
@@ -3072,6 +3165,42 @@ BOOL CharacterIsFighter(cDNDCharacter *pCharacter)
 int GetFighterClass(cDNDCharacter *pCharacter)
 {
 
+	#if CUSTOM_CLASSES
+	for(int i = 0; i < 3; ++i)
+	{
+		switch(pCharacter->m_Class[i])
+		{
+			case DND_CHARACTER_CLASS_FIGHTER:		
+			case DND_CHARACTER_CLASS_RANGER:		
+			case DND_CHARACTER_CLASS_CAVALIER:	
+			case DND_CHARACTER_CLASS_PALADIN:		
+			case DND_CHARACTER_CLASS_BARBARIAN:
+			case DND_CHARACTER_CLASS_MONSTER:
+			{
+				return i;
+			}
+			case DND_CHARACTER_CLASS_CUSTOM_1:
+			case DND_CHARACTER_CLASS_CUSTOM_2:
+			case DND_CHARACTER_CLASS_CUSTOM_3:
+			case DND_CHARACTER_CLASS_CUSTOM_4:
+			case DND_CHARACTER_CLASS_CUSTOM_5:
+			case DND_CHARACTER_CLASS_CUSTOM_6:
+			case DND_CHARACTER_CLASS_CUSTOM_7:
+			case DND_CHARACTER_CLASS_CUSTOM_8:
+			case DND_CHARACTER_CLASS_CUSTOM_9:
+			case DND_CHARACTER_CLASS_CUSTOM_10:
+			case DND_CHARACTER_CLASS_CUSTOM_11:
+			case DND_CHARACTER_CLASS_CUSTOM_12:
+			{
+				if(GetCustomClass(pCharacter->m_Class[i])->m_CombatClass == DND_CHARACTER_CLASS_FIGHTER)
+				{
+					return i;
+				}
+			}
+		}
+
+	}
+	#else
 	switch(pCharacter->m_Class[0])
 	{
 		case DND_CHARACTER_CLASS_FIGHTER:		
@@ -3107,6 +3236,7 @@ int GetFighterClass(cDNDCharacter *pCharacter)
 			return 2;
 		}
 	}
+	#endif
 
 	return -1;
 }
@@ -3197,10 +3327,80 @@ char *GetRaceName(DND_CHARACTER_RACES nRace)
 	return "Undefined";
 }
 
+BOOL IsDefinedClass(DND_CHARACTER_CLASSES nClass)
+{
+	//_gCustomClass[0].m_bClassDefined = TRUE;
 
+	switch (nClass)
+	{
+		case DND_CHARACTER_CLASS_FIGHTER:	
+		case DND_CHARACTER_CLASS_RANGER:		
+		case DND_CHARACTER_CLASS_CAVALIER:	
+		case DND_CHARACTER_CLASS_PALADIN:	
+		case DND_CHARACTER_CLASS_BARBARIAN:	
+
+		case DND_CHARACTER_CLASS_CLERIC:	
+		case DND_CHARACTER_CLASS_DRUID:		
+		case DND_CHARACTER_CLASS_MONK:			
+
+		case DND_CHARACTER_CLASS_MAGE:			
+		case DND_CHARACTER_CLASS_ILLUSIONIST:	
+
+		case DND_CHARACTER_CLASS_THIEF:			
+		case DND_CHARACTER_CLASS_THIEF_ACROBAT:	
+		case DND_CHARACTER_CLASS_ASSASSIN:
+		{
+			return TRUE;
+		}
+
+		#if CUSTOM_CLASSES
+		case DND_CHARACTER_CLASS_CUSTOM_1:
+		case DND_CHARACTER_CLASS_CUSTOM_2:
+		case DND_CHARACTER_CLASS_CUSTOM_3:
+		case DND_CHARACTER_CLASS_CUSTOM_4:
+		case DND_CHARACTER_CLASS_CUSTOM_5:
+		case DND_CHARACTER_CLASS_CUSTOM_6:
+		case DND_CHARACTER_CLASS_CUSTOM_7:
+		case DND_CHARACTER_CLASS_CUSTOM_8:
+		case DND_CHARACTER_CLASS_CUSTOM_9:
+		case DND_CHARACTER_CLASS_CUSTOM_10:
+		case DND_CHARACTER_CLASS_CUSTOM_11:
+		case DND_CHARACTER_CLASS_CUSTOM_12:
+		{
+			return GetCustomClass(nClass)->m_bClassDefined;
+		}
+		#endif
+	}
+
+	return FALSE;
+}
+
+char *GetUndefClassName(DND_CHARACTER_CLASSES nClass)
+{
+	#if CUSTOM_CLASSES
+	switch (nClass)
+	{
+		case DND_CHARACTER_CLASS_CUSTOM_1:	return "CUSTOM CLASS 1";
+		case DND_CHARACTER_CLASS_CUSTOM_2:	return "CUSTOM CLASS 2";
+		case DND_CHARACTER_CLASS_CUSTOM_3:	return "CUSTOM CLASS 3";
+		case DND_CHARACTER_CLASS_CUSTOM_4:	return "CUSTOM CLASS 4";
+		case DND_CHARACTER_CLASS_CUSTOM_5:	return "CUSTOM CLASS 5";
+		case DND_CHARACTER_CLASS_CUSTOM_6:	return "CUSTOM CLASS 6";
+		case DND_CHARACTER_CLASS_CUSTOM_7:	return "CUSTOM CLASS 7";
+		case DND_CHARACTER_CLASS_CUSTOM_8:	return "CUSTOM CLASS 8";
+		case DND_CHARACTER_CLASS_CUSTOM_9:	return "CUSTOM CLASS 9";
+		case DND_CHARACTER_CLASS_CUSTOM_10:	return "CUSTOM CLASS 10";
+		case DND_CHARACTER_CLASS_CUSTOM_11:	return "CUSTOM CLASS 11";
+		case DND_CHARACTER_CLASS_CUSTOM_12:	return "CUSTOM CLASS 12";
+	}
+	#endif
+
+	return "UNDEF";
+}
 
 char *GetClassName(DND_CHARACTER_CLASSES nClass)
 {
+	//strcpy(_gCustomClass[0].m_szClassName, "Ninja");
 
 	switch(nClass)
 	{
@@ -3220,6 +3420,31 @@ char *GetClassName(DND_CHARACTER_CLASSES nClass)
 		case DND_CHARACTER_CLASS_THIEF:			return("Thief");
 		case DND_CHARACTER_CLASS_THIEF_ACROBAT:	return("Thief Acrobat");
 		case DND_CHARACTER_CLASS_ASSASSIN:		return("Assassin");
+
+		#if CUSTOM_CLASSES
+		case DND_CHARACTER_CLASS_CUSTOM_1:
+		case DND_CHARACTER_CLASS_CUSTOM_2:
+		case DND_CHARACTER_CLASS_CUSTOM_3:
+		case DND_CHARACTER_CLASS_CUSTOM_4:
+		case DND_CHARACTER_CLASS_CUSTOM_5:
+		case DND_CHARACTER_CLASS_CUSTOM_6:
+		case DND_CHARACTER_CLASS_CUSTOM_7:
+		case DND_CHARACTER_CLASS_CUSTOM_8:
+		case DND_CHARACTER_CLASS_CUSTOM_9:
+		case DND_CHARACTER_CLASS_CUSTOM_10:
+		case DND_CHARACTER_CLASS_CUSTOM_11:
+		case DND_CHARACTER_CLASS_CUSTOM_12:
+		{
+			if (IsDefinedClass(nClass))
+			{
+				return GetCustomClass(nClass)->m_szClassName;
+			}
+			else
+			{
+				return GetUndefClassName(nClass);
+			}
+		}
+		#endif
 	}
 
 
@@ -3598,6 +3823,31 @@ void GetMinimumStatsByClass(cDNDCharacter *pCharacter, int *nMinStats)
 
 			break;
 		}
+		#if CUSTOM_CLASSES
+		case DND_CHARACTER_CLASS_CUSTOM_1:
+		case DND_CHARACTER_CLASS_CUSTOM_2:
+		case DND_CHARACTER_CLASS_CUSTOM_3:
+		case DND_CHARACTER_CLASS_CUSTOM_4:
+		case DND_CHARACTER_CLASS_CUSTOM_5:
+		case DND_CHARACTER_CLASS_CUSTOM_6:
+		case DND_CHARACTER_CLASS_CUSTOM_7:
+		case DND_CHARACTER_CLASS_CUSTOM_8:
+		case DND_CHARACTER_CLASS_CUSTOM_9:
+		case DND_CHARACTER_CLASS_CUSTOM_10:
+		case DND_CHARACTER_CLASS_CUSTOM_11:
+		case DND_CHARACTER_CLASS_CUSTOM_12:
+		{
+			nMinStats[0] = GetCustomClass(pCharacter->m_Class[0])->m_nMinAttributes[0];  //STR
+			nMinStats[1] = GetCustomClass(pCharacter->m_Class[0])->m_nMinAttributes[1];  //INT
+			nMinStats[2] = GetCustomClass(pCharacter->m_Class[0])->m_nMinAttributes[2];  //WIS
+			nMinStats[3] = GetCustomClass(pCharacter->m_Class[0])->m_nMinAttributes[3];  //DEX
+			nMinStats[4] = GetCustomClass(pCharacter->m_Class[0])->m_nMinAttributes[4];  //CON
+			nMinStats[5] = GetCustomClass(pCharacter->m_Class[0])->m_nMinAttributes[5];	 //CHA
+			nMinStats[6] = 0;
+
+			break;
+		}
+		#endif
 
 	}
 
@@ -3618,6 +3868,7 @@ BOOL GrantCharacterEarnedExperience(cDNDCharacter *pCharacter)
 	pCharacter->m_lEarnedXP = min(pCharacter->m_lEarnedXP, 10000000L);
 
 	//calculate bonuses
+
 
 	int nClasses = 0;
 	for(int i = 0; i < 3; ++i)
@@ -4152,6 +4403,34 @@ LONG GetExperiencePointsForLevelByClass(DND_CHARACTER_CLASSES nClass, int nLevel
 
 			break;
 		}
+
+		#if CUSTOM_CLASSES
+		case DND_CHARACTER_CLASS_CUSTOM_1:
+		case DND_CHARACTER_CLASS_CUSTOM_2:
+		case DND_CHARACTER_CLASS_CUSTOM_3:
+		case DND_CHARACTER_CLASS_CUSTOM_4:
+		case DND_CHARACTER_CLASS_CUSTOM_5:
+		case DND_CHARACTER_CLASS_CUSTOM_6:
+		case DND_CHARACTER_CLASS_CUSTOM_7:
+		case DND_CHARACTER_CLASS_CUSTOM_8:
+		case DND_CHARACTER_CLASS_CUSTOM_9:
+		case DND_CHARACTER_CLASS_CUSTOM_10:
+		case DND_CHARACTER_CLASS_CUSTOM_11:
+		case DND_CHARACTER_CLASS_CUSTOM_12:
+		{
+			if (nLevel < GetCustomClass(nClass)->m_nMaxChartLevel)
+			{
+				lRetVal = GetCustomClass(nClass)->m_lXPLevel[nLevel];
+			}
+			else
+			{
+				nLevel -= GetCustomClass(nClass)->m_nMaxChartLevel;
+				lRetVal = GetCustomClass(nClass)->m_lXPLevel[max(nLevel - 1, 0)] + nLevel * GetCustomClass(nClass)->m_lMaxChartLevelXP;
+			}
+
+			break;
+		}
+		#endif
 	}
 
 	return lRetVal;
@@ -4826,7 +5105,18 @@ void GetToHitChart(cDNDCharacter *pCharacter, int *pnAttackMatrix)
 
 	int nCol = 0;
 
+	#if CUSTOM_CLASSES
+	DND_CHARACTER_CLASSES nCombatClass = pCharacter->m_Class[0];
+
+	if (IsCustomClass(nCombatClass))
+	{
+		nCombatClass = GetCustomClass(nCombatClass)->m_CombatClass;
+	}
+
+	switch (nCombatClass)
+	#else
 	switch(pCharacter->m_Class[0])
+	#endif
 	{
 		case DND_CHARACTER_CLASS_CLERIC:
 		case DND_CHARACTER_CLASS_DRUID:
@@ -4951,7 +5241,7 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 		{	13,		12,		11,		10,		 9,		8}, 	//Paralyzation, Poison, Death Magic
 		{	12,		11,		10,		 9,		 8,		7}, 	//Petrification or Polymorph
 		{	14,		12,		10,		 8,		 6,		4}, 	//Rod, Staff or Wand
-		{	16,		15,		14,		13,		12,		11},		//Breath Weapon
+		{	16,		15,		14,		13,		12,		11},	//Breath Weapon
 		{	15,		13,		11,		 9,		 7,		5}, 	//Spell
 	};
 
@@ -4978,7 +5268,19 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 
 	int nClassLevel = pCharacter->m_nDualClassClass;
 
+	#if CUSTOM_CLASSES
+
+	DND_CHARACTER_CLASSES nSaveClass = pCharacter->m_Class[nClassLevel];
+
+	if (IsCustomClass(nSaveClass))
+	{
+		nSaveClass = GetCustomClass(nSaveClass)->m_SavingThrowClass;
+	}
+
+	switch(nSaveClass)
+	#else
 	switch (pCharacter->m_Class[nClassLevel])
+	#endif
 	{
 		case DND_CHARACTER_CLASS_CLERIC:
 		case DND_CHARACTER_CLASS_DRUID:
@@ -5022,6 +5324,40 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 			{
 				pnSaveMatrix[i] = _ThiefSaves[i][nCol];
 			}
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_PALADIN:
+		{
+			if (pCharacter->m_nLevel[nClassLevel] > 0)
+			{
+				nCol = min(pCharacter->m_nLevel[nClassLevel] - 1 + nSaveAdjust, 17) / 2 + 1;
+			}
+
+			if (nCol < 0) nCol = 0;
+
+			for (int i = 0; i < 5; ++i)
+			{
+				pnSaveMatrix[i] = max(_FighterSaves[i][nCol] - 2, 1);
+			}
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_BARBARIAN:
+		{
+			if (pCharacter->m_nLevel[nClassLevel] > 0)
+			{
+				nCol = min(pCharacter->m_nLevel[nClassLevel] - 1 + nSaveAdjust, 17) / 2 + 1;
+			}
+
+			if (nCol < 0) nCol = 0;
+
+			pnSaveMatrix[0] = max(_FighterSaves[0][nCol] - 4, 1);	//Paralyzation, Poison, Death Magic		+4 (yes fudged a little)
+			pnSaveMatrix[1] = max(_FighterSaves[1][nCol] - 3, 1);	//Petrification or Polymorph	+3
+			pnSaveMatrix[2] = max(_FighterSaves[2][nCol] - 2, 1);	//Rod, Staff or Wand	+2
+			pnSaveMatrix[3] = max(_FighterSaves[3][nCol] - 2, 1);	//Breath Weapon	+2
+			pnSaveMatrix[4] = max(_FighterSaves[4][nCol] - pCharacter->m_nLevel[nClassLevel] / 4, 1);	//Spell + nLevel / 4
+
 			break;
 		}
 
@@ -5077,6 +5413,12 @@ BOOL GetTurnUndeadMatrix(cDNDCharacter *pCharacter, int *pnTurnMatrix)
 			nTurnLevel = pCharacter->m_nLevel[i] - 2;
 			break;
 		}
+		#if CUSTOM_CLASSES
+		if (IsCustomClass(pCharacter->m_Class[i]) && GetCustomClass(pCharacter->m_Class[i])->m_bTurnUndead)
+		{
+			nTurnLevel = pCharacter->m_nLevel[i] - (GetCustomClass(pCharacter->m_Class[i])->m_nTurnUndeadLevel - 1);
+		}
+		#endif
 	}
 
 	if(nTurnLevel <= 0)
@@ -5141,13 +5483,36 @@ void GetThiefSkills(cDNDCharacter *pCharacter, float *pfThiefSkillMatrix)
 				break;
 			}
 
-			
 			case DND_CHARACTER_CLASS_ASSASSIN:
 			{
 				nThiefClass = pCharacter->m_Class[i];
 				nThiefLevel = pCharacter->m_nLevel[i]-2;
 				break;
 			}
+
+			#if CUSTOM_CLASSES
+			case DND_CHARACTER_CLASS_CUSTOM_1:
+			case DND_CHARACTER_CLASS_CUSTOM_2:
+			case DND_CHARACTER_CLASS_CUSTOM_3:
+			case DND_CHARACTER_CLASS_CUSTOM_4:
+			case DND_CHARACTER_CLASS_CUSTOM_5:
+			case DND_CHARACTER_CLASS_CUSTOM_6:
+			case DND_CHARACTER_CLASS_CUSTOM_7:
+			case DND_CHARACTER_CLASS_CUSTOM_8:
+			case DND_CHARACTER_CLASS_CUSTOM_9:
+			case DND_CHARACTER_CLASS_CUSTOM_10:
+			case DND_CHARACTER_CLASS_CUSTOM_11:
+			case DND_CHARACTER_CLASS_CUSTOM_12:
+			{
+				if (GetCustomClass(pCharacter->m_Class[i])->m_bThiefSkills)
+				{
+					nThiefClass = DND_CHARACTER_CLASS_THIEF;
+					nThiefLevel = pCharacter->m_nLevel[i] - (GetCustomClass(pCharacter->m_Class[i])->m_nThiefLevel - 1);
+				}
+
+				break;
+			}
+			#endif
 		}
 	}
 
@@ -5450,6 +5815,29 @@ int GetAssassinationTable(cDNDCharacter *pCharacter, int *pnAssassinationMatrix)
 				nAssassinLevel = pCharacter->m_nLevel[i];
 				break;
 			}
+			#if CUSTOM_CLASSES
+			case DND_CHARACTER_CLASS_CUSTOM_1:
+			case DND_CHARACTER_CLASS_CUSTOM_2:
+			case DND_CHARACTER_CLASS_CUSTOM_3:
+			case DND_CHARACTER_CLASS_CUSTOM_4:
+			case DND_CHARACTER_CLASS_CUSTOM_5:
+			case DND_CHARACTER_CLASS_CUSTOM_6:
+			case DND_CHARACTER_CLASS_CUSTOM_7:
+			case DND_CHARACTER_CLASS_CUSTOM_8:
+			case DND_CHARACTER_CLASS_CUSTOM_9:
+			case DND_CHARACTER_CLASS_CUSTOM_10:
+			case DND_CHARACTER_CLASS_CUSTOM_11:
+			case DND_CHARACTER_CLASS_CUSTOM_12:
+			{
+				if (GetCustomClass(pCharacter->m_Class[i])->m_bAssassinSkills)
+				{
+					nAssassinClass = DND_CHARACTER_CLASS_ASSASSIN;
+					nAssassinLevel = pCharacter->m_nLevel[i] - (GetCustomClass(pCharacter->m_Class[i])->m_nAssassinLevel - 1);
+				}
+
+				break;
+			}
+			#endif
 		}
 	}
 
@@ -6180,6 +6568,60 @@ int CalculateExperienceBonus(cDNDCharacter *pCharacter, int nClass, int *pnNumCl
 				
 				break;
 			}
+			case DND_CHARACTER_CLASS_CAVALIER:
+			case DND_CHARACTER_CLASS_BARBARIAN:
+			case DND_CHARACTER_CLASS_THIEF_ACROBAT:
+			{
+				++nClasses;
+
+				break;
+			}
+			#if CUSTOM_CLASSES
+			case DND_CHARACTER_CLASS_CUSTOM_1:
+			case DND_CHARACTER_CLASS_CUSTOM_2:
+			case DND_CHARACTER_CLASS_CUSTOM_3:
+			case DND_CHARACTER_CLASS_CUSTOM_4:
+			case DND_CHARACTER_CLASS_CUSTOM_5:
+			case DND_CHARACTER_CLASS_CUSTOM_6:
+			case DND_CHARACTER_CLASS_CUSTOM_7:
+			case DND_CHARACTER_CLASS_CUSTOM_8:
+			case DND_CHARACTER_CLASS_CUSTOM_9:
+			case DND_CHARACTER_CLASS_CUSTOM_10:
+			case DND_CHARACTER_CLASS_CUSTOM_11:
+			case DND_CHARACTER_CLASS_CUSTOM_12:
+			{
+				++nClasses;
+
+				int nCountPrequisites = 0;
+				for (int j = 0; j < 6; ++j)
+				{
+					if (GetCustomClass(pCharacter->m_Class[i])->m_bPrerequisiteAttrib[j] == TRUE)
+					{
+						++nCountPrequisites;
+					}
+				}
+
+				int nPrequisiteCount = 0;
+				for (int j = 0; j < 6; ++j)
+				{
+					if (GetCustomClass(pCharacter->m_Class[i])->m_bPrerequisiteAttrib[j] == TRUE)
+					{
+						if (pCharacter->m_nDisplayStats[j] > 15)
+						{
+							++nPrequisiteCount;
+
+							if (nPrequisiteCount == nCountPrequisites)
+							{
+								nBonus += 10000;
+								break;
+							}
+						}
+					}
+				}
+
+				break;
+			}
+			#endif
 		}
 	}
 
@@ -6537,9 +6979,23 @@ char *CalculateAttacksPerRound(cDNDCharacter *pCharacter, BOOL bBase)
 			int nFighterClass = GetFighterClass(pCharacter);
 			int nLevel = pCharacter->m_nLevel[nFighterClass];
 
-			switch(pCharacter->m_Class[nFighterClass])
+			switch(pCharacter->m_Class[max(nFighterClass,0)])
 			{
 				case DND_CHARACTER_CLASS_FIGHTER:	// 1-6 1/1 7-12 3/2 13+ 2/1
+				#if CUSTOM_CLASSES
+				case DND_CHARACTER_CLASS_CUSTOM_1:
+				case DND_CHARACTER_CLASS_CUSTOM_2:
+				case DND_CHARACTER_CLASS_CUSTOM_3:
+				case DND_CHARACTER_CLASS_CUSTOM_4:
+				case DND_CHARACTER_CLASS_CUSTOM_5:
+				case DND_CHARACTER_CLASS_CUSTOM_6:
+				case DND_CHARACTER_CLASS_CUSTOM_7:
+				case DND_CHARACTER_CLASS_CUSTOM_8:
+				case DND_CHARACTER_CLASS_CUSTOM_9:
+				case DND_CHARACTER_CLASS_CUSTOM_10:
+				case DND_CHARACTER_CLASS_CUSTOM_11:
+				case DND_CHARACTER_CLASS_CUSTOM_12:
+				#endif
 				{
 					if(nLevel >= 13)
 					{
@@ -6634,17 +7090,27 @@ char *CalculateAttacksPerRound(cDNDCharacter *pCharacter, BOOL bBase)
 
 }
 
-DND_CHARACTER_CLASSES GetCombatClass(cDNDCharacter *pCharacter, int *pnCombatLevel)
+DND_CHARACTER_CLASSES GetCombatClass(cDNDCharacter *pCharacter, int *pnCombatLevel, int *pnClassIndex)
 {
 
 	DND_CHARACTER_CLASSES nRetClass = (DND_CHARACTER_CLASSES)999;
 
 	for(int i=0; i< 3;++i)
 	{
-		if(pCharacter->m_Class[i] && pCharacter->m_Class[i] < nRetClass)
+		DND_CHARACTER_CLASSES nClass = pCharacter->m_Class[i];
+
+		#if CUSTOM_CLASSES
+		if (IsCustomClass(nClass))
 		{
-			nRetClass = pCharacter->m_Class[i];
+			nClass = GetCustomClass(pCharacter->m_Class[i])->m_CombatClass;
+		}
+		#endif
+
+		if (nClass && nClass < nRetClass)
+		{
+			*pnClassIndex = i;
 			*pnCombatLevel = pCharacter->m_nLevel[i];
+			nRetClass = pCharacter->m_Class[i];
 		}
 	}
 
@@ -6657,7 +7123,8 @@ int CalculateWeaponProficiencies(cDNDCharacter *pCharacter, int *pnProfPenalty)
 	int nRetVal = -5;
 
 	int nCombatLevel = 0;
-	DND_CHARACTER_CLASSES nCombatClass = GetCombatClass(pCharacter, &nCombatLevel);
+	int nClassIndex = 0;
+	DND_CHARACTER_CLASSES nCombatClass = GetCombatClass(pCharacter, &nCombatLevel, &nClassIndex);
 
 	switch(nCombatClass)
 	{
@@ -6723,7 +7190,26 @@ int CalculateWeaponProficiencies(cDNDCharacter *pCharacter, int *pnProfPenalty)
 			nRetVal = 1 + nCombatLevel / 6;
 			*pnProfPenalty = -5;
 			break;
-		}		
+		}	
+		#if CUSTOM_CLASSES
+		case DND_CHARACTER_CLASS_CUSTOM_1:
+		case DND_CHARACTER_CLASS_CUSTOM_2:
+		case DND_CHARACTER_CLASS_CUSTOM_3:
+		case DND_CHARACTER_CLASS_CUSTOM_4:
+		case DND_CHARACTER_CLASS_CUSTOM_5:
+		case DND_CHARACTER_CLASS_CUSTOM_6:
+		case DND_CHARACTER_CLASS_CUSTOM_7:
+		case DND_CHARACTER_CLASS_CUSTOM_8:
+		case DND_CHARACTER_CLASS_CUSTOM_9:
+		case DND_CHARACTER_CLASS_CUSTOM_10:
+		case DND_CHARACTER_CLASS_CUSTOM_11:
+		case DND_CHARACTER_CLASS_CUSTOM_12:
+		{
+			nRetVal = GetCustomClass(pCharacter->m_Class[nClassIndex])->m_nInitialWeaponProf + nCombatLevel / max(1, GetCustomClass(pCharacter->m_Class[nClassIndex])->m_nAddWeaponProfLevels);
+			*pnProfPenalty = -GetCustomClass(pCharacter->m_Class[nClassIndex])->m_nNonWeaponProfPenalty;
+			break;
+		}
+		#endif
 	}
 
 	return nRetVal;
@@ -7380,6 +7866,36 @@ BOOL GetSpellClasses(cDNDCharacter *pCharacter)
 
 				break;
 			}
+			#if CUSTOM_CLASSES
+			case DND_CHARACTER_CLASS_CUSTOM_1:
+			case DND_CHARACTER_CLASS_CUSTOM_2:
+			case DND_CHARACTER_CLASS_CUSTOM_3:
+			case DND_CHARACTER_CLASS_CUSTOM_4:
+			case DND_CHARACTER_CLASS_CUSTOM_5:
+			case DND_CHARACTER_CLASS_CUSTOM_6:
+			case DND_CHARACTER_CLASS_CUSTOM_7:
+			case DND_CHARACTER_CLASS_CUSTOM_8:
+			case DND_CHARACTER_CLASS_CUSTOM_9:
+			case DND_CHARACTER_CLASS_CUSTOM_10:
+			case DND_CHARACTER_CLASS_CUSTOM_11:
+			case DND_CHARACTER_CLASS_CUSTOM_12:
+			{
+				DND_CHARACTER_CLASSES nSpellClass = GetCustomClass(pCharacter->m_Class[i])->m_MagicUseClass; 
+
+				if (nSpellClass != DND_CHARACTER_CLASS_UNDEF)
+				{
+					pCharacter->m_SpellClasses[i] = GetCustomClass(pCharacter->m_Class[i])->m_MagicUseClass;
+
+					int nLevelOffset = GetCustomClass(pCharacter->m_Class[i])->m_nMagicUseLevel - 1;
+
+					pCharacter->m_nCastingLevels[i] = max(pCharacter->m_nLevel[i] - nLevelOffset, 0);
+
+					bRetVal = TRUE;
+				}
+
+				break;
+			}
+			#endif
 		}
 	}
 
@@ -10815,6 +11331,116 @@ char *GetMagicSwordSpecialPurposePower(int nIndex, int nDieRoll)
 	return szRetVal.GetBuffer(0);
 
 }
+
+cDNDCustomClass::cDNDCustomClass()
+{
+	Clear();
+}
+
+cDNDCustomClass::~cDNDCustomClass()
+{
+}
+
+void cDNDCustomClass::Clear()
+{
+	memset(m_szClassName, 0, 32 * sizeof(char));
+	memset(m_lXPLevel, 0, 12 * sizeof(LONG));
+
+	m_bClassDefined = FALSE;
+	m_Class = DND_CHARACTER_CLASS_UNDEF;
+
+	m_nHitDieType = 6;
+	m_lMaxChartLevelXP = 220000;
+	m_nMaxChartLevel = 9;
+
+	m_nMaxChartLevelHP = 2;
+	m_nMaxChartHPLevel = 9;
+
+	m_CombatClass = DND_CHARACTER_CLASS_CLERIC;
+	m_SavingThrowClass = DND_CHARACTER_CLASS_CLERIC;
+	m_MagicUseClass = DND_CHARACTER_CLASS_UNDEF;
+	m_nMagicUseLevel = 1;
+
+	m_bTurnUndead = FALSE;
+	m_nTurnUndeadLevel = 1;
+
+	m_bThiefSkills = FALSE;
+	m_nThiefLevel = 1;
+
+	m_bAssassinSkills = FALSE;
+	m_nAssassinLevel = 1;
+
+	m_nInitialWeaponProf = 1;
+	m_nAddWeaponProf = 1;		// unused
+	m_nAddWeaponProfLevels = 6;
+	m_nNonWeaponProfPenalty = 5;
+
+	for (int i = 0; i < 6; ++i)
+	{
+		m_nMinAttributes[i] = 3;
+		m_bPrerequisiteAttrib[i] = FALSE;
+	}
+
+	m_nFirstLevelHD = 1;
+
+	memset(m_ExpansionBuffer, 0, CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE * sizeof(ULONG));
+}
+
+void cDNDCustomClass::PopulateXPTable()
+{
+	//m_lXPLevel[0]
+}
+
+
+cDNDCustomClass *GetCustomClass(DND_CHARACTER_CLASSES _Class)
+{
+	#if CUSTOM_CLASSES
+	int nClassIndex = (int)_Class;
+
+	nClassIndex -= DND_CHARACTER_CLASS_CUSTOM_1;
+
+	if (nClassIndex < 0 || nClassIndex > DND_CHARACTER_CLASS_CUSTOM_12)
+	{
+		nClassIndex = 0;
+	}
+	#else
+	int nClassIndex = 0;
+	#endif
+
+	return &_gCustomClass[nClassIndex];
+}
+
+BOOL IsCustomClass(DND_CHARACTER_CLASSES _Class)
+{
+	#if CUSTOM_CLASSES
+	if (_Class >= DND_CHARACTER_CLASS_CUSTOM_1 && _Class <= DND_CHARACTER_CLASS_CUSTOM_12)
+	{
+		return TRUE;
+	}
+	#endif
+
+	return FALSE;
+}
+
+int GetNumDefinedCustomClasses()
+{
+	#if CUSTOM_CLASSES
+	int nCount = 0;
+	for (int i = 0; i < MAX_CUSTOM_CLASSES; ++i)
+	{
+		if(_gCustomClass[i].m_bClassDefined)
+		{
+			++nCount;
+		}
+	}
+
+	return nCount;
+	#else
+	return 0;
+	#endif
+}
+
+
 
 
 /*

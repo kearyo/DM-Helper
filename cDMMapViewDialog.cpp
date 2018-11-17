@@ -83,6 +83,7 @@ int _MapControlStater[][2] =
 	IDC_PLOT_PARTY_EXTEND_ROUTE_BUTTON,	TRUE,
 	IDC_PLACE_CHARACTER_BUTTON,			TRUE,
 	IDC_PARTY_CHARACTER_BUTTON,			TRUE,
+	IDC_PARTY_CHARACTERS_BUTTON,		TRUE,
 	IDC_PLACE_ON_CHARACTER_BUTTON,		TRUE,
 	IDC_SET_CHARACTER_ICON_BUTTON,		TRUE,
 	IDC_HIDE_BUTTON,					TRUE,
@@ -90,6 +91,7 @@ int _MapControlStater[][2] =
 	IDC_SHOW_STATIC,					TRUE,
 	IDC_HINT_STATIC,					TRUE,
 	IDC_PARTIES_CHECK,					TRUE,
+	IDC_SEL_PARTY_CHECK,				TRUE,
 	IDC_ROUTES_CHECK,					TRUE,
 	IDC_CACHES_CHECK,					TRUE,
 	IDC_CHILD_MAPS_CHECK,				TRUE,
@@ -157,6 +159,7 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	, m_nLightingSlider(0)
 	, m_bRainCheck(FALSE)
 	, m_bSnowCheck(FALSE)
+	, m_bShowSelectedPartyCheck(FALSE)
 {
 	//{{AFX_DATA_INIT(cDMMapViewDialog)
 	m_szMapLegend = _T("");
@@ -203,6 +206,7 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	m_dwDraggedPartyID = 0;
 
 	m_pSelectedCharacter = NULL;
+	m_pMapCenteredCharacter = NULL;
 	m_dwDraggedCharacterID = 0;
 	m_nDraggedSFXIndex = -1;
 	m_nLastSFXPosX = 0;
@@ -314,6 +318,7 @@ void cDMMapViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_RAIN_CHECK, m_cRainCheck);
 	DDX_Control(pDX, IDC_SNOW_CHECK, m_cSnowCheck);
 	DDX_Check(pDX, IDC_SNOW_CHECK, m_bSnowCheck);
+	DDX_Check(pDX, IDC_SEL_PARTY_CHECK, m_bShowSelectedPartyCheck);
 }
 
 
@@ -354,6 +359,7 @@ BEGIN_MESSAGE_MAP(cDMMapViewDialog, CDialog)
 	ON_EN_CHANGE(IDC_CACHE_DETAILS_EDIT, &cDMMapViewDialog::OnEnChangeCacheDetailsEdit)
 	ON_STN_CLICKED(IDC_BDROP, &cDMMapViewDialog::OnStnClickedBdrop)
 	ON_BN_CLICKED(IDC_PARTIES_CHECK, &cDMMapViewDialog::OnBnClickedPartiesCheck)
+	ON_BN_CLICKED(IDC_SEL_PARTY_CHECK, &cDMMapViewDialog::OnBnClickedPartiesCheck)
 	ON_BN_CLICKED(IDC_ROUTES_CHECK, &cDMMapViewDialog::OnBnClickedRoutesCheck)
 	ON_BN_CLICKED(IDC_CHILD_MAPS_CHECK, &cDMMapViewDialog::OnBnClickedChildMapsCheck)
 	ON_BN_CLICKED(IDC_CACHES_CHECK, &cDMMapViewDialog::OnBnClickedCachesCheck)
@@ -385,6 +391,7 @@ BEGIN_MESSAGE_MAP(cDMMapViewDialog, CDialog)
 	ON_BN_CLICKED(IDC_RAIN_CHECK, &cDMMapViewDialog::OnBnClickedRainCheck)
 	ON_BN_CLICKED(IDC_SNOW_CHECK, &cDMMapViewDialog::OnBnClickedSnowCheck)
 	ON_WM_MOVE()
+	ON_BN_CLICKED(IDC_PARTY_CHARACTERS_BUTTON, &cDMMapViewDialog::OnBnClickedPartyCharactersButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -423,6 +430,7 @@ BOOL cDMMapViewDialog::OnInitDialog()
 	ShowWindow(SW_SHOW);
 
 	m_bShowPartiesCheck = TRUE;
+	m_bShowSelectedPartyCheck = TRUE;
 	m_bShowRoutesCheck = TRUE;
 	m_bShowChildMapsCheck = TRUE;
 	m_bLabelsCheck = TRUE;
@@ -499,6 +507,8 @@ PDNDPARTYVIEWDLG cDMMapViewDialog::ValidateSelectedParty()
 		Reset();
 	}
 
+
+
 	return NULL;
 		
 }
@@ -506,6 +516,7 @@ PDNDPARTYVIEWDLG cDMMapViewDialog::ValidateSelectedParty()
 void cDMMapViewDialog::Reset() 
 {
 	m_pSelectedParty = NULL;
+	m_pSelectedCharacter = NULL;
 
 	m_cPartyCombo.ResetContent();
 
@@ -1077,7 +1088,65 @@ void cDMMapViewDialog::OnPaint()
 		CRect rect;
 		GetClientRect(&rect);
 
+		#if 0
 		DrawTransparentBitmap(&graphics, m_pLightingAlphaBitmap, 0, 0, rect.right, rect.bottom, 127, 127, m_fLightingAlpha);
+		#else
+		int nSizeX = rect.right - rect.left;
+		int nSizeY = rect.bottom - rect.top;
+
+		Bitmap *largeImage = new Bitmap(nSizeX, nSizeY, PixelFormat32bppARGB);
+
+		if (largeImage != NULL)
+		{
+			Graphics g(largeImage);
+			DrawTransparentBitmap(&g, m_pLightingAlphaBitmap, 0, 0, rect.right, rect.bottom, 127, 127, 1.0f);
+
+			// torches !
+			SolidBrush *bLightBrush = new SolidBrush(Color(255, 0, 255));
+			SolidBrush *bInfraBrush = new SolidBrush(Color(20, 0, 0));
+			for (int i = 0; i < m_nMapCharacters; ++i)
+			{
+				if (m_CharacterHotSpots[i].m_VisionType > DND_CHARACTER_VISION_STANDARD && m_CharacterHotSpots[i].m_nLightRange == 0)
+				{
+					int nRange = 0;
+
+					switch (m_CharacterHotSpots[i].m_VisionType)
+					{
+						case DND_CHARACTER_VISION_30_INF:		nRange = 30;	break;
+						case DND_CHARACTER_VISION_60_INF:		nRange = 60;	break;
+						case DND_CHARACTER_VISION_120_INF:		nRange = 120;	break;
+						case DND_CHARACTER_VISION_120_INF_UV:	nRange = 120;	break;
+						case DND_CHARACTER_VISION_UV:			nRange = 120;	break;
+					}
+
+					if (nRange)
+					{
+						nRange = nRange / m_pDNDMap->m_fScaleX * m_fViewScale * 2.0f;
+						int nLX = m_CharacterHotSpots[i].m_nX - nRange / 2;
+						int nLY = m_CharacterHotSpots[i].m_nY - nRange / 2;
+						g.FillEllipse(bInfraBrush, nLX, nLY, nRange, nRange);
+					}
+
+				}
+			}
+			for (int i = 0; i < m_nMapCharacters; ++i)
+			{
+				if (m_CharacterHotSpots[i].m_nLightRange)
+				{
+					int nLX = m_CharacterHotSpots[i].m_nX - m_CharacterHotSpots[i].m_nLightRange / 2;
+					int nLY = m_CharacterHotSpots[i].m_nY - m_CharacterHotSpots[i].m_nLightRange / 2;
+					g.FillEllipse(bLightBrush, nLX, nLY, m_CharacterHotSpots[i].m_nLightRange, m_CharacterHotSpots[i].m_nLightRange);
+				}
+
+			}
+
+			DrawTransparentAlphaBitmap(&graphics, largeImage, 0, 0, 0, 0, nSizeX, nSizeY, nSizeX, nSizeY, m_fLightingAlpha, TRUE);
+
+			delete bInfraBrush;
+			delete bLightBrush;
+			delete largeImage;
+		}
+		#endif
 	}
 
 	//////////////////////////////////
@@ -1115,7 +1184,7 @@ void cDMMapViewDialog::OnPaint()
 			nX += m_nCornerX;
 			nY += m_nCornerY;
 
-			if(m_bShowPartiesCheck)
+			if (m_bShowPartiesCheck || (m_bShowSelectedPartyCheck && (m_pSelectedParty == pPartyDlg->m_pParty)))
 			{
 				graphics.DrawLine(&pen, nX-10, nY, nX+10, nY);
 				graphics.DrawLine(&pen, nX, nY-10, nX, nY+10);
@@ -1198,6 +1267,9 @@ void cDMMapViewDialog::OnPaint()
 	m_nMapCharacters = 0;
 	memset(m_CharacterHotSpots, 0, MAX_HOTSPOTS * sizeof(CDMCharacterHotSpot));
 
+	BOOL bFoundSelectedCharacter = FALSE;
+	BOOL bFoundMapCenteredCharacter = FALSE;
+
 	for (pos = m_pApp->m_CharacterViewMap.GetStartPosition();  pos != NULL; )
 	{
 		WORD wID;
@@ -1206,6 +1278,16 @@ void cDMMapViewDialog::OnPaint()
 
 		if(pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
 		{
+			if (pCharDlg->m_pCharacter == m_pSelectedCharacter)
+			{
+				bFoundSelectedCharacter = TRUE;
+			}
+
+			if (pCharDlg->m_pCharacter == m_pMapCenteredCharacter)
+			{
+				bFoundMapCenteredCharacter = TRUE;
+			}
+
 			float fX = 0.0f;
 			float fY = 0.0f;
 
@@ -1246,7 +1328,14 @@ void cDMMapViewDialog::OnPaint()
 					DrawCharacterIcon(&graphics, nX, nY, pCharDlg->m_pCharacter->m_szIconPath, pCharDlg->m_bReversedMapIcon);
 				}
 
-				if (m_bShowPartiesCheck)
+				BOOL bShowAnyway = FALSE;
+				if (m_bShowSelectedPartyCheck && m_pSelectedParty != NULL && m_pSelectedParty->CharacterIsPartyMember(pCharDlg->m_pCharacter->m_dwCharacterID))
+				{
+					bShowAnyway = TRUE;
+				}
+
+				//if (m_bShowPartiesCheck || (pCharDlg->m_pCharacter->m_nLightSourceRange || pCharDlg->m_pCharacter == m_pMapCenteredCharacter))
+				if (m_bShowPartiesCheck || pCharDlg->m_pCharacter == m_pMapCenteredCharacter || bShowAnyway)
 				{
 					graphics.DrawLine(&pen, nX, nY - 7, nX + 7, nY + 7);
 					graphics.DrawLine(&pen, nX - 7, nY + 7, nX + 7, nY + 7);
@@ -1269,9 +1358,31 @@ void cDMMapViewDialog::OnPaint()
 			m_CharacterHotSpots[m_nMapCharacters].m_nX = nX;
 			m_CharacterHotSpots[m_nMapCharacters].m_nY = nY;
 			m_CharacterHotSpots[m_nMapCharacters].m_dwCharacterID = pCharDlg->m_pCharacter->m_dwCharacterID;
+			m_CharacterHotSpots[m_nMapCharacters].m_VisionType = pCharDlg->m_pCharacter->m_VisionType;
+
+			if (pCharDlg->m_pCharacter->m_nLightSourceRange)
+			{
+				m_CharacterHotSpots[m_nMapCharacters].m_nLightRange = pCharDlg->m_pCharacter->m_nLightSourceRange / m_pDNDMap->m_fScaleX * m_fViewScale * 2.0f;
+			}
+			else
+			{
+				m_CharacterHotSpots[m_nMapCharacters].m_nLightRange = 0;
+			}
+
+
 			++m_nMapCharacters;
 	
 		}
+	}
+
+	if (bFoundSelectedCharacter == FALSE && m_pSelectedCharacter != NULL)
+	{
+		m_pSelectedCharacter = NULL;
+	}
+
+	if (bFoundMapCenteredCharacter == FALSE && m_pMapCenteredCharacter != NULL)
+	{
+		m_pMapCenteredCharacter = NULL;
 	}
 
 
@@ -1281,7 +1392,7 @@ void cDMMapViewDialog::OnPaint()
 		//m_bCatchMe = FALSE;
 	}
 
-	for (pos = m_pApp->m_NPCViewMap.GetStartPosition(); (m_bShowPartiesCheck == TRUE || m_bShowCachesCheck == TRUE) && pos != NULL; )
+	for (pos = m_pApp->m_NPCViewMap.GetStartPosition(); (m_bShowPartiesCheck == TRUE || m_bShowSelectedPartyCheck || m_bShowCachesCheck == TRUE) && pos != NULL;)
 	{
 		WORD wID;
 		PDNDNPCVIEWDLG pNPCDlg = NULL;
@@ -1325,13 +1436,19 @@ void cDMMapViewDialog::OnPaint()
 
 			if (IsOnScreen(nX, nY))
 			{
-				if (m_bCharIcons)
+				BOOL bShowAnyway = FALSE;
+				if (m_bShowSelectedPartyCheck && m_pSelectedParty != NULL && m_pSelectedParty->CharacterIsPartyMember(pNPCDlg->m_pNPC->m_dwCharacterID))
 				{
-					DrawMonsterIcon(&graphics, nX, nY, pNPCDlg->m_pNPC, pNPCDlg->m_bReversedMapIcon);
+					bShowAnyway = TRUE;
 				}
 
-				if (m_bShowPartiesCheck)
+				if (m_bShowPartiesCheck || bShowAnyway)
 				{
+					if (m_bCharIcons)
+					{
+						DrawMonsterIcon(&graphics, nX, nY, pNPCDlg->m_pNPC, pNPCDlg->m_bReversedMapIcon);
+					}
+
 					graphics.DrawLine(&pen, nX - 7, nY - 7, nX + 7, nY - 7);
 					graphics.DrawLine(&pen, nX, nY + 7, nX - 7, nY - 7);
 					graphics.DrawLine(&pen, nX, nY + 7, nX + 7, nY - 7);
@@ -1445,7 +1562,7 @@ void cDMMapViewDialog::OnPaint()
 		} //if(m_pTreasureCaches != NULL)
 	}
 
-
+	TRACE("KEO DRAG %d\n", m_bMouseDrag);
 	if(m_bMouseDrag)
 	{
 		float fMouseDistance = GetDistance((float)m_DragPoint.x, (float)m_DragPoint.y, (float)m_MousePoint.x, (float)m_MousePoint.y);
@@ -1497,6 +1614,73 @@ void cDMMapViewDialog::OnPaint()
 
 	TimeSpan("END MAP PAINT", &dwStartPaintTime);
 
+}
+
+void cDMMapViewDialog::UpdateCharacterHotspots()
+{
+	m_nMapCharacters = 0;
+	memset(m_CharacterHotSpots, 0, MAX_HOTSPOTS * sizeof(CDMCharacterHotSpot));
+
+	for (POSITION pos = m_pApp->m_CharacterViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDCHARVIEWDLG pCharDlg = NULL;
+		m_pApp->m_CharacterViewMap.GetNextAssoc(pos, wID, pCharDlg);
+
+		if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+		{
+			float fX = 0.0f;
+			float fY = 0.0f;
+
+			if (m_pDNDMap->m_bMapScaleFeet)
+			{
+				//feet to pixels
+				fX = pCharDlg->m_pCharacter->m_fLocalLocationX / m_pDNDMap->m_fScaleX * m_fViewScale;
+				fY = pCharDlg->m_pCharacter->m_fLocalLocationY / m_pDNDMap->m_fScaleY * m_fViewScale;
+			}
+			else
+			{
+				//miles to pixels
+				fX = ((pCharDlg->m_pCharacter->m_fMapLocationX - m_pDNDMap->m_fParentMapOriginX) / m_pDNDMap->m_fScaleX) * m_fViewScale;
+				fY = ((pCharDlg->m_pCharacter->m_fMapLocationY - m_pDNDMap->m_fParentMapOriginY) / m_pDNDMap->m_fScaleY) * m_fViewScale;
+			}
+
+			if (fabs(fX + fY) < 1.0f)
+				continue;
+
+			int nX = (int)fX;
+			int nY = (int)fY;
+
+			nX += m_nCornerX;
+			nY += m_nCornerY;
+
+			if (m_bIsometricCheck)
+			{
+				fX = pCharDlg->m_pCharacter->m_fLocalLocationX / m_pDNDMap->m_fScaleX + 64;
+				fY = pCharDlg->m_pCharacter->m_fLocalLocationY / m_pDNDMap->m_fScaleY + 32;
+
+				Translate2DCoordinatesToIsometric((int)fX, (int)fY, m_fViewScale, &nX, &nY);
+			}
+
+			m_CharacterHotSpots[m_nMapCharacters].m_nX = nX;
+			m_CharacterHotSpots[m_nMapCharacters].m_nY = nY;
+			m_CharacterHotSpots[m_nMapCharacters].m_dwCharacterID = pCharDlg->m_pCharacter->m_dwCharacterID;
+			m_CharacterHotSpots[m_nMapCharacters].m_VisionType = pCharDlg->m_pCharacter->m_VisionType;
+
+			if (pCharDlg->m_pCharacter->m_nLightSourceRange)
+			{
+				m_CharacterHotSpots[m_nMapCharacters].m_nLightRange = pCharDlg->m_pCharacter->m_nLightSourceRange / m_pDNDMap->m_fScaleX * m_fViewScale * 2.0f;
+			}
+			else
+			{
+				m_CharacterHotSpots[m_nMapCharacters].m_nLightRange = 0;
+			}
+
+
+			++m_nMapCharacters;
+
+		}
+	}
 }
 
 
@@ -2144,6 +2328,8 @@ void cDMMapViewDialog::OnLButtonUp(UINT nFlags, CPoint point)
 				pSelectedCharacter->MarkChanged();
 			}
 
+			UpdateCharacterHotspots();
+
 			UpdateDetachedMaps();
 		}
 
@@ -2339,6 +2525,8 @@ void cDMMapViewDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 					m_pSelectedCharacter->MarkChanged();
 				}
+
+				UpdateCharacterHotspots();
 
 				UpdateDetachedMaps();
 			}
@@ -2936,6 +3124,12 @@ void cDMMapViewDialog::UpdateMapLegend()
 
 	m_szMapLegend.Format("(%0.2fx - %0.2fy)", fX, fY);
 
+	#ifdef _DEBUG
+	CString szTemp;
+	szTemp.Format(" drag %d", m_bMouseDrag);
+	m_szMapLegend += szTemp;
+	#endif
+
 	if(m_pSelectedParty != NULL && m_pApp->m_pSelectedCalendar != NULL)
 	{
 		int nMinutes = m_pSelectedParty->m_nTurn * 10 + m_pSelectedParty->m_nRound;
@@ -3032,7 +3226,10 @@ void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 
 	if(!(nFlags & MK_SHIFT))
 	{
-		m_bMouseDrag = FALSE;
+		if (m_bMouseDrag)
+		{
+			m_bMouseDrag = FALSE;
+		}
 
 		m_nUnshiftedMouseX = m_nMouseX;
 		m_nUnshiftedMouseY = m_nMouseY;
@@ -3040,7 +3237,7 @@ void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 
 	if(nFlags & MK_LBUTTON)
 	{
-		if(m_bMouseDrag == FALSE)
+		if (m_bMouseDrag == FALSE)
 		{
 			int nDiffX = point.x - nLastX;
 			int nDiffY = point.y - nLastY;
@@ -3048,24 +3245,58 @@ void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 			m_nCornerX += nDiffX;
 			m_nCornerY += nDiffY;
 
-			/*
-			if(m_nCornerX > nBorderX1)
-				m_nCornerX = nBorderX1;
 
-			if(m_nCornerY > nBorderY1)
-				m_nCornerY = nBorderY1;
+			if (m_pMapCenteredCharacter != NULL && m_bDetachedWindow == TRUE)
+			{
 
-			if(m_nCornerX < nBorderX2)
-				m_nCornerX = nBorderX2;
+				if (m_pDNDMap->m_bMapScaleFeet)
+				{
+					//pixels to feet
+					float fX = (float)(nDiffX) * m_pDNDMap->m_fScaleX / m_fViewScale;
+					float fY = (float)(nDiffY) * m_pDNDMap->m_fScaleY / m_fViewScale;
 
-			if(m_nCornerY < nBorderY2)
-				m_nCornerY = nBorderY2;
-				*/
+					//kieran
+					if (m_bIsometricCheck)
+					{
+						int nIsoX = 0;
+						int nIsoY = 0;
+						TranslateIsoCoordinatesTo2D(point.x, point.y, &nIsoX, &nIsoY);
+
+						fX = ((float)nIsoX)* m_pDNDMap->m_fScaleX;
+						fY = ((float)nIsoY)* m_pDNDMap->m_fScaleY;
+					}
+
+					m_pMapCenteredCharacter->m_fLocalLocationX -= fX;
+					m_pMapCenteredCharacter->m_fLocalLocationY -= fY;
+
+					m_pMapCenteredCharacter->MarkChanged();
+
+					UpdateCharacterHotspots();
+
+					UpdateDetachedMaps();
+				}
+				else
+				{
+					//pixels to miles
+					float fX = (float)(nDiffX) * m_pDNDMap->m_fScaleX / m_fViewScale + m_pDNDMap->m_fParentMapOriginX;
+					float fY = (float)(nDiffY) * m_pDNDMap->m_fScaleY / m_fViewScale + m_pDNDMap->m_fParentMapOriginY;
+
+					m_pMapCenteredCharacter->m_fMapLocationX -= fX;
+					m_pMapCenteredCharacter->m_fMapLocationY -= fY;
+
+					m_pMapCenteredCharacter->MarkChanged();
+
+					UpdateCharacterHotspots();
+
+					UpdateDetachedMaps();
+				}
+
+			}
+
+			//TRACE("TOUCH ME ! (%d %d (%d))\n", m_nCornerX, nBorderX2, m_pDNDMap->m_nPixelSizeX);
+
+			InvalidateRect(NULL);
 		}
-
-		//TRACE("TOUCH ME ! (%d %d (%d))\n", m_nCornerX, nBorderX2, m_pDNDMap->m_nPixelSizeX);
-
-		InvalidateRect(NULL);
 	}
 
 	nLastX = point.x;
@@ -3161,6 +3392,11 @@ void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 			m_pDNDMap->MarkChanged();
 		}
 	}
+
+	if (m_bMouseDrag)
+	{
+		InvalidateRect(NULL);
+	}
 	
 	CDialog::OnMouseMove(nFlags, point);
 }
@@ -3207,6 +3443,10 @@ void cDMMapViewDialog::SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG 
 	pMapDlg2->m_nLightingSlider = pMapDlg1->m_nLightingSlider;
 
 	pMapDlg2->m_fLightingAlpha = float(pMapDlg2->m_nLightingSlider) / 100.0f;
+
+	pMapDlg2->m_pMapCenteredCharacter = pMapDlg1->m_pMapCenteredCharacter;
+
+	pMapDlg2->UpdateCharacterHotspots();
 
 	if (bSyncSFX)
 	{
@@ -3789,6 +4029,11 @@ void cDMMapViewDialog::OnSelchangePartyCombo()
 		m_cCharacterCombo.ResetContent();
 
 		int nRow = 0;
+
+		m_cCharacterCombo.InsertString(nRow, "None");
+		m_cCharacterCombo.SetItemData(nRow, (ULONG)0);
+		++nRow;
+
 		WORD wID;
 		for (POSITION pos = m_pApp->m_CharacterViewMap.GetStartPosition(); pos != NULL; )
 		{
@@ -3924,6 +4169,8 @@ void cDMMapViewDialog::OnPlaceOnPartyButton()
 
 		m_szHint.Format("Centered on party: %s", m_pSelectedParty->m_szPartyName);
 
+		UpdateCharacterHotspots();
+
 		InvalidateRect(NULL);
 	}
 	else
@@ -4007,7 +4254,11 @@ void cDMMapViewDialog::OnSelchangeCharacterCombo()
 	if(nCursor >= 0)
 	{
 		m_pSelectedCharacter = (cDNDCharacter *)m_cCharacterCombo.GetItemData(nCursor);
-		m_szHint.Format("Selected Character: %s", m_pSelectedCharacter->m_szCharacterName);
+
+		if (m_pSelectedCharacter != NULL)
+		{
+			m_szHint.Format("Selected Character: %s", m_pSelectedCharacter->m_szCharacterName);
+		}
 
 	}
 
@@ -4632,7 +4883,7 @@ void cDMMapViewDialog::OnTravelMountedButton()
 	Refresh();
 }
 
-void cDMMapViewDialog::OnBnClickedPlaceOnCharacterButton()
+void cDMMapViewDialog::OnBnClickedPlaceOnCharacterButton() // center on character
 {
 	if(m_pSelectedCharacter != NULL)
 	{
@@ -4677,10 +4928,16 @@ void cDMMapViewDialog::OnBnClickedPlaceOnCharacterButton()
 
 		m_szHint.Format("Centered on character: %s", m_pSelectedCharacter->m_szCharacterName);
 
+		m_pMapCenteredCharacter = m_pSelectedCharacter;
+
+		UpdateCharacterHotspots();
+
 		InvalidateRect(NULL);
 	}
 	else
 	{
+		m_pMapCenteredCharacter = NULL;
+
 		m_szHint = _T("No character selected !");
 	}
 
@@ -4690,6 +4947,7 @@ void cDMMapViewDialog::OnBnClickedPlaceOnCharacterButton()
 
 void cDMMapViewDialog::OnPartyCharacterButton() 
 {
+	
 	if(m_pSelectedCharacter != NULL)
 	{
 		m_pSelectedCharacter->m_fMapLocationX = 0.0f;
@@ -4705,6 +4963,65 @@ void cDMMapViewDialog::OnPartyCharacterButton()
 
 	InvalidateRect(NULL);
 }
+
+// hier
+void cDMMapViewDialog::OnBnClickedPartyCharactersButton()
+{
+	if (m_pSelectedParty != NULL)
+	{
+		m_pSelectedCharacter = NULL;
+		m_pMapCenteredCharacter = NULL;
+
+		for (POSITION pos = m_pApp->m_CharacterViewMap.GetStartPosition(); pos != NULL;)
+		{
+			WORD wID;
+			PDNDCHARVIEWDLG pCharDlg = NULL;
+			m_pApp->m_CharacterViewMap.GetNextAssoc(pos, wID, pCharDlg);
+
+			if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+			{
+				if (m_pSelectedParty->CharacterIsPartyMember(pCharDlg->m_pCharacter->m_dwCharacterID))
+				{
+					pCharDlg->m_pCharacter->m_fMapLocationX = 0.0f;
+					pCharDlg->m_pCharacter->m_fMapLocationY = 0.0f;
+
+					pCharDlg->m_pCharacter->m_fLocalLocationX = 0.0f;
+					pCharDlg->m_pCharacter->m_fLocalLocationY = 0.0f;
+				}
+			}
+		}
+
+		for (pos = m_pApp->m_NPCViewMap.GetStartPosition();  pos != NULL;)
+		{
+			WORD wID;
+			PDNDNPCVIEWDLG pNPCDlg = NULL;
+			m_pApp->m_NPCViewMap.GetNextAssoc(pos, wID, pNPCDlg);
+
+			if (pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL && pNPCDlg->m_pNPC->m_bIsCache == FALSE)
+			{
+				if (m_pSelectedParty->CharacterIsPartyMember(pNPCDlg->m_pNPC->m_dwCharacterID))
+				{
+					pNPCDlg->m_pNPC->m_fMapLocationX = 0.0f;
+					pNPCDlg->m_pNPC->m_fMapLocationY = 0.0f;
+
+					pNPCDlg->m_pNPC->m_fLocalLocationX = 0.0f;
+					pNPCDlg->m_pNPC->m_fLocalLocationY = 0.0f;
+				}
+			}
+		}
+		
+		m_szHint = _T("All characters moved to party location");
+	}
+	else
+	{
+		m_szHint = _T("No party selected !");
+	}
+
+	UpdateData(FALSE);
+
+	InvalidateRect(NULL);
+}
+
 
 
 void cDMMapViewDialog::OnBnClickedSetCharacterIconButton()
@@ -4823,6 +5140,8 @@ void cDMMapViewDialog::OnBnClickedPlaceOnCacheButton()
 		m_nCornerY = (int)(nSizeY - fY);
 
 		m_szHint.Format("Centered on cache: %s", m_pSelectedCache->m_szCacheDesc);
+
+		UpdateCharacterHotspots();
 
 		InvalidateRect(NULL);
 	}
@@ -6121,10 +6440,44 @@ void cDMMapViewDialog::DrawTransparentBitmap(Graphics* g, Bitmap *pBitmap, int n
 	ImgAttr.SetColorMatrix(&ClrMatrix, ColorMatrixFlagsDefault,
 		ColorAdjustTypeBitmap);
 
+	//if (bTransparent)
+	{
+		Color TransColor(255, 0, 255);
+		ImgAttr.SetColorKey(TransColor, TransColor, ColorAdjustTypeBitmap);
+	}
+
 	Rect destRect(nX, nY, nSizeX, nSizeY);
 
-	g->DrawImage(pBitmap, destRect, 0, 0, nBitmapSizeX, nBitmapSizeY, Gdiplus::UnitPixel, &ImgAttr);
+	int nOK = g->DrawImage(pBitmap, destRect, 0, 0, nBitmapSizeX, nBitmapSizeY, Gdiplus::UnitPixel, &ImgAttr);
 	//g->DrawImage(m_pFogOfWarBitmap, nX, nY, nSizeX, nSizeY);
+}
+
+void cDMMapViewDialog::DrawTransparentAlphaBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nCellX, int nCellY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha, BOOL bTransparent)
+{
+	//Status rc;
+
+	ColorMatrix ClrMatrix = {
+		1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, fAlpha, 0.0f,
+		0.0f, 0.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	ImageAttributes ImgAttr;
+
+	ImgAttr.SetColorMatrix(&ClrMatrix, ColorMatrixFlagsDefault,
+		ColorAdjustTypeBitmap);
+
+	if (bTransparent)
+	{
+		Color TransColor(255,0,255);
+		ImgAttr.SetColorKey(TransColor, TransColor, ColorAdjustTypeBitmap);
+	}
+
+	Gdiplus::Rect destRect(nX, nY, nBitmapSizeX, nBitmapSizeY);
+
+	g->DrawImage(pBitmap, destRect, nCellX, nCellY, nSizeX, nSizeY, Gdiplus::UnitPixel, &ImgAttr);
 }
 
 
@@ -6701,4 +7054,6 @@ BOOL cDMMapViewDialog::MapHasDetachedChildren()
 
 	return FALSE;
 }
+
+
 

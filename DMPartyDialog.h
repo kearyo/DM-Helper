@@ -87,7 +87,7 @@ public:
 	void Refresh();
 	void Broadcast();
 	BOOL SetSelectedTarget(CDMBaseCharViewDialog *pBaseCharDlg);
-	BOOL FindPartyListSelection(CDMBaseCharViewDialog *pBaseDlg, BOOL bTarget = FALSE);
+	BOOL FindPartyListSelection(CDMBaseCharViewDialog *pBaseDlg, BOOL bTarget = FALSE, BOOL *pbOpponentParty = NULL);
 
 	cDNDSubParty * ExternalSubPartyCommand(char *szSubPartyName, DWORD dwSubPartyID);
 
@@ -115,6 +115,10 @@ public:
 	void LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_TYPES nType, char *szName, DWORD dwID, LONG lAmount, char *szComment);
 
 	void GenerateStatBlock(cDNDParty *pParty);
+
+	void ClickHitButton(BOOL bOpponentParty);
+	void ClickMissButton(BOOL bOpponentParty);
+	void ClickSpellButton(BOOL bOpponentParty);
 
 
 // Dialog Data

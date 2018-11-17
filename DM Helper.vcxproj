@@ -179,6 +179,7 @@
     <ClCompile Include="DMCharViewDialog.cpp" />
     <ClCompile Include="DMContainerDetailsDialog.cpp" />
     <ClCompile Include="DMCustomArmorDialog.cpp" />
+    <ClCompile Include="DMCustomClassDialog.cpp" />
     <ClCompile Include="DMCustomItemsDialog.cpp" />
     <ClCompile Include="DMCustomMonsterDialog.cpp" />
     <ClCompile Include="DMCustomSpellDialog.cpp" />
@@ -253,6 +254,7 @@
     <ClInclude Include="DMCharViewDialog.h" />
     <ClInclude Include="DMContainerDetailsDialog.h" />
     <ClInclude Include="DMCustomArmorDialog.h" />
+    <ClInclude Include="DMCustomClassDialog.h" />
     <ClInclude Include="DMCustomItemsDialog.h" />
     <ClInclude Include="DMCustomMonsterDialog.h" />
     <ClInclude Include="DMCustomSpellDialog.h" />

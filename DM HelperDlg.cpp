@@ -20,6 +20,7 @@
 #include "DMCustomWeaponDialog.h"
 #include "DMCustomArmorDialog.h"
 #include "DMCustomSpellDialog.h"
+#include "DMCustomClassDialog.h"
 #include "DMCustomMonsterDialog.h"
 #include "cDMMapNameDialog.h"
 #include "cDMPDFViewDialog.h"
@@ -263,6 +264,7 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_DMLIBRARY_FIENDFOLIO, &CDMHelperDlg::OnDmlibraryFiendfolio)
 	ON_COMMAND(ID_DMLIBRARY_UNEARTHEDARCANA, &CDMHelperDlg::OnDmlibraryUnearthedarcana)
 	ON_COMMAND(ID_DMLIBRARY_FROMFILE, &CDMHelperDlg::OnDmlibraryFromfile)
+	ON_COMMAND(ID_CUSTOMIZATIONS_CUSTOMCLASSEDITOR, &CDMHelperDlg::OnCustomizationsCustomclasseditor)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2969,6 +2971,16 @@ void CDMHelperDlg::OnCustomizationsCustomspelleditor()
 	delete pDlg;
 }
 
+void CDMHelperDlg::OnCustomizationsCustomclasseditor()
+{
+	CDMCustomClassDialog *pDlg = new CDMCustomClassDialog(this);
+
+	pDlg->DoModal();
+
+	delete pDlg;
+}
+
+
 void CDMHelperDlg::OnCustomizationsCustommonster()
 {
 	CDMCustomMonsterDialog *pDlg = new CDMCustomMonsterDialog(this);
@@ -3200,3 +3212,5 @@ void CDMHelperDlg::OnDmlibraryFromfile()
 
 	}
 }
+
+

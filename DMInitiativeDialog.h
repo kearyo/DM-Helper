@@ -22,11 +22,17 @@ public:
 	PBASECHARVIEWMAP	m_MonstersViewMap;
 
 	int m_nOldCursor;
-
 	int m_nMaxRoundTime;
+	int m_nNumAttacksThisRound;
+	int m_nCompletedAttacksThisRound;
 
 	void Refresh();
 	void RefreshAndSelect();
+	void NextSegment();
+	BOOL IsSelectedCharacterAlive();
+	BOOL IsCharacterAlive(CDMBaseCharViewDialog *pDlg);
+	BOOL IsSelectedCharacterInOpponentParty();
+	void SetAttackData(CDMBaseCharViewDialog *pDlg);
 
 // Dialog Data
 	enum { IDD = IDD_INITIATIVE_DIALOG };
@@ -65,4 +71,8 @@ public:
 	CButton m_cRollPCsCheck;
 	CStatic m_cDebugText;
 	CString m_szDebugText;
+	afx_msg void OnBnClickedHitButton();
+	afx_msg void OnBnClickedMissButton();
+	afx_msg void OnBnClickedSpellButton();
+	CString m_szAttacksText;
 };

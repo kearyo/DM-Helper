@@ -19,6 +19,7 @@ CDMInitiativeDialog::CDMInitiativeDialog(CWnd* pParent /*=NULL*/)
 	: CDialog(CDMInitiativeDialog::IDD, pParent)
 	, m_bRollPCs(FALSE)
 	, m_szDebugText(_T(""))
+	, m_szAttacksText(_T("ATTACK #X of X THIS ROUND"))
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();
 
@@ -27,6 +28,8 @@ CDMInitiativeDialog::CDMInitiativeDialog(CWnd* pParent /*=NULL*/)
 	m_nOldCursor = -1;
 
 	m_nMaxRoundTime = -1;
+	m_nNumAttacksThisRound = 0;
+	m_nCompletedAttacksThisRound = 0;
 
 	m_bRollPCs = m_pApp->m_bRollPCsInitiative;
 
@@ -50,6 +53,7 @@ void CDMInitiativeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ROLL_PCS_CHECK, m_cRollPCsCheck);
 	DDX_Control(pDX, IDC_DEBUG_TEXT, m_cDebugText);
 	DDX_Text(pDX, IDC_DEBUG_TEXT, m_szDebugText);
+	DDX_Text(pDX, IDC_ATTACKS_TEXT, m_szAttacksText);
 }
 
 
@@ -71,6 +75,9 @@ BEGIN_MESSAGE_MAP(CDMInitiativeDialog, CDialog)
 	ON_BN_CLICKED(IDC_ROLL_TARGETS_BUTTON, &CDMInitiativeDialog::OnBnClickedRollTargetsButton)
 	ON_WM_PAINT()
 	ON_WM_SIZE()
+	ON_BN_CLICKED(IDC_HIT_BUTTON, &CDMInitiativeDialog::OnBnClickedHitButton)
+	ON_BN_CLICKED(IDC_MISS_BUTTON, &CDMInitiativeDialog::OnBnClickedMissButton)
+	ON_BN_CLICKED(IDC_SPELL_BUTTON, &CDMInitiativeDialog::OnBnClickedSpellButton)
 END_MESSAGE_MAP()
 
 
@@ -87,9 +94,9 @@ BOOL CDMInitiativeDialog::OnInitDialog()
 	m_cCharacterList.InsertColumn( nCount++, "Character", LVCFMT_LEFT, 150, -1 );
 	m_cCharacterList.InsertColumn( nCount++, "Roll", LVCFMT_LEFT, 50, -1 );
 	m_cCharacterList.InsertColumn( nCount++, "Seg/Rnd", LVCFMT_LEFT, 70, -1 );
-	m_cCharacterList.InsertColumn( nCount++, "Action", LVCFMT_LEFT, 130, -1 );
+	m_cCharacterList.InsertColumn( nCount++, "Action", LVCFMT_LEFT, 170, -1 );
 	m_cCharacterList.InsertColumn( nCount++, "To Hit", LVCFMT_LEFT, 60, -1);
-	m_cCharacterList.InsertColumn( nCount++, "Damage", LVCFMT_LEFT, 80, -1);
+	m_cCharacterList.InsertColumn( nCount++, "Damage", LVCFMT_LEFT, 140, -1);
 
 	m_pParentPartyDialog->m_pInitiativeDialog = this;
 
@@ -287,9 +294,16 @@ void CDMInitiativeDialog::Refresh()
 #endif
 				m_cCharacterList.SetItemText(nRow, nCol++, szTemp);
 
-				if(pCharDlg->m_szInitiativeAction == _T("") && pCharDlg->m_pTargetBaseDlg != NULL)
+				if(pCharDlg->m_pTargetBaseDlg != NULL)
 				{
-					pCharDlg->m_szInitiativeAction.Format("attacking %s", pCharDlg->m_pTargetBaseDlg->m_szBaseCharName);
+					if (IsCharacterAlive(pCharDlg->m_pTargetBaseDlg))
+					{
+						pCharDlg->m_szInitiativeAction.Format("attacking %s", pCharDlg->m_pTargetBaseDlg->m_szBaseCharName);
+					}
+					else
+					{
+						pCharDlg->m_szInitiativeAction = "TARGET DEAD";
+					}
 				}
 
 				m_cCharacterList.SetItemText(nRow, nCol++, pCharDlg->m_szInitiativeAction);
@@ -425,7 +439,14 @@ void CDMInitiativeDialog::Refresh()
 
 				if(pNPCDlg->m_szInitiativeAction == _T("") && pNPCDlg->m_pTargetBaseDlg != NULL)
 				{
-					pNPCDlg->m_szInitiativeAction.Format("attacking %s", pNPCDlg->m_pTargetBaseDlg->m_szBaseCharName);
+					if (IsCharacterAlive(pNPCDlg->m_pTargetBaseDlg))
+					{
+						pNPCDlg->m_szInitiativeAction.Format("attacking %s", pNPCDlg->m_pTargetBaseDlg->m_szBaseCharName);
+					}
+					else
+					{
+						pNPCDlg->m_szInitiativeAction = "TARGET DEAD";
+					}	
 				}
 
 				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szInitiativeAction);
@@ -446,7 +467,7 @@ void CDMInitiativeDialog::Refresh()
 		SetSelectedListCtrlItem(&m_cCharacterList, m_nOldCursor);
 		m_cCharacterList.m_nSelectedRow = m_nOldCursor;
 	}
-	
+
 }
 
 void CDMInitiativeDialog::RefreshAndSelect()
@@ -547,6 +568,8 @@ void CDMInitiativeDialog::OnBnClickedRollInitButton()
 	m_cCharacterList.m_nSelectedRow = m_nOldCursor;
 
 	CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog*)m_cCharacterList.GetItemData(m_nOldCursor);
+	SetAttackData(pDlg);
+	UpdateData(FALSE);
 
 	if(pDlg != NULL)
 	{
@@ -699,6 +722,7 @@ void CDMInitiativeDialog::OnBnClickedNextRoundButton()
 	m_cCharacterList.m_nSelectedRow = m_nOldCursor;
 
 	CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog*)m_cCharacterList.GetItemData(m_nOldCursor);
+	SetAttackData(pDlg);
 
 	if(pDlg != NULL)
 	{
@@ -748,6 +772,7 @@ void CDMInitiativeDialog::OnLvnKeydownCharacterList(NMHDR *pNMHDR, LRESULT *pRes
 		if(nCursor > -1)
 		{
 			pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+			SetAttackData(pDlg);
 			m_pParentPartyDialog->FindPartyListSelection(pDlg);
 			m_pParentPartyDialog->SetSelectedTarget(pDlg);
 		}
@@ -827,6 +852,7 @@ void CDMInitiativeDialog::OnLvnItemchangedCharacterList(NMHDR *pNMHDR, LRESULT *
 		if(nCursor > -1)
 		{
 			pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+			SetAttackData(pDlg);
 
 			if(pDlg != NULL)
 			{
@@ -846,6 +872,7 @@ void CDMInitiativeDialog::OnLvnItemchangedCharacterList(NMHDR *pNMHDR, LRESULT *
 	if (nCursor != -1 && nOtherSelected != -1)
 	{
 		pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+		SetAttackData(pDlg);
 		pTargetDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nOtherSelected);
 
 		if (pDlg != NULL && pTargetDlg != NULL)
@@ -898,6 +925,7 @@ void CDMInitiativeDialog::OnBnClickedUpListButton()
 	if(nOldCursor != nCursor)
 	{
 		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+		SetAttackData(pDlg);
 
 		if(pDlg != NULL)
 		{
@@ -910,6 +938,11 @@ void CDMInitiativeDialog::OnBnClickedUpListButton()
 
 	Refresh();
 	
+}
+
+void CDMInitiativeDialog::NextSegment()
+{
+	OnBnClickedDownListButton();
 }
 
 void CDMInitiativeDialog::OnBnClickedDownListButton()
@@ -932,6 +965,7 @@ void CDMInitiativeDialog::OnBnClickedDownListButton()
 	if(nOldCursor != nCursor)
 	{
 		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+		SetAttackData(pDlg);
 
 		if(pDlg != NULL)
 		{
@@ -1023,4 +1057,158 @@ void CDMInitiativeDialog::OnSize(UINT nType, int cx, int cy)
 	CDialog::OnSize(nType, cx, cy);
 
 	InvalidateRect(NULL);
+}
+
+BOOL CDMInitiativeDialog::IsSelectedCharacterAlive()
+{
+	int nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+	if (nCursor > -1)
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+
+		switch (pDlg->m_CharViewType)
+		{
+			case DND_CHAR_VIEW_TYPE_PC:		return ((CDMCharViewDialog*)pDlg)->m_pCharacter->IsAlive();
+			case DND_CHAR_VIEW_TYPE_NPC:	return ((cDMBaseNPCViewDialog*)pDlg)->m_pNPC->IsAlive();
+		}
+		
+	}
+
+	return FALSE;
+}
+
+BOOL CDMInitiativeDialog::IsCharacterAlive(CDMBaseCharViewDialog *pDlg)
+{
+	switch (pDlg->m_CharViewType)
+	{
+		case DND_CHAR_VIEW_TYPE_PC:		return ((CDMCharViewDialog*)pDlg)->m_pCharacter->IsAlive();
+		case DND_CHAR_VIEW_TYPE_NPC:	return ((cDMBaseNPCViewDialog*)pDlg)->m_pNPC->IsAlive();
+	}
+
+	return FALSE;
+}
+
+BOOL CDMInitiativeDialog::IsSelectedCharacterInOpponentParty()
+{
+	BOOL bRetVal = FALSE;
+
+	int nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+	if (nCursor > -1)
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+
+		nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+		if (nCursor > -1)
+		{
+			pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+			m_pParentPartyDialog->FindPartyListSelection(pDlg, FALSE, &bRetVal);
+		}
+	}
+
+	return bRetVal;
+}
+
+void CDMInitiativeDialog::OnBnClickedHitButton()
+{
+	
+	if (FALSE == IsSelectedCharacterAlive())
+	{
+		NextSegment();
+		return;
+	}
+
+	m_pParentPartyDialog->ClickHitButton(IsSelectedCharacterInOpponentParty());
+
+	++m_nCompletedAttacksThisRound;
+
+	Refresh();
+
+	if (m_nCompletedAttacksThisRound >= m_nNumAttacksThisRound)
+	{
+		NextSegment();
+	}
+	else
+	{
+		m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
+		UpdateData(FALSE);
+	}
+}
+
+
+void CDMInitiativeDialog::OnBnClickedMissButton()
+{
+	if (FALSE == IsSelectedCharacterAlive())
+	{
+		NextSegment();
+		return;
+	}
+
+	m_pParentPartyDialog->ClickMissButton(IsSelectedCharacterInOpponentParty());
+
+	++m_nCompletedAttacksThisRound;
+
+	if (m_nCompletedAttacksThisRound >= m_nNumAttacksThisRound)
+	{
+		NextSegment();
+	}
+	else
+	{
+		m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
+		UpdateData(FALSE);
+	}
+}
+
+
+void CDMInitiativeDialog::OnBnClickedSpellButton()
+{
+	if (FALSE == IsSelectedCharacterAlive())
+	{
+		NextSegment();
+		return;
+	}
+
+	m_pParentPartyDialog->ClickSpellButton(IsSelectedCharacterInOpponentParty());
+
+	NextSegment();
+}
+
+void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
+{
+	m_nNumAttacksThisRound = 0;
+	m_nCompletedAttacksThisRound = 0;
+
+	if (NULL == pDlg)
+	{
+		return;
+	}
+	int nNum = 0;
+	int nDem = 0;
+
+	sscanf(pDlg->m_szNumAttacks.GetBuffer(0), "%d/%d", &nNum, &nDem);
+
+	if (nDem == 0)
+	{
+		nDem = 1;
+	}
+
+	if (nDem > 1)
+	{
+		if (m_pParentPartyDialog->m_pParty->m_nRound % 2 == 0)
+		{
+			m_nNumAttacksThisRound = (nNum / nDem) + 1;
+		}
+		else
+		{
+			m_nNumAttacksThisRound = (nNum % nDem);
+		}
+	}
+	else
+	{
+		m_nNumAttacksThisRound = nNum;
+	}
+
+	m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
 }

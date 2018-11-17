@@ -587,6 +587,9 @@ BOOL CDMHelperApp::InitInstance()
 	szTemp.Format("%sData\\tables\\MagicItemDescriptions.dat", m_szEXEPath.GetBuffer(0));
 	LoadMagicItemDescriptions(szTemp.GetBuffer(0));
 
+	szTemp.Format("%sData/tables/light_sources.dat", m_szEXEPath.GetBuffer(0));
+	LoadLightSourceTable(szTemp.GetBuffer(0));
+
 	szTemp.Format("%sData/tables/languages.dat", m_szEXEPath.GetBuffer(0));
 	LoadLanguages(szTemp.GetBuffer(0));
 
@@ -607,6 +610,12 @@ BOOL CDMHelperApp::InitInstance()
 
 	//CString szTestName = GetRandomName(DND_CHARACTER_RACE_HUMAN, 1);
 	//szTestName = GetRandomName((DND_CHARACTER_RACES)(DND_CHARACTER_RACE_HUMAN+0), 1);
+
+	/////////////////////////////////////////////////
+
+	szTemp.Format("%sData\\tables\\CustomClasses.dat", m_szEXEPath.GetBuffer(0));
+	LoadCustomClasses(szTemp.GetBuffer(0));
+
 
 	m_bSaveAllParties = FALSE;
 	m_bSaveAllMaps = FALSE;
@@ -2626,6 +2635,66 @@ void CDMHelperApp::LoadMagicItemDescriptions(char *path)
 	}
 }
 
+void CDMHelperApp::LoadLightSourceTable(char *path)
+{
+	FILE *pInfile = fopen(path, "rt");
+
+	char szInLine[256];
+	int nObjectCount = 0;
+
+	if (pInfile != NULL)
+	{
+		while (!feof(pInfile))
+		{
+			fgets(szInLine, 255, pInfile);
+			CString szTemp = szInLine;
+
+			if (szTemp.FindOneOf("#") >= 0)
+				continue;
+
+			cDNDObject *pObject = new cDNDObject();
+
+			//id, type, weight
+			CString sToken = _T("");
+			int i = 0; // substring index to extract
+			while (AfxExtractSubString(sToken, szTemp, i, ','))
+			{
+				sToken.Replace("	", "");	//remove tabs
+
+				switch (i)
+				{
+					case 0: pObject->m_wTypeId = atoi(sToken.GetBuffer(0)); break;
+					case 1: pObject->m_nCost = atoi(sToken.GetBuffer(0)); break; // this is actually the 'range' of the light source
+					case 2:
+					{
+						sToken.Replace("_", ",");
+						strcpy(pObject->m_szType, sToken.GetBuffer(0));
+						break;
+					}
+				}
+				i++;
+			}
+
+			if (pObject->m_wTypeId == 0 || pObject->m_szType[0] == 0) //bad data
+			{
+				delete pObject;
+				continue;
+			}
+
+			pObject->m_ObjectType = DND_OBJECT_TYPE_LIGHTSOURCE;
+
+			m_LightSourceOrderedTypeArray.InsertAt(nObjectCount, pObject);
+			m_LightSourceIndexedTypeArray.InsertAt(pObject->m_wTypeId, pObject);
+			++nObjectCount;
+
+		}
+
+		fclose(pInfile);
+	}
+
+}
+
+
 void CDMHelperApp::InitializeMonsters()
 {
 	CString szTemp = _T("");
@@ -3988,6 +4057,21 @@ void CDMHelperApp::LoadRandomNameDataTable(CString szNameDataFileName, DND_CHARA
 	}
 }
 
+void CDMHelperApp::LoadCustomClasses(char *path)
+{
+	FILE *pInfile = fopen(path, "rb");
+
+	if (pInfile != NULL)
+	{
+		UINT nVersion = 0;
+
+		fread(&nVersion, sizeof(UINT), 1, pInfile);
+		fread(&_gCustomClass, MAX_CUSTOM_CLASSES*sizeof(cDNDCustomClass), 1, pInfile);
+
+		fclose(pInfile);
+	}
+}
+
 CString CDMHelperApp::Capitalize(CString szInString)
 {
 	CString szRetVal =  _T("");
@@ -4111,6 +4195,21 @@ void CDMHelperApp::CleanUpObjectTables()
 	}
 	m_EquipmentOrderedTypeArray.RemoveAll();
 	m_EquipmentIndexedTypeArray.RemoveAll();
+
+	////////////////////////////////
+	for (i = 0; i < m_LightSourceOrderedTypeArray.GetSize(); ++i)
+	{
+		cDNDObject *pObject = (cDNDObject *)m_LightSourceOrderedTypeArray.GetAt(i);
+
+		if (pObject != NULL)
+		{
+			delete pObject;
+		}
+	}
+	m_LightSourceOrderedTypeArray.RemoveAll();
+	m_LightSourceIndexedTypeArray.RemoveAll();
+
+	/////////////////////////////////
 
 	for (i = 0; i < m_HelmetsOrderedTypeArray.GetSize(); ++i)
 	{
@@ -4851,6 +4950,38 @@ void CDMHelperApp::SaveSettings()
 	}
 }
 
+BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile)
+{
+	CString szPath = szFile;
+
+	int nFindRandom = szPath.Find("RANDOM_");
+	if (nFindRandom > 0)
+	{
+		CString szNum = szPath.Mid(nFindRandom+7, 2);
+
+		int nNumFiles = atoi(szNum.GetBuffer(0));
+
+		int nFile = rand() % nNumFiles;
+
+		szNum.Format("_%02d.", nFile);
+
+		szPath.Replace("_00.", szNum);
+	}
+
+	BOOL bRetVal = PlaySound((LPCSTR)szPath.GetBuffer(0), AfxGetInstanceHandle(), SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+
+	#ifdef _DEBUG
+	if (FALSE == bRetVal)
+	{
+		CString szMsg;
+		szMsg.Format("CAN'T PLAY %s", szPath);
+		AfxMessageBox(szMsg, MB_OK);
+	}
+	#endif
+
+	return bRetVal;
+}
+
 void CDMHelperApp::PlaySoundFX(CString szDesc)
 {
 	for (int i = 0; i < MAX_SOUNDBOARD_PAGES; ++i)
@@ -4861,7 +4992,7 @@ void CDMHelperApp::PlaySoundFX(CString szDesc)
 			{
 				CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 				szPath.Replace("<$DMAPATH>", m_szEXEPath);
-				PlaySound((LPCSTR)szPath.GetBuffer(0), AfxGetInstanceHandle(), SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+				PlaySoundFXFromFile(szPath.GetBuffer(0));
 				return;
 			}
 		}
@@ -4883,8 +5014,19 @@ void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType)
 		}
 	}
 
-	if(nSoundIndex == -1)
+	if (nSoundIndex == -1)
+	{
+		if (nSoundType % 2 == 0)
+		{
+			PlaySoundFX("Default Hit");
+		}
+		else
+		{
+			PlaySoundFX("Default Miss");
+		}
+
 		return;
+	}
 
 	for(i = 0; i < MAX_SOUNDBOARD_PAGES; ++ i)
 	{
@@ -4896,7 +5038,7 @@ void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType)
 				{
 					CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 					szPath.Replace("<$DMAPATH>", m_szEXEPath);
-					PlaySound ((LPCSTR) szPath.GetBuffer(0), AfxGetInstanceHandle() , SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+					PlaySoundFXFromFile(szPath);
 					return;
 				}
 			}
@@ -4930,7 +5072,7 @@ void CDMHelperApp::PlaySpellSFX(int nSpellID)
 				{
 					CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 					szPath.Replace("<$DMAPATH>", m_szEXEPath);
-					PlaySound ((LPCSTR) szPath.GetBuffer(0), AfxGetInstanceHandle() , SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+					PlaySoundFXFromFile(szPath);
 					return;
 				}
 			}

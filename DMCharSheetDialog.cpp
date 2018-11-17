@@ -449,7 +449,11 @@ void DMCharSheetDialog::OnPaint()
 	//{
 	//	bmp.LoadBitmap( IDB_INVENTORY_BITMAP );
 	//}
+	#if CUSTOM_CLASSES
+	else if (m_pCharacter->m_Class[1] || IsCustomClass(m_pCharacter->m_Class[0]))
+	#else
 	else if(m_pCharacter->m_Class[1])
+	#endif
 	{
 		bmp.LoadBitmap( IDB_MULTICLASS_BITMAP );
 		nBitMapResource = IDB_MULTICLASS_BITMAP;

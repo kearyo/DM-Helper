@@ -68,7 +68,8 @@ BOOL DMSoundboardDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	
-	// TODO: Add extra initialization here
+	CString szDirPath = m_pApp->m_szEXEPath + "data\\sounds\\random";
+	CreateDirectory(szDirPath, NULL);
 
 	SetWindowText("Soundboard");
 
@@ -188,8 +189,7 @@ void DMSoundboardDialog::OnPaint()
 
 BOOL DMSoundboardDialog::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo) 
 {
-	// TODO: Add your specialized code here and/or call the base class
-
+	
 	if(nID >= IDC_SOUND_BUTTON_1 && nID <= IDC_SOUND_BUTTON_80)
 	{
 		int nIndex = nID - IDC_SOUND_BUTTON_1;
@@ -208,7 +208,7 @@ BOOL DMSoundboardDialog::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHAND
 			CString szPath = m_pApp->m_Settings.m_SoundFX[m_nPage][nIndex].m_szFilePath;
 			szPath.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
 
-			if(PlaySound ((LPCSTR) szPath.GetBuffer(0), AfxGetInstanceHandle() , SND_ASYNC | SND_FILENAME | SND_NODEFAULT) == FALSE)
+			if (m_pApp->PlaySoundFXFromFile(szPath) == FALSE)
 			{
 				m_pApp->m_Settings.m_SoundFX[m_nPage][nIndex].Clear();
 			}

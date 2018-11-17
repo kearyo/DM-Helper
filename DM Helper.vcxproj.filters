@@ -213,6 +213,9 @@
     <ClCompile Include="cDMCharacterPortraitDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DMCustomClassDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -422,6 +425,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cDMCharacterPortraitDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DMCustomClassDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

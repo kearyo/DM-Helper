@@ -425,7 +425,14 @@ void cDMBaseNPCViewDialog::ProcessCharStats()
 			++nWeaponCount;
 		}
 
-		m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pNPC));
+		if (pMonster != NULL)
+		{
+			m_szNumAttacks.Format("%s/1", pMonster->m_szNumAttacks);
+		}
+		else
+		{
+			m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pNPC));
+		}
 
 	}
 }
@@ -1901,7 +1908,14 @@ void DMNPCViewDialog::ProcessCharStats()
 		++nWeaponCount;
 	}
 
-	m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pNPC));
+	if (pMonster != NULL)
+	{
+		m_szNumAttacks.Format("%s/1", pMonster->m_szNumAttacks);
+	}
+	else
+	{
+		m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pNPC));
+	}
 
 	m_szNumAttacksEdit = m_szNumAttacks;
 

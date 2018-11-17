@@ -3063,10 +3063,20 @@ void DMPartyDialog::OnClickPartyList(NMHDR* pNMHDR, LRESULT* pResult)
 		if (m_pOpposingCharacterDialog != NULL)
 		{
 			m_pOpposingCharacterDialog->m_pTargetBaseDlg = m_pBaseOpposingCharDlg;
+
+			if (m_pBaseCharDlg->m_pTargetBaseDlg == NULL)
+			{
+				m_pBaseCharDlg->m_pTargetBaseDlg = m_pBaseCharDlg;
+			}
 		}
 		if (m_pOpposingNPCDialog != NULL)
 		{
 			m_pOpposingNPCDialog->m_pTargetBaseDlg = m_pBaseOpposingCharDlg;
+
+			if (m_pBaseCharDlg->m_pTargetBaseDlg == NULL)
+			{
+				m_pBaseCharDlg->m_pTargetBaseDlg = m_pBaseCharDlg;
+			}
 		}
 
 		Refresh();
@@ -3110,6 +3120,7 @@ void DMPartyDialog::OnClickPartyList2(NMHDR* pNMHDR, LRESULT* pResult)
 			{
 				m_pSelectedNPCDialog->m_pTargetBaseDlg = m_pBaseOpposingCharDlg;
 			}
+		
 		}
 
 		Refresh();
@@ -3144,7 +3155,7 @@ BOOL DMPartyDialog::SetSelectedTarget(CDMBaseCharViewDialog *pBaseCharDlg)
 }
 
 
-BOOL DMPartyDialog::FindPartyListSelection(CDMBaseCharViewDialog *pBaseDlg, BOOL bTarget)
+BOOL DMPartyDialog::FindPartyListSelection(CDMBaseCharViewDialog *pBaseDlg, BOOL bTarget, BOOL *pbOpponentParty)
 {
 	if(pBaseDlg == NULL)
 	{
@@ -3186,7 +3197,7 @@ BOOL DMPartyDialog::FindPartyListSelection(CDMBaseCharViewDialog *pBaseDlg, BOOL
 		}
 	}
 
-	for(int i =0; i < m_cPartyList2.GetItemCount(); ++i)
+	for(int i=0; i < m_cPartyList2.GetItemCount(); ++i)
 	{
 		if( (CDMBaseCharViewDialog *)m_cPartyList2.GetItemData(i) == pBaseDlg)
 		{
@@ -3217,6 +3228,10 @@ BOOL DMPartyDialog::FindPartyListSelection(CDMBaseCharViewDialog *pBaseDlg, BOOL
 				m_cCastSpellButton2.EnableWindow(FALSE);
 			}
 
+			if (pbOpponentParty != NULL)
+			{
+				*pbOpponentParty = TRUE;
+			}
 
 			return TRUE;
 		}
@@ -3296,6 +3311,70 @@ void DMPartyDialog::OnDownPartyButton()
 
 			Refresh();
 		}
+	}
+}
+
+void DMPartyDialog::ClickHitButton(BOOL bOpponentParty)
+{
+	if (bOpponentParty)
+	{
+		if (m_cAttackHitButton2.IsWindowEnabled() == FALSE)
+		{
+			OnMissileHitButton2();
+		}
+		else
+		{
+			OnAttackHitButton2();
+		}
+	}
+	else
+	{
+		if (m_cAttackHitButton.IsWindowEnabled() == FALSE)
+		{
+			OnMissileHitButton();
+		}
+		else
+		{
+			OnAttackHitButton();
+		}
+	}
+}
+
+void DMPartyDialog::ClickMissButton(BOOL bOpponentParty)
+{
+	if (bOpponentParty)
+	{
+		if (m_cAttackMissButton2.IsWindowEnabled() == FALSE)
+		{
+			OnMissileMissButton2();
+		}
+		else
+		{
+			OnAttackMissButton2();
+		}
+	}
+	else
+	{
+		if (m_cAttackMissButton.IsWindowEnabled() == FALSE)
+		{
+			OnMissileMissButton();
+		}
+		else
+		{
+			OnAttackMissButton();
+		}
+	}
+}
+
+void DMPartyDialog::ClickSpellButton(BOOL bOpponentParty)
+{
+	if (bOpponentParty)
+	{
+		OnCastSpellButton2();
+	}
+	else
+	{
+		OnCastSpellButton();
 	}
 }
 
@@ -3531,8 +3610,12 @@ void DMPartyDialog::OnCastSpellButton()
 
 void DMPartyDialog::OnWoundButton() 
 {
+	BOOL bWasAlive = FALSE;
+
 	if(m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
 	{
+		bWasAlive = m_pSelectedCharacterDialog->m_pCharacter->IsAlive();
+
 		int nValue = 0;
 
 		ModifyValue((int *)&nValue, "Add Damage:", FALSE);
@@ -3544,10 +3627,26 @@ void DMPartyDialog::OnWoundButton()
 
 		m_pSelectedCharacterDialog->ProcessCharStats();
 		m_pSelectedCharacterDialog->Refresh();
+
+		if (bWasAlive == TRUE && m_pSelectedCharacterDialog->m_pCharacter->IsAlive() == FALSE)
+		{
+			if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
+			{
+				m_pApp->PlaySoundFX("Female PC Die");
+			}
+			else
+			{
+				m_pApp->PlaySoundFX("Male PC Die");
+			}
+
+			m_pSelectedCharacterDialog->m_szInitiativeAction = _T("DEAD");
+		}
 	}
 
 	if(m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL)
 	{
+		bWasAlive = m_pSelectedNPCDialog->m_pNPC->IsAlive();
+
 		int nValue = 0;
 
 		ModifyValue((int *)&nValue, "Add Damage:", FALSE);
@@ -3559,6 +3658,13 @@ void DMPartyDialog::OnWoundButton()
 
 		m_pSelectedNPCDialog->ProcessCharStats();
 		m_pSelectedNPCDialog->Refresh();
+
+		if (bWasAlive == TRUE && m_pSelectedNPCDialog->m_pNPC->IsAlive() == FALSE)
+		{
+			m_pApp->PlaySoundFX("Monster Die");
+		}
+
+		m_pSelectedNPCDialog->m_szInitiativeAction = _T("DEAD");
 	}
 
 	Refresh();
@@ -3887,8 +3993,20 @@ void DMPartyDialog::OnWoundButton2()
 
 		if(bWasAlive && !m_pOpposingCharacterDialog->m_pCharacter->IsAlive())
 		{
+			if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
+			{
+				m_pApp->PlaySoundFX("Female PC Die");
+			}
+			else
+			{
+				m_pApp->PlaySoundFX("Male PC Die");
+			}
+
+			m_pOpposingCharacterDialog->m_szInitiativeAction = _T("DEAD");
+
 			OnBnClickedKillForXpButton();
 			m_pOpposingCharacterDialog = NULL;
+			
 		}
 	}
 	
@@ -3912,6 +4030,10 @@ void DMPartyDialog::OnWoundButton2()
 
 		if(bWasAlive && !m_pOpposingNPCDialog->m_pNPC->IsAlive())
 		{
+			m_pApp->PlaySoundFX("Monster Die");
+
+			m_pOpposingNPCDialog->m_szInitiativeAction = _T("DEAD");
+
 			OnBnClickedKillForXpButton();
 			m_pOpposingNPCDialog = NULL;
 		}

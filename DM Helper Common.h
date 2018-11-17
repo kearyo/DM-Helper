@@ -9,11 +9,14 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10033
+#define DMH_CURRENT_VERSION 10034
 
 #define USE_CANTRIPS	TRUE
 
 #define ISOMETRIC_MAPS	TRUE
+
+#define CUSTOM_CLASSES	TRUE
+#define MAX_CUSTOM_CLASSES	12
 
 #define KEARY_BUILD	FALSE
 
@@ -213,6 +216,11 @@
 	* Double sided printing enabled for character sheets
 	* Bug fixes for errors caused by adding and removing / copy/ pasting NPCs into parties
 
+- 1.0.034	--/--/18
+	* Paladin saving throws were not being calculated correctly, fixed
+	* Added character light sources to display lighting ranges in dungeon map views
+	* DEV NOTE light_sources.dat MUST BE INCLUDED IN NEXT PATCH AND ADDED TO MSI INSTALL
+	* Custom classes / editor added
 
 */
 
@@ -313,6 +321,22 @@ typedef enum
 	DND_CHARACTER_CLASS_MAGE = 400,
 	DND_CHARACTER_CLASS_ILLUSIONIST = 410,
 
+	#if CUSTOM_CLASSES
+	DND_CHARACTER_CLASS_CUSTOM_1 = 500,
+	DND_CHARACTER_CLASS_CUSTOM_2 = 501,
+	DND_CHARACTER_CLASS_CUSTOM_3 = 502,
+	DND_CHARACTER_CLASS_CUSTOM_4 = 503,
+	DND_CHARACTER_CLASS_CUSTOM_5 = 504,
+	DND_CHARACTER_CLASS_CUSTOM_6 = 505,
+	DND_CHARACTER_CLASS_CUSTOM_7 = 506,
+	DND_CHARACTER_CLASS_CUSTOM_8 = 507,
+	DND_CHARACTER_CLASS_CUSTOM_9 = 508,
+	DND_CHARACTER_CLASS_CUSTOM_10 = 509,
+	DND_CHARACTER_CLASS_CUSTOM_11 = 510,
+	DND_CHARACTER_CLASS_CUSTOM_12 = 511,
+	// make sure this jibes with MAX_CUSTOM_CLASSES
+	#endif
+
 	DND_CHARACTER_SPELL_CLASS_RANGER_DRUID = 1000,
 	DND_CHARACTER_SPELL_CLASS_RANGER_MAGE = 1001,
 	DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC = 2000,
@@ -324,6 +348,7 @@ typedef enum
 
 
 char *GetClassName(DND_CHARACTER_CLASSES nClass);
+BOOL IsDefinedClass(DND_CHARACTER_CLASSES nClass);
 
 
 typedef enum
@@ -391,6 +416,70 @@ typedef enum
 
 } DND_COIN_TYPES;
 
+
+#define CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE  1024
+
+class cDNDCustomClass
+{
+public:
+
+	cDNDCustomClass();
+
+	~cDNDCustomClass();
+
+	void Clear();
+
+	void PopulateXPTable();
+
+	BOOL m_bClassDefined;
+	DND_CHARACTER_CLASSES m_Class;
+
+	char m_szClassName[32];
+
+	int m_nHitDieType;
+
+	LONG m_lXPLevel[12];
+	LONG m_lMaxChartLevelXP;
+	int m_nMaxChartLevel;		// max level number of XP per level is defined, after this level we add m_lMaxChartLevelXP instead
+
+	int m_nMaxChartLevelHP;
+	int m_nMaxChartHPLevel;  // after this level, only get m_nMaxChartLevelHP new hitpoints instead of rolling
+
+	DND_CHARACTER_CLASSES m_CombatClass;
+
+	DND_CHARACTER_CLASSES m_SavingThrowClass;
+
+	DND_CHARACTER_CLASSES m_MagicUseClass;
+	int m_nMagicUseLevel;
+
+	BOOL m_bTurnUndead;
+	int m_nTurnUndeadLevel;
+
+	BOOL m_bThiefSkills;
+	int m_nThiefLevel;
+
+	BOOL m_bAssassinSkills;
+	int m_nAssassinLevel;
+
+	int m_nInitialWeaponProf;
+	int m_nAddWeaponProf;		// unused
+	int m_nAddWeaponProfLevels;
+	int m_nNonWeaponProfPenalty;
+
+	int m_nMinAttributes[6];
+	BOOL m_bPrerequisiteAttrib[6];
+
+	int m_nFirstLevelHD;
+
+	ULONG m_ExpansionBuffer[CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE];
+};
+
+extern cDNDCustomClass _gCustomClass[MAX_CUSTOM_CLASSES];
+
+cDNDCustomClass *GetCustomClass(DND_CHARACTER_CLASSES _Class);
+BOOL IsCustomClass(DND_CHARACTER_CLASSES _Class);
+
+int GetNumDefinedCustomClasses();
 
 #define APPEND_TO_LOG	-1
 
@@ -733,6 +822,8 @@ typedef enum
 	DND_OBJECT_TYPE_HELMET,
 
 	DND_OBJECT_TYPE_CUSTOM,
+
+	DND_OBJECT_TYPE_LIGHTSOURCE,
 
 	DND_OBJECT_TYPE_LAST_TYPE,
 
@@ -2016,8 +2107,10 @@ public:
 	int m_nClimbingMove;
 	int m_nSpecialMove;
 
+	int m_nLightSourceID;
+	int m_nLightSourceRange;
 
-	int m_nReserved_0[971];
+	int m_nReserved_0[969];
 
 	DND_CHARACTER_CLASSES		m_SpellClasses[4];
 	int m_nCastingLevels[4];
@@ -2158,7 +2251,7 @@ public:
 		m_nClimbingMove = 0;
 		m_nSpecialMove = 0;
 
-		memset(m_nReserved_0,0,971*sizeof(int));
+		memset(m_nReserved_0,0,969*sizeof(int));
 
 		m_SpellClasses[0] = DND_CHARACTER_CLASS_UNDEF;
 		m_SpellClasses[1] = DND_CHARACTER_CLASS_UNDEF;
@@ -2664,7 +2757,7 @@ char * GetMonkWeaponDamageAdj(cDNDCharacter *pCharacter, int nWeaponSlot);
 int CalculateBaseArmorClass(cDNDCharacter *pCharacter);
 int CalculateBaseMovement(cDNDCharacter *pCharacter);
 char *CalculateAttacksPerRound(cDNDCharacter *pCharacter, BOOL bBase = FALSE);
-DND_CHARACTER_CLASSES GetCombatClass(cDNDCharacter *pCharacter, int *pnCombatLevel);
+DND_CHARACTER_CLASSES GetCombatClass(cDNDCharacter *pCharacter, int *pnCombatLevel, int *pnClassIndex);
 int CalculateWeaponProficiencies(cDNDCharacter *pCharacter, int *pnProfPenalty);
 void CalculateWeaponlessCombatMatrix(cDNDCharacter *pCharacter);
 
@@ -3556,7 +3649,7 @@ public:
 	~cDNDStatBlock()
 	{
 		Reset();
-	}
+	};
 
 	void Reset()
 	{
@@ -3624,6 +3717,8 @@ public:
 #define PDNDSTATBLOCK cDNDStatBlock*
 typedef CTypedPtrMap <CMapStringToPtr, CString, PDNDSTATBLOCK> PDNDSTATBLOCKMAP;
 
+
+ 
 //utility functions
 void RemoveSpaces(char *szInString);
 void RemoveLineFeeds(char *szInString);

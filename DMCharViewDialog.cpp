@@ -26,8 +26,13 @@ static char THIS_FILE[] = __FILE__;
 static OPENFILENAME    g_ofn;
 char g_CV_szFilename[MAX_PATH];
 
+#if CUSTOM_CLASSES
+#define NUM_CHARVIEW_CLASSES 26
+#else
+#define NUM_CHARVIEW_CLASSES 14
+#endif
 
-int nClasses[14] = 
+int nClasses[NUM_CHARVIEW_CLASSES] =
 {
 	DND_CHARACTER_CLASS_UNDEF,
 
@@ -47,6 +52,21 @@ int nClasses[14] =
 	DND_CHARACTER_CLASS_THIEF,
 	DND_CHARACTER_CLASS_THIEF_ACROBAT,
 	DND_CHARACTER_CLASS_ASSASSIN,
+
+	#if CUSTOM_CLASSES
+	DND_CHARACTER_CLASS_CUSTOM_1,
+	DND_CHARACTER_CLASS_CUSTOM_2,
+	DND_CHARACTER_CLASS_CUSTOM_3,
+	DND_CHARACTER_CLASS_CUSTOM_4,
+	DND_CHARACTER_CLASS_CUSTOM_5,
+	DND_CHARACTER_CLASS_CUSTOM_6,
+	DND_CHARACTER_CLASS_CUSTOM_7,
+	DND_CHARACTER_CLASS_CUSTOM_8,
+	DND_CHARACTER_CLASS_CUSTOM_9,
+	DND_CHARACTER_CLASS_CUSTOM_10,
+	DND_CHARACTER_CLASS_CUSTOM_11,
+	DND_CHARACTER_CLASS_CUSTOM_12,
+	#endif
 
 };
 
@@ -429,6 +449,7 @@ void CDMCharViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_CONCEALED_MOVE_EDIT, m_szConcealedMove);
 	DDX_Text(pDX, IDC_CLIMBING_MOVE_EDIT, m_szClimbingMove);
 	DDX_Text(pDX, IDC_SPECIAL_MOVE_EDIT, m_szSpecialMove);
+	DDX_Control(pDX, IDC_LIGHT_SOURCE_COMBO, m_cLightSourceCombo);
 }
 
 
@@ -516,6 +537,7 @@ BEGIN_MESSAGE_MAP(CDMCharViewDialog, CDialog)
 	ON_EN_CHANGE(IDC_CONCEALED_MOVE_EDIT, &CDMCharViewDialog::OnEnChangeConcealedMoveEdit)
 	ON_EN_CHANGE(IDC_CLIMBING_MOVE_EDIT, &CDMCharViewDialog::OnEnChangeClimbingMoveEdit)
 	ON_EN_CHANGE(IDC_SPECIAL_MOVE_EDIT, &CDMCharViewDialog::OnEnChangeSpecialMoveEdit)
+	ON_CBN_SELCHANGE(IDC_LIGHT_SOURCE_COMBO, &CDMCharViewDialog::OnCbnSelchangeLightSourceCombo)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -545,16 +567,7 @@ BOOL CDMCharViewDialog::OnInitDialog()
 
 	m_cCharRaceCombo.SetCurSel(0);
 
-
-
-	for(i = 0; i < 14; ++i)
-	{
-		m_cClassCombo_1.InsertString(i, GetClassName((DND_CHARACTER_CLASSES)nClasses[i]));
-		m_cClassCombo_1.SetItemData(i, nClasses[i]);
-	}
-	m_cClassCombo_1.SetCurSel(0);
-
-
+	InitClassListBox();
 
 	m_cCharSexCombo.InsertString(0, "Male");
 	m_cCharSexCombo.SetItemData(0, 0);
@@ -709,6 +722,23 @@ BOOL CDMCharViewDialog::OnInitDialog()
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CDMCharViewDialog::InitClassListBox()
+{
+	m_cClassCombo_1.ResetContent();
+
+	int nIndex = 0;
+	for (int i = 0; i < NUM_CHARVIEW_CLASSES; ++i)
+	{
+		if (IsDefinedClass((DND_CHARACTER_CLASSES)nClasses[i]))
+		{
+			m_cClassCombo_1.InsertString(nIndex, GetClassName((DND_CHARACTER_CLASSES)nClasses[i]));
+			m_cClassCombo_1.SetItemData(nIndex, nClasses[i]);
+			++nIndex;
+		}
+	}
+	m_cClassCombo_1.SetCurSel(0);
 }
 
 void CDMCharViewDialog::OnOK() 
@@ -957,6 +987,16 @@ void CDMCharViewDialog::Refresh()
 
 	m_szBaseCharName = m_szCharacterName;
 
+	if(m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_UNDEF)
+	{
+		m_pCharacter->m_Class[0] = DND_CHARACTER_CLASS_FIGHTER;
+	}
+
+	if(m_pCharacter->m_nLevel[0] == 0)
+	{
+		m_pCharacter->m_nLevel[0] = 1;
+	}
+
 	#if 0 // #ifdef _DEBUG
 
 	#define ATTRIB_STR		0
@@ -1085,7 +1125,7 @@ void CDMCharViewDialog::Refresh()
 			BOOL bEnable = FALSE;
 			m_cClassCombo_2.ResetContent();
 			int index = 0;
-			for(int i = 0; i < 14; ++i)
+			for (int i = 0; i < NUM_CHARVIEW_CLASSES; ++i)
 			{
 				if(ClassIsValidDualClass((DND_CHARACTER_CLASSES)nClasses[i], m_pCharacter->m_Class[0], m_pCharacter->m_Class[2]))
 				{
@@ -1095,10 +1135,17 @@ void CDMCharViewDialog::Refresh()
 						m_cClassCombo_2.SetItemData(index, 0);
 						++index;
 					}
-					m_cClassCombo_2.InsertString(index, GetClassName((DND_CHARACTER_CLASSES)nClasses[i]));
-					m_cClassCombo_2.SetItemData(index, nClasses[i]);
-					++index;
-					bEnable = TRUE;
+					#if CUSTOM_CLASSES
+					if (IsDefinedClass((DND_CHARACTER_CLASSES)nClasses[i]) == TRUE)
+					#else
+					if(1)
+					#endif
+					{
+						m_cClassCombo_2.InsertString(index, GetClassName((DND_CHARACTER_CLASSES)nClasses[i]));
+						m_cClassCombo_2.SetItemData(index, nClasses[i]);
+						++index;
+						bEnable = TRUE;
+					}
 				}
 			}
 			if(bEnable)
@@ -1132,7 +1179,7 @@ void CDMCharViewDialog::Refresh()
 			BOOL bEnable = FALSE;
 			m_cClassCombo_3.ResetContent();
 			int index = 0;
-			for(int i = 0; i < 14; ++i)
+			for (int i = 0; i < NUM_CHARVIEW_CLASSES; ++i)
 			{
 				if(ClassIsValidDualClass((DND_CHARACTER_CLASSES)nClasses[i], m_pCharacter->m_Class[0], m_pCharacter->m_Class[1]))
 				{
@@ -1142,10 +1189,17 @@ void CDMCharViewDialog::Refresh()
 						m_cClassCombo_3.SetItemData(index, 0);
 						++index;
 					}
-					m_cClassCombo_3.InsertString(index, GetClassName((DND_CHARACTER_CLASSES)nClasses[i]));
-					m_cClassCombo_3.SetItemData(index, nClasses[i]);
-					++index;
-					bEnable = TRUE;
+					#if CUSTOM_CLASSES
+					if (IsDefinedClass((DND_CHARACTER_CLASSES)nClasses[i]) == TRUE)
+					#else
+					if(1)
+					#endif
+					{
+						m_cClassCombo_3.InsertString(index, GetClassName((DND_CHARACTER_CLASSES)nClasses[i]));
+						m_cClassCombo_3.SetItemData(index, nClasses[i]);
+						++index;
+						bEnable = TRUE;
+					}
 				}
 			}
 			if(bEnable)
@@ -1238,7 +1292,7 @@ void CDMCharViewDialog::Refresh()
 		BOOL bEnable = FALSE;
 		m_cClassCombo_2.ResetContent();
 		int index = 0;
-		for(int i = 0; i < 14; ++i)
+		for (int i = 0; i < NUM_CHARVIEW_CLASSES; ++i)
 		{
 			if(ClassIsValidMultiClass(m_pCharacter->m_Class[0], (DND_CHARACTER_CLASSES)nClasses[i]))
 			{
@@ -1300,7 +1354,7 @@ void CDMCharViewDialog::Refresh()
 		bEnable = FALSE;
 		m_cClassCombo_3.ResetContent();
 		index = 0;
-		for(i = 0; i < 14; ++i)
+		for (i = 0; i < NUM_CHARVIEW_CLASSES; ++i)
 		{
 			if(ClassIsValidMultiClass(m_pCharacter->m_Class[0], (DND_CHARACTER_CLASSES)nClasses[i]) && ClassIsValidMultiClass(m_pCharacter->m_Class[1], (DND_CHARACTER_CLASSES)nClasses[i]))
 			{
@@ -1732,9 +1786,11 @@ void CDMCharViewDialog::Refresh()
 	m_cWeaponCombo_4.ResetContent();
 	m_cAmmunitionCombo.ResetContent();
 	m_cRecoverAmmoCombo.ResetContent();
+	m_cLightSourceCombo.ResetContent();
 
 	int nWeaponCount = 0;
 	int nAmmoCount = 0;
+	int nLightSourceCount = 0;
 
 	m_cWeaponCombo_1.InsertString(nWeaponCount, _BlankWeapon.m_szType);
 	m_cWeaponCombo_1.SetItemData(nWeaponCount, _BlankWeapon.m_wTypeId);
@@ -1753,6 +1809,13 @@ void CDMCharViewDialog::Refresh()
 
 	++nWeaponCount;
 	++nAmmoCount;
+
+	m_cLightSourceCombo.InsertString(nLightSourceCount, "None");
+	m_cLightSourceCombo.SetItemData(nLightSourceCount, 0);
+	m_cLightSourceCombo.SetCurSel(0);
+	++nLightSourceCount;
+
+	BOOL bFoundLightSource = FALSE;
 
 	for (i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
 	{
@@ -1824,6 +1887,33 @@ void CDMCharViewDialog::Refresh()
 				++nAmmoCount;
 			}
 		}
+
+		POBJECTTYPE pLightObject = m_pApp->m_LightSourceIndexedTypeArray.GetAt(m_pCharacter->m_Inventory[i].m_wTypeId);
+		if (NULL != pLightObject)
+		{
+			if (m_pCharacter->m_Inventory[i].m_wTypeId >= 10000 || m_pCharacter->m_Inventory[i].m_nMagicAdj)
+			{
+				// TRACE("LIGHT!");
+				szTemp.Format("%s (%d ft.)", m_pCharacter->m_Inventory[i].m_szType, pLightObject->m_nCost);
+				m_cLightSourceCombo.InsertString(nLightSourceCount, szTemp);
+				m_cLightSourceCombo.SetItemData(nLightSourceCount, m_pCharacter->m_Inventory[i].m_dwObjectID);
+
+				if (m_pCharacter->m_Inventory[i].m_dwObjectID == m_pCharacter->m_nLightSourceID)
+				{
+					m_cLightSourceCombo.SetCurSel(nLightSourceCount);
+					m_pCharacter->m_nLightSourceRange = pLightObject->m_nCost;
+					bFoundLightSource = TRUE;
+				}
+
+				++nLightSourceCount;
+			}
+		}
+	}
+
+	if (FALSE == bFoundLightSource)
+	{
+		m_pCharacter->m_nLightSourceRange = 0;
+		m_pCharacter->m_nLightSourceID = 0;
 	}
 
 	//AMMO RECOVERY
@@ -2029,7 +2119,6 @@ void CDMCharViewDialog::Refresh()
 		m_szAmmoPlus = "";
 	}
 
-	/////////////////////////////////////////////////////////
 
 	int nMaxWeight = 0;
 	int nEncumbrance = CalculateEncumbrance(m_pCharacter, &nMaxWeight);
@@ -2467,7 +2556,19 @@ void CDMCharViewDialog::ProcessCharStats()
 		int nHDLevel = m_pCharacter->m_nLevel[j];
 
 		int nStartAtLevel = 1;
-		if(m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_RANGER || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_MONK)// || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_BARBARIAN)
+
+		BOOL bClassHas2HDAtFirstLevel = FALSE;
+		#if CUSTOM_CLASSES
+		if (IsCustomClass(m_pCharacter->m_Class[j]))
+		{
+			if (GetCustomClass(m_pCharacter->m_Class[j])->m_nFirstLevelHD == 2)
+			{
+				bClassHas2HDAtFirstLevel = TRUE;
+			}
+		}
+		#endif
+
+		if (m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_RANGER || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_MONK || bClassHas2HDAtFirstLevel == TRUE)// || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_BARBARIAN)
 		{
 			nStartAtLevel = 0;
 		}
@@ -2953,6 +3054,17 @@ void CDMCharViewDialog::RollHitpoints()
 {
 	int nDieType = GetHitDieTypeByClass(m_pCharacter->m_Class[0]);
 
+	BOOL bClassHas2HDAtFirstLevel = FALSE;
+	#if CUSTOM_CLASSES
+	if (IsCustomClass(m_pCharacter->m_Class[0]))
+	{
+		if (GetCustomClass(m_pCharacter->m_Class[0])->m_nFirstLevelHD == 2)
+		{
+			bClassHas2HDAtFirstLevel = TRUE;
+		}
+	}
+	#endif
+
 	//assuming 18 is max HD for any char, as it is the max for a monk
 	for(int i = 0; i <= 18; ++i)
 	{
@@ -2960,7 +3072,7 @@ void CDMCharViewDialog::RollHitpoints()
 		{
 			m_pCharacter->m_nHitPointRolls[0][i] = nDieType;
 		}
-		else if(g_bMaxHitPointsAtFirstLevel && i == 1 && m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_RANGER)
+		else if (g_bMaxHitPointsAtFirstLevel && i == 1 && (m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_RANGER || m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_MONK || bClassHas2HDAtFirstLevel == TRUE))
 		{
 			m_pCharacter->m_nHitPointRolls[0][i] = nDieType;
 		}
@@ -5187,4 +5299,23 @@ void CDMCharViewDialog::OnEnChangeSpecialMoveEdit()
 	m_pCharacter->m_nSpecialMove = atoi(m_szSpecialMove.GetBuffer(0));
 
 	m_pCharacter->MarkChanged();
+}
+
+
+void CDMCharViewDialog::OnCbnSelchangeLightSourceCombo()
+{
+	UpdateData(TRUE);
+
+	int nCursor = m_cLightSourceCombo.GetCurSel();
+
+	if (nCursor > -1)
+	{
+		m_pCharacter->m_nLightSourceID = m_cLightSourceCombo.GetItemData(nCursor);
+	}
+	else
+	{
+		m_pCharacter->m_nLightSourceID = 0;
+	}
+
+	Refresh();
 }

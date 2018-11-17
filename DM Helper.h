@@ -529,6 +529,9 @@ public:
 	POBJECTTYPEARRAY m_EquipmentOrderedTypeArray;
 	POBJECTTYPEARRAY m_EquipmentIndexedTypeArray;
 
+	POBJECTTYPEARRAY m_LightSourceOrderedTypeArray;
+	POBJECTTYPEARRAY m_LightSourceIndexedTypeArray;
+
 	PSPELLARRAY		m_MasterSpellArray;
 	PSPELLARRAY		m_CustomSpellArray;
 	PSPELLBOOKARRAY	m_SpellBooks;
@@ -623,6 +626,7 @@ public:
 	void LoadCustomWeaponsTable(char *path);
 	void LoadMagicItemTable(char *path);
 	void LoadMagicItemDescriptions(char *path);
+	void LoadLightSourceTable(char *path);
 	void LoadLanguages(char *path);
 
 
@@ -650,6 +654,8 @@ public:
 	CString Capitalize(CString szInString);
 	CString GetRandomName(DND_CHARACTER_RACES nRace, int nGender);
 
+	void LoadCustomClasses(char *path);
+
 	void CleanUpObjectTables();
 
 	void InitializeObjectTables();
@@ -664,6 +670,7 @@ public:
 	void LoadSettings();
 	void SaveSettings();
 
+	BOOL PlaySoundFXFromFile(CString szFile);
 	void PlaySoundFX(CString szDesc);
 	void PlayWeaponSFX(int nWeaponID, int nIndex);
 	void PlaySpellSFX(int nSpellID);
