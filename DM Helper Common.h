@@ -9,7 +9,7 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10034
+#define DMH_CURRENT_VERSION 10035
 
 #define USE_CANTRIPS	TRUE
 
@@ -216,12 +216,15 @@
 	* Double sided printing enabled for character sheets
 	* Bug fixes for errors caused by adding and removing / copy/ pasting NPCs into parties
 
-- 1.0.034	--/--/18
+- 1.0.034	11/16/18
 	* Paladin saving throws were not being calculated correctly, fixed
 	* Added character light sources to display lighting ranges in dungeon map views
 	* DEV NOTE light_sources.dat MUST BE INCLUDED IN NEXT PATCH AND ADDED TO MSI INSTALL
 	* Custom classes / editor added
 
+
+- 1.0.035	11/20/18
+	* Fixed bug with character HP edit screen not storing edited values
 */
 
 #define PCSTRING CString*

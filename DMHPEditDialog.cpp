@@ -292,32 +292,31 @@ BOOL DMHPEditDialog::OnInitDialog()
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
 
-void DMHPEditDialog::OnOK() 
+void DMHPEditDialog::OnBnClickedOk()
 {
-
 	UpdateData(TRUE);
 
-	for(int j = 0; j < 3; ++j)
+	for (int j = 0; j < 3; ++j)
 	{
-		for(int i = 0; i < 19; ++ i)
+		for (int i = 0; i < 19; ++i)
 		{
 			m_pCharacter->m_nHitPointRolls[j][i] = atoi(m_szHP[j][i].GetBuffer(0));
 		}
 	}
-	
-	if(m_pDMCharViewDialog != NULL)
+
+	if (m_pDMCharViewDialog != NULL)
 	{
 		m_pDMCharViewDialog->ProcessCharStats();
 		m_pDMCharViewDialog->Refresh();
 		m_pDMCharViewDialog->m_pHPEditDialog = NULL;
 	}
-	
+
 	CDialog::OnOK();
 }
 
+
 void DMHPEditDialog::OnCancel() 
 {
-	// TODO: Add extra cleanup here
 	
 	if(m_pDMCharViewDialog != NULL)
 	{
@@ -339,12 +338,3 @@ void DMHPEditDialog::OnClose()
 }
 
 
-void DMHPEditDialog::OnBnClickedOk()
-{
-	if (m_pDMCharViewDialog != NULL)
-	{
-		m_pDMCharViewDialog->m_pHPEditDialog = NULL;
-	}
-	
-	CDialog::OnOK();
-}

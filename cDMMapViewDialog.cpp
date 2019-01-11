@@ -4964,7 +4964,6 @@ void cDMMapViewDialog::OnPartyCharacterButton()
 	InvalidateRect(NULL);
 }
 
-// hier
 void cDMMapViewDialog::OnBnClickedPartyCharactersButton()
 {
 	if (m_pSelectedParty != NULL)
