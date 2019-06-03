@@ -101,11 +101,11 @@ void CColoredListCtrl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 		{
 			if(iRow %2)
 			{
-			 lplvcd->clrTextBk = m_colRow2;
+				lplvcd->clrTextBk = m_colRow2;
 			}
 			else
 			{
-			  lplvcd->clrTextBk = m_colRow1;
+				lplvcd->clrTextBk = m_colRow1;
 			}
 		}
 		

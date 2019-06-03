@@ -797,6 +797,12 @@ void cDMMapViewDialog::OnPaint()
 			szFaker.MakeUpper();
 			strcpy(pCell->m_szBitmapPath, szFaker.GetBuffer(0));
 #endif
+#if 0	
+			CString szFaker;
+			szFaker.Format("<$DMAPATH>\\DATA\\maps\\bitmaps\\flanaess_598\\flanaess_598-%d.jpg", xx + yy * m_pDNDMap->m_nColumns);
+			szFaker.MakeUpper();
+			strcpy(pCell->m_szBitmapPath, szFaker.GetBuffer(0));
+#endif
 
 			BOOL bInRegion = FALSE;
 			if(x1 <= cRect.left && y1 <= cRect.top && x2 >= cRect.right && y2 >= cRect.bottom) //view is completely inside cell
@@ -3082,6 +3088,11 @@ void cDMMapViewDialog::OnRButtonDblClk(UINT nFlags, CPoint point)
 		{
 			int nImageWidth = pCell->m_pBitmap->GetWidth();
 			int nImageHeight = pCell->m_pBitmap->GetHeight();
+
+			if (nImageWidth == 0 || nImageHeight == 0)
+			{
+				AfxMessageBox("Failed to create initial image ! (Out of Memory ?)", MB_OK);
+			}
 
 			if (nImageWidth > m_pDNDMap->m_nPixelSizeX || nImageHeight > m_pDNDMap->m_nPixelSizeY)
 			{

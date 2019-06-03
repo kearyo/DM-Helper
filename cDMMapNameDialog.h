@@ -27,4 +27,5 @@ public:
 	CEdit m_cNameEdit;
 	CString m_szMapName;
 	afx_msg void OnEnChangeEdit1();
+	virtual BOOL OnInitDialog();
 };

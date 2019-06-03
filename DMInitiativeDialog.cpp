@@ -78,6 +78,7 @@ BEGIN_MESSAGE_MAP(CDMInitiativeDialog, CDialog)
 	ON_BN_CLICKED(IDC_HIT_BUTTON, &CDMInitiativeDialog::OnBnClickedHitButton)
 	ON_BN_CLICKED(IDC_MISS_BUTTON, &CDMInitiativeDialog::OnBnClickedMissButton)
 	ON_BN_CLICKED(IDC_SPELL_BUTTON, &CDMInitiativeDialog::OnBnClickedSpellButton)
+	ON_BN_CLICKED(IDC_WEAPON_SWAP_BUTTON, &CDMInitiativeDialog::OnBnClickedWeaponSwapButton)
 END_MESSAGE_MAP()
 
 
@@ -1161,6 +1162,16 @@ void CDMInitiativeDialog::OnBnClickedMissButton()
 	}
 }
 
+void CDMInitiativeDialog::OnBnClickedWeaponSwapButton()
+{
+	m_pParentPartyDialog->ClickWeaponSwapButton(IsSelectedCharacterInOpponentParty());
+
+	CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog*)m_cCharacterList.GetItemData(m_nOldCursor);
+	SetAttackData(pDlg);
+
+	Refresh();
+}
+
 
 void CDMInitiativeDialog::OnBnClickedSpellButton()
 {
@@ -1212,3 +1223,5 @@ void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 
 	m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
 }
+
+

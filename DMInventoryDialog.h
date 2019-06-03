@@ -223,6 +223,11 @@ public:
 	afx_msg void OnBnClickedItemInfoButton();
 	afx_msg void OnLbnDblclkStoreList();
 	afx_msg void OnLbnDblclkInventoryList();
+	CButton m_cGenerateTreasureButton;
+	afx_msg void OnBnClickedGenTreasureButton();
+	CButton m_cInLairCheck;
+	BOOL m_bInLairCheck;
+	afx_msg void OnBnClickedInLairCheck();
 };
 
 //{{AFX_INSERT_LOCATION}}

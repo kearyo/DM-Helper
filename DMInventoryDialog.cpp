@@ -64,6 +64,7 @@ DMInventoryDialog::DMInventoryDialog(CDMHelperDlg* pMainDialog, cDNDCharacter *_
 	, m_szInventoryLabel(_T(""))
 	, m_bDoubleSpecialized(FALSE)
 	, m_bSpecialized(FALSE)
+	, m_bInLairCheck(FALSE)
 {
 	//{{AFX_DATA_INIT(DMInventoryDialog)
 	m_szEncumbrance = _T("");
@@ -192,6 +193,9 @@ void DMInventoryDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_DOUBLE_SPECIALIZED_CHECK, m_bDoubleSpecialized);
 	DDX_Check(pDX, IDC_SPECIALIZED_CHECK, m_bSpecialized);
 	DDX_Control(pDX, IDC_ITEM_INFO_BUTTON, m_cItemInfoButton);
+	DDX_Control(pDX, IDC_GEN_TREASURE_BUTTON, m_cGenerateTreasureButton);
+	DDX_Control(pDX, IDC_IN_LAIR_CHECK, m_cInLairCheck);
+	DDX_Check(pDX, IDC_IN_LAIR_CHECK, m_bInLairCheck);
 }
 
 
@@ -263,6 +267,8 @@ BEGIN_MESSAGE_MAP(DMInventoryDialog, CDialog)
 	ON_BN_CLICKED(IDC_ITEM_INFO_BUTTON, &DMInventoryDialog::OnBnClickedItemInfoButton)
 	ON_LBN_DBLCLK(IDC_STORE_LIST, &DMInventoryDialog::OnLbnDblclkStoreList)
 	ON_LBN_DBLCLK(IDC_INVENTORY_LIST, &DMInventoryDialog::OnLbnDblclkInventoryList)
+	ON_BN_CLICKED(IDC_GEN_TREASURE_BUTTON, &DMInventoryDialog::OnBnClickedGenTreasureButton)
+	ON_BN_CLICKED(IDC_IN_LAIR_CHECK, &DMInventoryDialog::OnBnClickedInLairCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -329,9 +335,17 @@ BOOL DMInventoryDialog::OnInitDialog()
 
 	m_bMagicItemSelect = FALSE;
 
-	if(m_pCharacter->m_bIsNPC == FALSE)
+	if (m_pCharacter->m_bIsNPC == FALSE)
 	{
 		m_pPCDetailsDialog = new CDMPCDetailsDialog(this);
+		m_cGenerateTreasureButton.ShowWindow(SW_HIDE);
+		m_cInLairCheck.ShowWindow(SW_HIDE);	
+	}
+
+	if (m_pCharacter->m_bIsCache == TRUE)
+	{
+		m_cGenerateTreasureButton.ShowWindow(SW_HIDE);
+		m_cInLairCheck.ShowWindow(SW_HIDE);
 	}
 
 	m_pCharacter->ValidateInventory();
@@ -3193,3 +3207,29 @@ void DMInventoryDialog::OnBnClickedItemInfoButton()
 
 
 
+
+
+void DMInventoryDialog::OnBnClickedGenTreasureButton()
+{
+	// RollMonsterTreasure(cDNDNonPlayerCharacter *pNPC, PDNDMONSTERMANUALENTRY pMonster, BOOL bLair, BOOL bAddCoins)
+
+	if (m_pNPCVWindow != NULL)
+	{
+		PDNDMONSTERMANUALENTRY pMonster = NULL;
+
+		m_pApp->m_MonsterManualIndexedMap.Lookup(m_pNPCVWindow->m_pNPC->m_nMonsterIndex, pMonster);
+
+		if (pMonster != NULL && m_pNPCVWindow->m_pNPC->m_bIsCache == FALSE)
+		{
+			RollMonsterTreasure(m_pNPCVWindow->m_pNPC, pMonster, m_bInLairCheck, TRUE);
+
+			Refresh();
+		}	
+	}
+}
+
+
+void DMInventoryDialog::OnBnClickedInLairCheck()
+{
+	UpdateData(TRUE);
+}

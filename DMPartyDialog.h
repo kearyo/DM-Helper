@@ -116,6 +116,9 @@ public:
 
 	void GenerateStatBlock(cDNDParty *pParty);
 
+	void GrantXPBonusToSelectedCharacter(int nXP);
+
+	void ClickWeaponSwapButton(BOOL bOpponentParty);
 	void ClickHitButton(BOOL bOpponentParty);
 	void ClickMissButton(BOOL bOpponentParty);
 	void ClickSpellButton(BOOL bOpponentParty);

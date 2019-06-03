@@ -9,7 +9,7 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10035
+#define DMH_CURRENT_VERSION 10037
 
 #define USE_CANTRIPS	TRUE
 
@@ -222,9 +222,15 @@
 	* DEV NOTE light_sources.dat MUST BE INCLUDED IN NEXT PATCH AND ADDED TO MSI INSTALL
 	* Custom classes / editor added
 
-
 - 1.0.035	11/20/18
 	* Fixed bug with character HP edit screen not storing edited values
+
+- 1.0.036	1/31/19
+	* Added save with confirmation for each character in a party when the party itself is saved
+
+- 1.0.037	XX/XX/XX
+	* More bug fixes for errors caused by adding and removing / copy/ pasting NPCs into parties
+	* Added button for treasure generation by treasure type to NPC details screen
 */
 
 #define PCSTRING CString*

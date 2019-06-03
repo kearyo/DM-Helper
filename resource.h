@@ -582,6 +582,7 @@
 #define IDC_WOUND_BUTTON                1140
 #define IDC_BUTTON_ALL                  1140
 #define IDC_CONCEALED_MOVE_EDIT         1140
+#define IDC_GEN_TREASURE_BUTTON         1140
 #define IDC_SPELL_DESC_EDIT             1141
 #define IDC_HEAL_BUTTON                 1141
 #define IDC_CLIMBING_MOVE_EDIT          1141
@@ -850,6 +851,8 @@
 #define IDC_XP_COMMENT                  1364
 #define IDC_D10_BUTTON                  1365
 #define IDC_WP_STATIC                   1365
+#define IDC_XP_COMMENT2                 1365
+#define IDC_DEBUG_CHAR_ID               1365
 #define IDC_D6_BUTTON                   1366
 #define IDC_INVENTORY_STATIC            1366
 #define IDC_D100_BUTTON                 1367
@@ -918,6 +921,7 @@
 #define IDC_TYPE_RADIO2                 1408
 #define IDC_SPELL_BUTTON                1408
 #define IDC_TYPE_RADIO3                 1409
+#define IDC_WEAPON_SWAP_BUTTON          1409
 #define IDC_TYPE_RADIO4                 1410
 #define IDC_TYPE_RADIO5                 1411
 #define IDC_TYPE_RADIO6                 1412
@@ -1003,6 +1007,7 @@
 #define IDC_DONE2                       1459
 #define IDC_CHARS_REM_STATIC            1459
 #define IDC_ITEM_IDENTIFIED_CHECK       1460
+#define IDC_IN_LAIR_CHECK               1461
 #define IDC_TREASURE_TYPE_LIST          1462
 #define IDC_MAGIC_SWORD_STATIC          1463
 #define IDC_ALIGNMENT_COMBO             1465

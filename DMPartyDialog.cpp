@@ -564,8 +564,11 @@ void DMPartyDialog::UpdateSelections()
 			{
 				m_pApp->m_NPCViewMap.Lookup((WORD)m_pParty->m_dwPartyRoster[i], pNPCDlg);
 
-				if(pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL)
+				if (pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL)
 				{
+					if (pNPCDlg->m_pNPC->m_dwCharacterID == 0) // rev 1.0.037
+						continue;
+
 					if(m_dwSubPartyID && pNPCDlg->m_pNPC->m_dwSubPartyID != m_dwSubPartyID)
 						continue;
 
@@ -934,6 +937,9 @@ void DMPartyDialog::UpdateSelections()
 
 					if(pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL)
 					{
+						if (pNPCDlg->m_pNPC->m_dwCharacterID == 0)  // rev 1.0.037
+							continue;
+
 						if(m_pOpposingSubParty != NULL && m_pOpposingSubParty->m_dwSubPartyID != pNPCDlg->m_pNPC->m_dwSubPartyID)
 						{
 							continue;
@@ -1804,14 +1810,19 @@ void DMPartyDialog::AddPartyMember(DWORD dwReturnedID, DWORD dwSubPartyID)
 				}
 				if(nFoundSlot >= 0)
 				{
-					if(dwSubPartyID)
+					if (dwSubPartyID)
 					{
+						//if(pNPCDlg->m_pNPC->m_dwSubPartyID != dwSubPartyID) // don't re-add the NPC if it is already a member of the subparty
 						pNPCDlg->m_pNPC->m_dwSubPartyID = dwSubPartyID;
 
-						memcpy(&m_pParty->m_NPCs[nFoundSlot], pNPCDlg->m_pNPC, sizeof(cDNDNonPlayerCharacter));
-						memset(pNPCDlg->m_pNPC, 0, sizeof(cDNDNonPlayerCharacter));
-
-						pNPCDlg->m_pNPC = &m_pParty->m_NPCs[nFoundSlot];
+						if (&m_pParty->m_NPCs[nFoundSlot] != pNPCDlg->m_pNPC)
+						{
+							memcpy(&m_pParty->m_NPCs[nFoundSlot], pNPCDlg->m_pNPC, sizeof(cDNDNonPlayerCharacter));
+							memset(pNPCDlg->m_pNPC, 0, sizeof(cDNDNonPlayerCharacter));
+						
+							pNPCDlg->m_pNPC = &m_pParty->m_NPCs[nFoundSlot];
+						}
+							
 					}
 					else
 					{
@@ -1980,19 +1991,46 @@ void DMPartyDialog::OnDeleteMemberButton()
 				{
 					if(bAlreadyAsked == TRUE || AfxMessageBox("NPC will be deleted completely !\nAre you sure ?", MB_YESNO) == IDYES)
 					{
-						if(FindAndSelectCharacterTab(dwReturnedID))
+						//if(FindAndSelectCharacterTab(dwReturnedID))
+						if (m_pMainDialog->FindAndDeleteTab(DND_TAB_TYPE_NPC, dwReturnedID, FALSE))
 						{
-							CDMHelperDlg *pMainDlg = (CDMHelperDlg *)m_pApp->m_pMainWindow;
-							pMainDlg->DeleteTab();
-							pMainDlg->SortTabs();
-							FindAndSelectPartyTab();
-							UpdateSelections();
+
+							memset(&m_pParty->m_NPCs[i], 0, sizeof(cDNDNonPlayerCharacter));
+
+							// Don't mess with this shit, trust in the force :-)  -- trying to revalidate the party and remove the 'gaps' created by m_dwCharacterID=0 slots causes all kinds of issues with the tabs
+
+							// validate npc list here
+							//m_pParty->ValidateNPCList();
+							//m_pOldSelectedNPCDialog = NULL;
+
+							/*
+							PDNDNPCVIEWDLG pNPCDlg = NULL;
+							m_pApp->m_NPCViewMap.Lookup((WORD)dwReturnedID, pNPCDlg);
+
+							if (pNPCDlg != NULL)
+							{
+								m_pApp->m_NPCViewMap.SetAt((WORD)dwReturnedID, NULL);
+								m_pApp->m_NPCViewMap.RemoveKey((WORD)dwReturnedID);
+							}
+
+							
+							//pMainDlg->SortTabs();
+
+							//UpdateSelections();
+							//FindAndSelectPartyTab();
+							*/
+
+							//return;
+						}
+						else
+						{
+							AfxMessageBox("Internal Error !", MB_OK);
 						}
 
-						memset(&m_pParty->m_NPCs[i], 0, sizeof(cDNDNonPlayerCharacter));
 					}
 					else
 					{
+						m_pParty->ValidateNPCList();
 						Refresh();
 						return;
 					}
@@ -2026,7 +2064,7 @@ void DMPartyDialog::OnDeleteMemberButton()
 
 		if(pNPCDlg != NULL)
 		{
-			m_pApp->m_NPCViewMap.SetAt((WORD)dwReturnedID,NULL);
+			m_pApp->m_NPCViewMap.SetAt((WORD)dwReturnedID, NULL);
 			m_pApp->m_NPCViewMap.RemoveKey((WORD)dwReturnedID);
 		}
 
@@ -2035,6 +2073,8 @@ void DMPartyDialog::OnDeleteMemberButton()
 
 		m_pSelectedCharacterDialog = NULL;
 		m_pSelectedNPCDialog = NULL;
+
+		// m_pParty->ValidateNPCList();  NO ! not here - see big comment above about deleting NPCs
 
 		UpdateSelections();
 
@@ -2219,6 +2259,8 @@ void DMPartyDialog::OnLoadPartyButton()
 
 		m_pApp->m_PartyViewMap.SetAt((WORD)m_pParty->m_dwPartyID, this);
 
+		m_pParty->ValidateNPCList();
+
 		if(pTestPartyDlg == NULL)
 		{
 			CString szPath = m_pApp->m_szEXEPath + "data\\characters";
@@ -2234,6 +2276,7 @@ void DMPartyDialog::OnLoadPartyButton()
 					if(m_pParty->m_NPCs[i].m_bPocketPC == FALSE)
 					{
 						pNPC = &m_pParty->m_NPCs[i];
+
 						pNPC->m_bRolled = TRUE;
 						pNPC->m_bIsNPC = TRUE;
 						cDMBaseNPCViewDialog *pDlg = new cDMBaseNPCViewDialog(m_pMainDialog, pNPC, NULL, &m_pMainDialog->m_cMainTab); //TODO memory leak here
@@ -2341,6 +2384,31 @@ void DMPartyDialog::OnSavePartyButton()
 	if(FileDesc.m_bSuccess)
 	{
 		SavePartyToFile(FileDesc.m_szReturnedPath.GetBuffer(0));
+
+		//////////////////////////////////////// - 1.0.036	1/27/19
+		m_pApp->m_bSaveAllCharacters = FALSE;
+		WORD wID = 0;
+		for (POSITION pos = m_pApp->m_CharacterViewMap.GetStartPosition(); pos != NULL;)
+		{
+			PDNDCHARVIEWDLG pCharDlg = NULL;
+			m_pApp->m_CharacterViewMap.GetNextAssoc(pos, wID, pCharDlg);
+
+			if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL && pCharDlg->m_pCharacter->m_dwCharacterID && pCharDlg->m_pCharacter->IsChanged() && pCharDlg->m_pCharacter->m_bPocketPC == FALSE)
+			{
+				if (m_pParty->CharacterIsPartyMember(pCharDlg->m_pCharacter))
+				{
+					if (m_pApp->m_bSaveAllCharacters == TRUE || m_pApp->SaveConfirmCharacter(pCharDlg->m_pCharacter, TRUE) == TRUE)
+					{
+						pCharDlg->SaveExternal();
+					}
+					else
+					{
+						pCharDlg->m_pCharacter->MarkSaved();
+					}
+				}
+			}
+		}
+		//////////////////////////////////////// - 1.0.036	1/27/19
 	}
 }
 
@@ -3311,6 +3379,18 @@ void DMPartyDialog::OnDownPartyButton()
 
 			Refresh();
 		}
+	}
+}
+
+void DMPartyDialog::ClickWeaponSwapButton(BOOL bOpponentParty)
+{
+	if (bOpponentParty)
+	{
+		OnBnClickedSwapWeaponButton2();
+	}
+	else
+	{
+		OnBnClickedSwapWeaponButton1();
 	}
 }
 
@@ -4581,6 +4661,27 @@ void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_
 	}
 
 	Refresh();
+}
+
+void  DMPartyDialog::GrantXPBonusToSelectedCharacter(int nXP)
+{
+	if (m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
+	{
+		m_pSelectedCharacterDialog->m_pCharacter->m_lEarnedXP += nXP;
+		m_pSelectedCharacterDialog->m_pCharacter->MarkChanged();
+
+		CString szTemp;
+		if (nXP > 0)
+		{
+			m_pApp->PlaySoundFX("Correct");
+			LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_GAINED_XP, m_pSelectedCharacterDialog->m_pCharacter->m_szCharacterName, 0, nXP, "");
+		}
+		else
+		{
+			m_pApp->PlaySoundFX("Incorrect");
+			LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_LOST_XP, m_pSelectedCharacterDialog->m_pCharacter->m_szCharacterName, 0, nXP, "");
+		}
+	}
 }
 
 void DMPartyDialog::OnBnClickedAddXpButton()

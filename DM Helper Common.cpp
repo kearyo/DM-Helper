@@ -576,8 +576,10 @@ void cDNDParty::RemovePartyMemberID(DWORD dwID)
 	ValidatePartyRoster();
 }
 
+//cDNDNonPlayerCharacter _NPCs[MAX_NPC_PARTY_MEMBERS];
 void cDNDParty::ValidateNPCList() //eliminate gaps in the NPC list
 {
+	/* // prior to rev 1.0.037
 	//m_NPCs[MAX_NPC_PARTY_MEMBERS];
 	for(int i = 0; i < MAX_NPC_PARTY_MEMBERS-1; ++i)
 	{
@@ -594,7 +596,25 @@ void cDNDParty::ValidateNPCList() //eliminate gaps in the NPC list
 			}
 		}
 	}
+	*/
+
+	// rev 1.0.037
+	cDNDNonPlayerCharacter *_NPCs = new cDNDNonPlayerCharacter[MAX_NPC_PARTY_MEMBERS];
+	memset(_NPCs, 0, MAX_NPC_PARTY_MEMBERS * sizeof(cDNDNonPlayerCharacter));
+
+	int nIndex = 0;
+	for (int i = 0; i < MAX_NPC_PARTY_MEMBERS - 1; ++i)
+	{
+		if (m_NPCs[i].m_dwCharacterID != 0L)
+		{
+			memcpy(&_NPCs[nIndex], &m_NPCs[i], sizeof(cDNDNonPlayerCharacter));
+			++nIndex;
+		}
+	}
 	
+	memcpy(&m_NPCs, _NPCs, MAX_NPC_PARTY_MEMBERS * sizeof(cDNDNonPlayerCharacter));
+
+	delete []_NPCs;
 }
 
 cDNDNonPlayerCharacter* cDNDParty::GetOpenNPCSlot() 

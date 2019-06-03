@@ -225,6 +225,8 @@ public:
 	CString m_szTreasureType;
 	afx_msg void OnStnClickedNpcPortraitButton();
 	afx_msg void OnStnDblclickDescComment();
+	CStatic m_cDebugCharID;
+	CString m_szDebugCharID;
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -282,6 +282,8 @@ BOOL CDMHelperDlg::OnInitDialog()
 
 	RegisterHotKey(m_hWnd, 100, MOD_CONTROL, 'R');	// dice roller hotkey
 	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, VK_F12);	// flip secondary screen hotkey
+	RegisterHotKey(m_hWnd, 300, MOD_CONTROL, VK_ADD);		// add XP to selected character
+	RegisterHotKey(m_hWnd, 301, MOD_CONTROL, VK_SUBTRACT);	// remove XP from selected character
 
 	CMenu* pMenu = GetMenu();
 
@@ -1050,6 +1052,9 @@ void CDMHelperDlg::SortTabs()
 			if(!pPartyDlg->m_pParty->CharacterIsPartyMember(pNPCDlg->m_pNPC))
 				continue;
 
+			if (pNPCDlg->m_dwNPCCharacterID == 0)  // rev 1.0.037
+				continue;
+
 			if(m_pCurrentOpenPartyWindow == pPartyDlg)
 			{	
 				if(m_dwCurrentOpenSubPartyWindow == 0 || m_dwCurrentOpenSubPartyWindow == pNPCDlg->m_pNPC->m_dwSubPartyID)
@@ -1205,6 +1210,13 @@ void CDMHelperDlg::SortTabs()
 
 void CDMHelperDlg::AddTab(CWnd* pWindow, DND_TAB_TYPES _nTabType, BOOL bSetPick)
 {
+	#ifdef _DEBUG
+	if (_nTabType == DND_TAB_TYPE_NPC)
+	{
+		TRACE("<");
+	}
+	#endif
+
 	int nPos = m_pApp->m_TabArray.GetSize();
 
 	cDNDDisplayTab *pTab = new cDNDDisplayTab();
@@ -1487,7 +1499,7 @@ BOOL CDMHelperDlg::FindAndDeleteTab(DND_TAB_TYPES nTabType, DWORD dwFindID, BOOL
 
 				if(pMoveTab != NULL)
 				{
-					m_pApp->m_TabArray[j] = m_pApp->m_TabArray[j+1];
+					m_pApp->m_TabArray[j] = m_pApp->m_TabArray[j+1];	
 				}
 			}
 
@@ -2648,6 +2660,24 @@ LRESULT CDMHelperDlg::OnHotKey(WPARAM wParam, LPARAM lParam)
 			OnFlipSecondaryScreen();
 			break;
 		}
+		//RegisterHotKey(m_hWnd, 300, MOD_CONTROL, VK_ADD);		// add XP to selected character
+		//RegisterHotKey(m_hWnd, 301, MOD_CONTROL, VK_SUBTRACT);	// remove XP from selected character
+		case 300:
+		{
+			if (m_pSelectedPartyWindow != NULL)
+			{
+				m_pSelectedPartyWindow->GrantXPBonusToSelectedCharacter(100);
+			}
+			break;
+		}
+		case 301:
+		{
+			if (m_pSelectedPartyWindow != NULL)
+			{
+				m_pSelectedPartyWindow->GrantXPBonusToSelectedCharacter(-100);
+			}
+			break;
+		}
 	}
 
 	return 0;
@@ -3086,12 +3116,19 @@ void CDMHelperDlg::OpenPDFDocument(CString szFileName, int nPage)
 
 	//start chrome "FILE:\\D:\SOURCE\DM HELPER\.\RELEASE\\data\PDF\DMGuide.pdf #page=9"
 	//szPDFPath.Format("chrome %s\\data\\%s%c20#page=%d", m_pApp->m_szEXEPath, szFileName,'%', nPage);
-	szPDFPath.Format("\"FILE:\\%s\\data\\%s #page=%d\"", m_pApp->m_szEXEPath, szFileName, nPage);
+	//szPDFPath.Format("\"FILE:\\%s\\data\\%s #page=%d\"", m_pApp->m_szEXEPath, szFileName, nPage);
+	szPDFPath.Format("\"FILE:\\%s\\data\\%s\"", m_pApp->m_szEXEPath, szFileName);
+
+	CString szSpacer;
+	szSpacer.Format("%cc20", '%');
+	//szPDFPath.Replace(" ", szSpacer);
 
 	//UINT nOK = WinExec(szPDFPath, SW_SHOW);
 
 	CString szParms = "";
 	szParms.Format("?#page=%d", nPage);
+
+	szPDFPath += szParms;
 
 	//LONG lTry = ERROR_FILE_NOT_FOUND;
 	HINSTANCE hRet = ShellExecute(AfxGetMainWnd()->GetSafeHwnd(), "open", "chrome", szPDFPath, NULL, SW_SHOWNORMAL);

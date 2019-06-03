@@ -526,6 +526,7 @@ DMNPCViewDialog::DMNPCViewDialog(CDMHelperDlg* pMainDialog, cDNDNonPlayerCharact
 	, m_szMagicResist(_T(""))
 	, m_szDescComment(_T(""))
 	, m_szMonsterSize(_T("SIZE:"))
+	, m_szDebugCharID(_T(""))
 {
 	//{{AFX_DATA_INIT(DMNPCViewDialog)
 	m_szCharacterName = _T("");
@@ -661,6 +662,8 @@ void DMNPCViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_DESC_COMMENT, m_szDescComment);
 	DDX_Text(pDX, IDC_SIZE_COMMENT, m_szMonsterSize);
 	DDX_Text(pDX, IDC_TT_COMMENT, m_szTreasureType);
+	DDX_Control(pDX, IDC_DEBUG_CHAR_ID, m_cDebugCharID);
+	DDX_Text(pDX, IDC_DEBUG_CHAR_ID, m_szDebugCharID);
 }
 
 
@@ -1664,6 +1667,12 @@ void DMNPCViewDialog::Refresh()
 
 	m_nCharacterMovementRate = nMove;
 
+	#ifdef _DEBUG
+	m_szDebugCharID.Format("CHAR ID: %ld", m_pNPC->m_dwCharacterID);
+	#else
+	m_szDebugCharID = _T("");
+	#endif
+
 	UpdateData(FALSE);
 
 	BOOL bIsSpellCaster = GetSpellClasses(m_pNPC);
@@ -1681,6 +1690,7 @@ void DMNPCViewDialog::Refresh()
 	{
 		m_cSpellsButton.EnableWindow(FALSE);
 	}
+
 
 	m_pApp->m_pMainWindow->InvalidateRect(NULL);
 

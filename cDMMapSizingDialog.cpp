@@ -139,6 +139,7 @@ void cDMMapSizingDialog::OnBnClickedResizeMapButton()
 
 	//char szOutFile[MAX_PATH];
 
+	BOOL bFailed = FALSE;
 	int nDrawnWidth = 0;
 	for (int nColumn = 0; nColumn < m_pDNDMap->m_nColumns; ++nColumn)
 	{
@@ -154,6 +155,7 @@ void cDMMapSizingDialog::OnBnClickedResizeMapButton()
 
 			if (m_pDNDMap->m_Cells[nColumn][nRow].m_pBitmap == NULL)
 			{
+				bFailed = TRUE;
 				continue;
 			}
 			
@@ -194,6 +196,11 @@ void cDMMapSizingDialog::OnBnClickedResizeMapButton()
 	}
 
 	delete m_pOriginalBitmap;
+
+	if (bFailed)
+	{
+		AfxMessageBox("Failed to create images ! (Out of Memory ?)", MB_OK);
+	}
 
 	OnBnClickedOk();
 }

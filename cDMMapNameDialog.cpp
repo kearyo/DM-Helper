@@ -40,6 +40,16 @@ END_MESSAGE_MAP()
 
 // cDMMapNameDialog message handlers
 
+BOOL cDMMapNameDialog::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	m_cNameEdit.SetFocus();
+
+	return FALSE;  // return TRUE unless you set the focus to a control
+	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
 
 void cDMMapNameDialog::OnBnClickedCancel()
 {
@@ -65,3 +75,5 @@ void cDMMapNameDialog::OnEnChangeEdit1()
 
 	strcpy(m_pDNDMap->m_szMapName, m_szMapName.Left(259));
 }
+
+
