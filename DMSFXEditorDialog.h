@@ -1,3 +1,4 @@
+#include "afxwin.h"
 #if !defined(AFX_DMSFXEDITORDIALOG_H__9ECB8F3E_08DF_4C8D_8A31_FAF7E99DD821__INCLUDED_)
 #define AFX_DMSFXEDITORDIALOG_H__9ECB8F3E_08DF_4C8D_8A31_FAF7E99DD821__INCLUDED_
 
@@ -19,6 +20,8 @@ public:
 	CDMHelperApp *m_pApp;
 
 	cDNDSoundEffect *m_pSoundFX;
+
+	BOOL m_bPasted;
 
 // Dialog Data
 	//{{AFX_DATA(DMSFXEditorDialog)
@@ -45,6 +48,16 @@ protected:
 	virtual void OnOK();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	CButton m_cCutSoundButton;
+	CButton m_cCopySoundButton;
+	CButton m_cPasteSoundButton;
+	afx_msg void OnBnClickedCutSoundButton();
+	afx_msg void OnBnClickedCopySoundButton();
+	afx_msg void OnBnClickedPasteSoundButton();
+	afx_msg void OnPaint();
+	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedClearSoundButton();
 };
 
 //{{AFX_INSERT_LOCATION}}

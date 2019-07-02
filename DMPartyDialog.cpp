@@ -3400,22 +3400,26 @@ void DMPartyDialog::ClickHitButton(BOOL bOpponentParty)
 	{
 		if (m_cAttackHitButton2.IsWindowEnabled() == FALSE)
 		{
-			OnMissileHitButton2();
+			//OnMissileHitButton2();
+			InitiativeMissileAttack(m_pOpposingCharacterDialog, m_pOpposingNPCDialog, m_pSelectedCharacterDialog, m_pSelectedNPCDialog, FALSE);
 		}
 		else
 		{
-			OnAttackHitButton2();
+			//OnAttackHitButton2();
+			InitiativeAttack(m_pOpposingCharacterDialog, m_pOpposingNPCDialog, m_pSelectedCharacterDialog, m_pSelectedNPCDialog, FALSE);
 		}
 	}
 	else
 	{
 		if (m_cAttackHitButton.IsWindowEnabled() == FALSE)
 		{
-			OnMissileHitButton();
+			//OnMissileHitButton();
+			InitiativeMissileAttack(m_pSelectedCharacterDialog, m_pSelectedNPCDialog, m_pOpposingCharacterDialog, m_pOpposingNPCDialog, TRUE);
 		}
 		else
 		{
-			OnAttackHitButton();
+			//OnAttackHitButton();
+			InitiativeAttack(m_pSelectedCharacterDialog, m_pSelectedNPCDialog, m_pOpposingCharacterDialog, m_pOpposingNPCDialog, TRUE);
 		}
 	}
 }
@@ -3458,64 +3462,432 @@ void DMPartyDialog::ClickSpellButton(BOOL bOpponentParty)
 	}
 }
 
-void DMPartyDialog::OnAttackHitButton() 
+void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialog, cDMBaseNPCViewDialog *pAttackingNPCDialog, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP)
 {
+	int nWeapon = 0;
+	int nDamage = 0;
+	int nMaxDamage = 0;
 
-	if(m_pBaseCharDlg != NULL)
+	CString szAttackerName = _T("");
+	CString szTargetName = _T("");
+
+	if (pTargetCharacterDialog != NULL)
 	{
-		m_pBaseCharDlg->m_pTargetBaseDlg = m_pBaseOpposingCharDlg;
+		nMaxDamage = max(pTargetCharacterDialog->m_pCharacter->m_nHitPoints - pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage, 0);
+	}
+	else if (pTargetNPCDialog != NULL)
+	{
+		nMaxDamage = max(pTargetNPCDialog->m_pNPC->m_nHitPoints - pTargetNPCDialog->m_pNPC->m_nCurrentDamage, 0);
 	}
 
+	BOOL bCriticalHit = FALSE;
+	//ModifyValue((int *)&nDamage, "Add Damage:", nMaxDamage, FALSE, TRUE, &bCriticalHit);
 
-	if(m_pSelectedCharacterDialog != NULL)
+	if (pAttackingCharacterDialog != NULL)
 	{
-		m_pSelectedCharacterDialog->FireAmmo();
+		szAttackerName = pAttackingCharacterDialog->m_pCharacter->m_szCharacterName;
 
-		int nWeapon = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+		pAttackingCharacterDialog->FireAmmo();
 
-		if(nWeapon == 0)
+		nWeapon = pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+
+		if (nWeapon == 0)
 		{
 			nWeapon = m_pApp->m_nPummelWeaponIndex;
 
-			if(m_pSelectedCharacterDialog->m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_MONK)
+			if (pAttackingCharacterDialog->m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_MONK)
 			{
 				nWeapon = m_pApp->m_nMonkWeaponIndex;
 			}
 		}
 
-		if(m_pInitiativeDialog != NULL)
+		if (pAttackingCharacterDialog->m_pCharacter->m_nSex)
+		{
+			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+		}
+		else
+		{
+			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+		}
+
+	}
+	else if (pAttackingNPCDialog != NULL)
+	{
+		szAttackerName = pAttackingNPCDialog->m_pNPC->m_szCharacterName;
+
+		pAttackingNPCDialog->FireAmmo();
+
+		nWeapon = pAttackingNPCDialog->m_pNPC->m_SelectedWeapons[0].m_wTypeId;
+
+		if (nWeapon == 0)
+		{
+			nWeapon = m_pApp->m_nPummelWeaponIndex;
+
+			if (pAttackingNPCDialog->m_pNPC->m_Class[0] == DND_CHARACTER_CLASS_MONK)
+				nWeapon = m_pApp->m_nMonkWeaponIndex;
+		}
+
+	}
+
+	if (NULL != pAttackingNPCDialog)
+	{
+		m_pApp->PlayPCSoundFX("* Attack", pAttackingNPCDialog->m_szMonsterName, "Monster", FALSE);
+	}
+	else
+	{
+		m_pApp->PlaySoundFX("Whiff", FALSE);
+	}
+
+	if (m_pInitiativeDialog != NULL)
+	{
+		if (pAttackingCharacterDialog != NULL)
+		{
+			pAttackingCharacterDialog->m_szInitiativeAction = _T("roll to hit");
+		}
+		else if (pAttackingNPCDialog != NULL)
+		{
+			pAttackingNPCDialog->m_szInitiativeAction = _T("roll to hit");
+		}
+	}
+
+	if (pTargetCharacterDialog != NULL)
+	{
+		szTargetName = pTargetCharacterDialog->m_pCharacter->m_szCharacterName;
+	}
+
+	if (pTargetNPCDialog != NULL)
+	{
+		szTargetName = pTargetNPCDialog->m_pNPC->m_szCharacterName;
+	}
+
+	ModifyValue((int *)&nDamage, "Add Damage:", nMaxDamage, FALSE, TRUE, &bCriticalHit);
+
+	CString szLogEntry = _T("");
+
+	if (nDamage == 0)
+	{
+		if (m_pInitiativeDialog != NULL)
+		{
+			if (pAttackingCharacterDialog != NULL)
+			{
+				pAttackingCharacterDialog->m_szInitiativeAction = _T("attack missed");
+			}
+			else if (pAttackingNPCDialog != NULL)
+			{
+				pAttackingNPCDialog->m_szInitiativeAction = _T("attack missed");
+			}
+		}
+
+		Refresh();
+
+		return;
+	}
+
+	if (m_pInitiativeDialog != NULL)
+	{
+		if (pAttackingCharacterDialog != NULL)
+		{
+			pAttackingCharacterDialog->m_szInitiativeAction = _T("attack hit !");
+		}
+		else if (pAttackingNPCDialog != NULL)
+		{
+			pAttackingNPCDialog->m_szInitiativeAction = _T("attack hit !");
+		}
+	}
+
+	if (bCriticalHit)
+	{
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_CRITICAL_HIT, FALSE);
+	}
+	else
+	{
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT, FALSE);
+	}
+
+	if (nDamage == 0)
+	{
+		szLogEntry.Format("%s attacked %s and missed", szAttackerName, szTargetName);
+	}
+	else
+	{
+		if (bCriticalHit)
+		{
+			szLogEntry.Format("%s struck a critical hit on %s for %d damage", szAttackerName, szTargetName, nDamage);
+		}
+		else
+		{
+			szLogEntry.Format("%s hit %s for %d damage", szAttackerName, szTargetName, nDamage);
+		}
+	}
+	LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_MISC, m_pParty->m_szPartyName, m_pParty->m_dwPartyID, 0, szLogEntry.GetBuffer(0));
+
+	
+	BOOL bTargetDied = InitiativeWound(nDamage, pTargetCharacterDialog, pTargetNPCDialog, bGrantXP);
+
+	if (bGrantXP == FALSE && bTargetDied == TRUE)
+	{
+		szLogEntry.Format("%s fell in battle !", szTargetName);
+
+		//for (int i = 0; i < 2100; ++i)
+		//{
+			LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_MISC, m_pParty->m_szPartyName, m_pParty->m_dwPartyID, 0, szLogEntry.GetBuffer(0));
+		//}
+	}
+	
+}
+
+void DMPartyDialog::InitiativeMissileAttack(CDMCharViewDialog *pAttackingCharacterDialog, cDMBaseNPCViewDialog *pAttackingNPCDialog, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP)
+{
+	int nWeapon = 0;
+	int nDamage = 0;
+	int nMaxDamage = 0;
+
+	if (pAttackingCharacterDialog != NULL)
+	{
+		pAttackingCharacterDialog->FireAmmo();
+
+		nWeapon = pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+
+		pAttackingCharacterDialog->ProcessCharStats();
+		pAttackingCharacterDialog->Refresh();
+	}
+
+	if (pAttackingNPCDialog != NULL)
+	{
+		pAttackingNPCDialog->FireAmmo();
+
+		nWeapon = pAttackingNPCDialog->m_pNPC->m_SelectedWeapons[0].m_wTypeId;
+
+		pAttackingNPCDialog->ProcessCharStats();
+		pAttackingNPCDialog->Refresh();
+	}
+
+	if (pTargetCharacterDialog != NULL)
+	{
+		nMaxDamage = max(pTargetCharacterDialog->m_pCharacter->m_nHitPoints - pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage, 0);
+	}
+	else if (pTargetNPCDialog != NULL)
+	{
+		nMaxDamage = max(pTargetNPCDialog->m_pNPC->m_nHitPoints - pTargetNPCDialog->m_pNPC->m_nCurrentDamage, 0);
+	}
+
+	BOOL bCriticalHit = FALSE;
+	ModifyValue((int *)&nDamage, "Add Damage:", nMaxDamage, FALSE, TRUE, &bCriticalHit);
+
+	if (nDamage == 0)
+	{
+		if (m_pInitiativeDialog != NULL)
+		{
+			if (pAttackingCharacterDialog != NULL)
+			{
+				pAttackingCharacterDialog->m_szInitiativeAction = _T("attack missed");
+			}
+			else if (pAttackingNPCDialog != NULL)
+			{
+				pAttackingNPCDialog->m_szInitiativeAction = _T("attack missed");
+			}
+		}
+
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_MISSILE_MISS);
+
+		Refresh();
+
+		return;
+	}
+
+	if (m_pInitiativeDialog != NULL)
+	{
+		if (pAttackingCharacterDialog != NULL)
+		{
+			pAttackingCharacterDialog->m_szInitiativeAction = _T("attack hit !");
+		}
+		else if (pAttackingNPCDialog != NULL)
+		{
+			pAttackingNPCDialog->m_szInitiativeAction = _T("attack hit !");
+		}
+	}
+
+	m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_MISSILE_HIT, FALSE);
+
+	InitiativeWound(nDamage, pTargetCharacterDialog, pTargetNPCDialog, bGrantXP);
+}
+
+BOOL DMPartyDialog::InitiativeWound(int nDamage, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP)
+{
+	BOOL bWasAlive = FALSE;
+	BOOL bTargetDied = FALSE;
+
+	if (pTargetCharacterDialog != NULL && pTargetCharacterDialog->m_pCharacter != NULL)
+	{
+		bWasAlive = pTargetCharacterDialog->m_pCharacter->IsAlive();
+
+		pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage += nDamage;
+
+		if (pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage < 0)
+			pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage = 0;
+
+		pTargetCharacterDialog->ProcessCharStats();
+
+		pTargetCharacterDialog->Refresh();
+
+		if (bWasAlive && !pTargetCharacterDialog->m_pCharacter->IsAlive())
+		{
+			if (pTargetCharacterDialog->m_pCharacter->m_nSex)
+			{
+				//m_pApp->PlaySoundFX("Female PC Die");
+				m_pApp->PlayPCSoundFX("* PC Die", pTargetCharacterDialog->m_szCharacterFirstName, "Female");
+			}
+			else
+			{
+				//m_pApp->PlaySoundFX("Male PC Die");
+				m_pApp->PlayPCSoundFX("* PC Die", pTargetCharacterDialog->m_szCharacterFirstName, "Male");
+			}
+
+			pTargetCharacterDialog->m_szInitiativeAction = _T("DEAD");
+
+			if (bGrantXP)
+			{
+				OnBnClickedKillForXpButton();
+			}
+
+			if (pTargetCharacterDialog == m_pOpposingCharacterDialog)
+			{
+				m_pOpposingCharacterDialog = NULL;
+			}
+
+			bTargetDied = TRUE;
+		}
+		else if (pTargetCharacterDialog->m_pCharacter->IsAlive())
+		{
+			if (pTargetCharacterDialog->m_pCharacter->m_nSex)
+			{
+				m_pApp->PlayPCSoundFX("* PC Hurt", pTargetCharacterDialog->m_szCharacterFirstName, "Female");
+			}
+			else
+			{
+				m_pApp->PlayPCSoundFX("* PC Hurt", pTargetCharacterDialog->m_szCharacterFirstName, "Male");
+			}
+		}
+	}
+
+	if (pTargetNPCDialog != NULL && pTargetNPCDialog->m_pNPC != NULL)
+	{
+		bWasAlive = pTargetNPCDialog->m_pNPC->IsAlive();
+
+		pTargetNPCDialog->m_pNPC->m_nCurrentDamage += nDamage;
+
+		if (pTargetNPCDialog->m_pNPC->m_nCurrentDamage < 0)
+			pTargetNPCDialog->m_pNPC->m_nCurrentDamage = 0;
+
+		pTargetNPCDialog->ProcessCharStats();
+
+		pTargetNPCDialog->Refresh();
+
+		if (bWasAlive && !pTargetNPCDialog->m_pNPC->IsAlive())
+		{
+			//m_pApp->PlaySoundFX("Monster Die");
+			m_pApp->PlayPCSoundFX("* Die", pTargetNPCDialog->m_szMonsterName, "Monster");
+
+			pTargetNPCDialog->m_szInitiativeAction = _T("DEAD");
+
+			if (bGrantXP)
+			{
+				OnBnClickedKillForXpButton();
+			}
+
+			if (pTargetNPCDialog == m_pOpposingNPCDialog)
+			{
+				m_pOpposingNPCDialog = NULL;
+			}
+
+			bTargetDied = TRUE;
+		}
+		else if(pTargetNPCDialog->m_pNPC->IsAlive())
+		{
+			m_pApp->PlayPCSoundFX("* Hurt", pTargetNPCDialog->m_szMonsterName, "Monster");
+		}
+	}
+
+	Refresh();
+
+	return bTargetDied;
+}
+
+void DMPartyDialog::OnAttackHitButton() 
+{
+	if (m_pBaseCharDlg != NULL)
+	{
+		m_pBaseCharDlg->m_pTargetBaseDlg = m_pBaseOpposingCharDlg;
+	}
+
+
+	if (m_pSelectedCharacterDialog != NULL)
+	{
+		m_pSelectedCharacterDialog->FireAmmo();
+
+		int nWeapon = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+
+		if (nWeapon == 0)
+		{
+			nWeapon = m_pApp->m_nPummelWeaponIndex;
+
+			if (m_pSelectedCharacterDialog->m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_MONK)
+			{
+				nWeapon = m_pApp->m_nMonkWeaponIndex;
+			}
+		}
+
+		if (m_pInitiativeDialog != NULL)
 		{
 			m_pSelectedCharacterDialog->m_szInitiativeAction = _T("attack hit !");
 			m_pInitiativeDialog->Refresh();
 		}
 
-		m_pApp->PlayWeaponSFX(nWeapon, 0);
+		if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
+		{
+			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+		}
+		else
+		{
+			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+		}
+
+		m_pApp->PlaySoundFX("Whiff", FALSE);
+
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT);
 
 		OnWoundButton2();
-	}
-	
 
-	if(m_pSelectedNPCDialog != NULL)
+	}
+
+	if (m_pSelectedNPCDialog != NULL)
 	{
 		m_pSelectedNPCDialog->FireAmmo();
 
 		int nWeapon = m_pSelectedNPCDialog->m_pNPC->m_SelectedWeapons[0].m_wTypeId;
 
-		if(nWeapon == 0)
+		if (nWeapon == 0)
 		{
 			nWeapon = m_pApp->m_nPummelWeaponIndex;
 
-			if(m_pSelectedNPCDialog->m_pNPC->m_Class[0] == DND_CHARACTER_CLASS_MONK)
+			if (m_pSelectedNPCDialog->m_pNPC->m_Class[0] == DND_CHARACTER_CLASS_MONK)
 				nWeapon = m_pApp->m_nMonkWeaponIndex;
 		}
 
-		if(m_pInitiativeDialog != NULL)
+		if (m_pInitiativeDialog != NULL)
 		{
 			m_pSelectedNPCDialog->m_szInitiativeAction = _T("attack hit !");
 			m_pInitiativeDialog->Refresh();
+			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedNPCDialog->m_szMonsterName, "Monster", FALSE);
 		}
 
-		m_pApp->PlayWeaponSFX(nWeapon, 0);
+		m_pApp->PlayPCSoundFX("* Attack", m_pSelectedNPCDialog->m_szMonsterName, "Monster", FALSE);
+
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT);
 
 		OnWoundButton2();
 	}
@@ -3549,6 +3921,17 @@ void DMPartyDialog::OnAttackMissButton()
 			m_pInitiativeDialog->Refresh();
 		}
 
+		if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
+		{
+			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+		}
+		else
+		{
+			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+		}
+
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
 	}
 
@@ -3572,11 +3955,12 @@ void DMPartyDialog::OnAttackMissButton()
 			m_pInitiativeDialog->Refresh();
 		}
 
+		m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedNPCDialog->m_szMonsterName, "Monster", FALSE);
+
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
 	}
 	
 }
-
 
 void DMPartyDialog::OnMissileHitButton() 
 {
@@ -3593,7 +3977,7 @@ void DMPartyDialog::OnMissileHitButton()
 
 		if(m_pInitiativeDialog != NULL)
 		{
-			m_pSelectedCharacterDialog->m_szInitiativeAction = _T("attack hit");
+			m_pSelectedCharacterDialog->m_szInitiativeAction = _T("attack hit !");
 			m_pInitiativeDialog->Refresh();
 		}
 
@@ -3613,7 +3997,7 @@ void DMPartyDialog::OnMissileHitButton()
 
 		if(m_pInitiativeDialog != NULL)
 		{
-			m_pSelectedNPCDialog->m_szInitiativeAction = _T("attack hit");
+			m_pSelectedNPCDialog->m_szInitiativeAction = _T("attack hit !");
 			m_pInitiativeDialog->Refresh();
 		}
 
@@ -3684,7 +4068,10 @@ void DMPartyDialog::OnCastSpellButton()
 		pDlg->DoModal();
 		delete pDlg;
 
-		m_pSelectedCharacterDialog->Refresh();
+		if (m_pSelectedCharacterDialog != NULL)  // somehow this can be NULL ??
+		{
+			m_pSelectedCharacterDialog->Refresh();
+		}
 	}	
 }
 
@@ -3698,7 +4085,7 @@ void DMPartyDialog::OnWoundButton()
 
 		int nValue = 0;
 
-		ModifyValue((int *)&nValue, "Add Damage:", FALSE);
+		ModifyValue((int *)&nValue, "Add Damage:", m_pSelectedCharacterDialog->m_pCharacter->m_nHitPoints, FALSE);
 
 		m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage += nValue;
 
@@ -3708,18 +4095,35 @@ void DMPartyDialog::OnWoundButton()
 		m_pSelectedCharacterDialog->ProcessCharStats();
 		m_pSelectedCharacterDialog->Refresh();
 
+		
 		if (bWasAlive == TRUE && m_pSelectedCharacterDialog->m_pCharacter->IsAlive() == FALSE)
 		{
 			if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
 			{
-				m_pApp->PlaySoundFX("Female PC Die");
+				//m_pApp->PlaySoundFX("Female PC Die");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female");
 			}
 			else
 			{
-				m_pApp->PlaySoundFX("Male PC Die");
+				//m_pApp->PlaySoundFX("Male PC Die");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male");
 			}
 
 			m_pSelectedCharacterDialog->m_szInitiativeAction = _T("DEAD");
+		}
+		else
+		{
+			if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
+			{
+				//m_pApp->PlaySoundFX("Female PC Hurt");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female");
+			}
+			else
+			{
+				//m_pApp->PlaySoundFX("Male PC Hurt");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male");
+			}
+
 		}
 	}
 
@@ -3729,7 +4133,7 @@ void DMPartyDialog::OnWoundButton()
 
 		int nValue = 0;
 
-		ModifyValue((int *)&nValue, "Add Damage:", FALSE);
+		ModifyValue((int *)&nValue, "Add Damage:", m_pSelectedNPCDialog->m_pNPC->m_nHitPoints, FALSE);
 
 		m_pSelectedNPCDialog->m_pNPC->m_nCurrentDamage += nValue;
 
@@ -3741,7 +4145,12 @@ void DMPartyDialog::OnWoundButton()
 
 		if (bWasAlive == TRUE && m_pSelectedNPCDialog->m_pNPC->IsAlive() == FALSE)
 		{
-			m_pApp->PlaySoundFX("Monster Die");
+			//m_pApp->PlaySoundFX("Monster Die");
+			m_pApp->PlayPCSoundFX("* Die", m_pSelectedNPCDialog->m_szMonsterName, "Monster");
+		}
+		else
+		{
+			m_pApp->PlayPCSoundFX("* Hurt", m_pSelectedNPCDialog->m_szMonsterName, "Monster");
 		}
 
 		m_pSelectedNPCDialog->m_szInitiativeAction = _T("DEAD");
@@ -3849,6 +4258,19 @@ void DMPartyDialog::OnAttackHitButton2()
 			m_pInitiativeDialog->Refresh();
 		}
 
+		if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
+		{
+			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+		}
+		else
+		{
+			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+		}
+
+		m_pApp->PlaySoundFX("Whiff", FALSE);
+
 		m_pApp->PlayWeaponSFX(nWeapon, 0);
 
 		OnWoundButton();
@@ -3870,9 +4292,12 @@ void DMPartyDialog::OnAttackHitButton2()
 
 		if(m_pInitiativeDialog != NULL)
 		{
-			m_pOpposingNPCDialog->m_szInitiativeAction = _T("attack hit");
+			m_pOpposingNPCDialog->m_szInitiativeAction = _T("attack hit !");
 			m_pInitiativeDialog->Refresh();
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingNPCDialog->m_szMonsterName, "Monster", FALSE);
 		}
+
+		m_pApp->PlayPCSoundFX("* Attack", m_pOpposingNPCDialog->m_szMonsterName, "Monster", FALSE);
 
 		m_pApp->PlayWeaponSFX(nWeapon, 0);
 
@@ -3908,6 +4333,16 @@ void DMPartyDialog::OnAttackMissButton2()
 			m_pInitiativeDialog->Refresh();
 		}
 
+		if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
+		{
+			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+		}
+		else
+		{
+			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+		}
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
 	}
@@ -3931,6 +4366,8 @@ void DMPartyDialog::OnAttackMissButton2()
 			m_pOpposingNPCDialog->m_szInitiativeAction = _T("attack missed");
 			m_pInitiativeDialog->Refresh();
 		}
+
+		m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingNPCDialog->m_szMonsterName, "Monster", FALSE);
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
 	}
@@ -4045,12 +4482,15 @@ void DMPartyDialog::OnCastSpellButton2()
 		pDlg->DoModal();
 		delete pDlg;
 
-		m_pOpposingCharacterDialog->Refresh();
+		if (m_pOpposingCharacterDialog != NULL)
+		{
+			m_pOpposingCharacterDialog->Refresh();
+		}
 	}
 	
 }
 
-void DMPartyDialog::OnWoundButton2() 
+void DMPartyDialog::OnWoundButton2()
 {
 	BOOL bWasAlive = FALSE;
 
@@ -4060,7 +4500,7 @@ void DMPartyDialog::OnWoundButton2()
 		
 		int nValue = 0;
 
-		ModifyValue((int *)&nValue, "Add Damage:", FALSE);
+		ModifyValue((int *)&nValue, "Add Damage:", m_pOpposingCharacterDialog->m_pCharacter->m_nHitPoints ,FALSE);
 
 		m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage += nValue;
 
@@ -4075,18 +4515,32 @@ void DMPartyDialog::OnWoundButton2()
 		{
 			if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
 			{
-				m_pApp->PlaySoundFX("Female PC Die");
+				//m_pApp->PlaySoundFX("Female PC Die");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female");
 			}
 			else
 			{
-				m_pApp->PlaySoundFX("Male PC Die");
+				//m_pApp->PlaySoundFX("Male PC Die");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male");
 			}
 
 			m_pOpposingCharacterDialog->m_szInitiativeAction = _T("DEAD");
 
 			OnBnClickedKillForXpButton();
 			m_pOpposingCharacterDialog = NULL;
-			
+		}
+		else
+		{
+			if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
+			{
+				//m_pApp->PlaySoundFX("Female PC Hurt");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female");
+			}
+			else
+			{
+				//m_pApp->PlaySoundFX("Male PC Hurt");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male");
+			}
 		}
 	}
 	
@@ -4097,7 +4551,7 @@ void DMPartyDialog::OnWoundButton2()
 		
 		int nValue = 0;
 
-		ModifyValue((int *)&nValue, "Add Damage:", FALSE);
+		ModifyValue((int *)&nValue, "Add Damage:", m_pOpposingNPCDialog->m_pNPC->m_nHitPoints, FALSE);
 
 		m_pOpposingNPCDialog->m_pNPC->m_nCurrentDamage += nValue;
 
@@ -4110,12 +4564,17 @@ void DMPartyDialog::OnWoundButton2()
 
 		if(bWasAlive && !m_pOpposingNPCDialog->m_pNPC->IsAlive())
 		{
-			m_pApp->PlaySoundFX("Monster Die");
+			//m_pApp->PlaySoundFX("Monster Die");
+			m_pApp->PlayPCSoundFX("* Die", m_pOpposingNPCDialog->m_szMonsterName, "Monster");
 
 			m_pOpposingNPCDialog->m_szInitiativeAction = _T("DEAD");
 
 			OnBnClickedKillForXpButton();
 			m_pOpposingNPCDialog = NULL;
+		}
+		else
+		{
+			m_pApp->PlayPCSoundFX("* Hurt", m_pOpposingNPCDialog->m_szMonsterName, "Monster");
 		}
 	}
 
@@ -4522,6 +4981,14 @@ void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_
 	int nTurn = m_pParty->m_nTurn;
 	int nRound = m_pParty->m_nRound;
 	int nSegment = m_pParty->m_nSegment;
+
+	if (pPartyLog->m_LogHeader.m_nEvents >= 2047)
+	{
+		pPartyLog->m_LogHeader.m_nEvents = 2047;
+		nPosition = APPEND_TO_LOG;
+		nType = DND_LOG_EVENT_TYPE_MISC;
+		strcpy(szComment, "LOG IS FULL !");
+	}
 
 	int nLogEvent = pPartyLog->m_LogHeader.m_nEvents;
 	if(nPosition != APPEND_TO_LOG)

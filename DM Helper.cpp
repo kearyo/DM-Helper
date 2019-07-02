@@ -523,6 +523,7 @@ BOOL CDMHelperApp::InitInstance()
     m_szEXEPath = m_szEXEPath.Left(m_szEXEPath.ReverseFind(_T('\\'))+1);    
 
 #ifdef _DEBUG
+	m_szEXEPath.Replace("\\.\\", "\\");
 	m_szEXEPath.Replace("Debug", "Release");
 #endif
 
@@ -629,6 +630,13 @@ BOOL CDMHelperApp::InitInstance()
 	m_pIsometricDungeonTilesBitmap = NULL;
 
 	m_nCalendarSecond = 0;
+
+	m_SoundFXCutPasteType = DND_EDIT_TYPE_NONE;
+	m_pSoundFXCutPasteBuffer = NULL;
+
+	m_nInitiativeCurrentAttackNumber = 0;
+
+	curl_global_init(CURL_GLOBAL_ALL);
 
 	CDMHelperDlg dlg;
 	m_pMainWnd = &dlg;
@@ -915,7 +923,7 @@ BOOL CDMHelperApp::SaveUpdateParams()
 
 	if(pOutfile != NULL)
 	{
-		fprintf(pOutfile, "# location of Dungeo Maestro update repository\n");
+		fprintf(pOutfile, "# location of Dungeon Maestro update repository\n");
 		fprintf(pOutfile, "%s\n", m_UpdateParams.m_szUpdateURL.GetBuffer(0));
 		fprintf(pOutfile, "# flag for update behavior: 0-manual updates only 1-check update everytime program is started\n");
 		fprintf(pOutfile, "%d\n", m_UpdateParams.m_nUpdateRule);
@@ -4930,6 +4938,8 @@ void CDMHelperApp::LoadSettings()
 		g_bUseUnearthedArcana = m_Settings.m_bUseUnearthedArcana;
 		g_bUseDemiHumanLevelLimits = m_Settings.m_bUseLevelLimits;			
 	}
+
+	CheckForSoundBoardUpdates();
 }
 
 void CDMHelperApp::SaveSettings()
@@ -4950,9 +4960,41 @@ void CDMHelperApp::SaveSettings()
 	}
 }
 
-BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile)
+void CDMHelperApp::CheckForSoundBoardUpdates()
+{
+	#if 0 
+	for (int i = 0; i < MAX_SOUNDBOARD_PAGES; ++i)
+	{
+		for (int j = 0; j < SOUNDBOARD_SOUNDS_PER_PAGE; ++j)
+		{
+			CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
+
+			if (szPath.Find("SOUNDS\\UO") != -1)
+			{
+				szPath.Replace("SOUNDS\\UO", "SOUNDS\\GROUP0");
+				strcpy(m_Settings.m_SoundFX[i][j].m_szFilePath, szPath.GetBuffer(0));
+			}
+			if (szPath.Find("SOUNDS\\GROUP 1") != -1)
+			{
+				szPath.Replace("SOUNDS\\GROUP 1", "SOUNDS\\GROUP1");
+				strcpy(m_Settings.m_SoundFX[i][j].m_szFilePath, szPath.GetBuffer(0));
+			}
+
+		}
+	}
+	#endif
+
+	CString szTemp;
+	szTemp.Format("%s/Data/_ImportSoundBoards.sbd", m_szEXEPath.GetBuffer(0));
+	ImportSoundBoards(szTemp, TRUE);
+
+}
+
+BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync)
 {
 	CString szPath = szFile;
+	BOOL bRetVal = FALSE;
+	static int nLastFile = -1;
 
 	int nFindRandom = szPath.Find("RANDOM_");
 	if (nFindRandom > 0)
@@ -4963,12 +5005,40 @@ BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile)
 
 		int nFile = rand() % nNumFiles;
 
+		if (nFile == nLastFile && nNumFiles > 1)
+		{
+			do
+			{
+				nFile = rand() % nNumFiles;
+			} while (nFile == nLastFile);
+		}
+
+		nLastFile = nFile;
+
 		szNum.Format("_%02d.", nFile);
 
 		szPath.Replace("_00.", szNum);
 	}
 
-	BOOL bRetVal = PlaySound((LPCSTR)szPath.GetBuffer(0), AfxGetInstanceHandle(), SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+	// DRAGONZ !
+	int nFindMulti = szPath.Find("MULTI_");
+	if (nFindMulti > 0)
+	{
+		CString szNum;
+		szNum.Format("_%02d.", m_nInitiativeCurrentAttackNumber);
+
+		szPath.Replace("_00.", szNum);
+	}
+
+	if (bAsync)
+	{
+		bRetVal = PlaySound((LPCSTR)szPath.GetBuffer(0), AfxGetInstanceHandle(), SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+	}
+	else
+	{
+		bRetVal = PlaySound((LPCSTR)szPath.GetBuffer(0), AfxGetInstanceHandle(), SND_FILENAME | SND_NODEFAULT);
+	}
+	
 
 	#ifdef _DEBUG
 	if (FALSE == bRetVal)
@@ -4982,24 +5052,100 @@ BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile)
 	return bRetVal;
 }
 
-void CDMHelperApp::PlaySoundFX(CString szDesc)
+BOOL CDMHelperApp::PlaySoundFX(CString szDesc, BOOL bAsync)
 {
+	if (g_bUseSoundEffects == FALSE)
+		return FALSE;
+
+	BOOL bFoundIt = FALSE;
+
+	szDesc.MakeUpper();
+
 	for (int i = 0; i < MAX_SOUNDBOARD_PAGES; ++i)
 	{
 		for (int j = 0; j < SOUNDBOARD_SOUNDS_PER_PAGE; ++j)
 		{
-			if (strcmp(m_Settings.m_SoundFX[i][j].m_szDesc, szDesc) == 0)
+			CString szSoundFX = m_Settings.m_SoundFX[i][j].m_szDesc;
+			szSoundFX.MakeUpper();
+
+			if (szDesc == szSoundFX)
+			{
+				bFoundIt = TRUE;
+			}
+
+			if (bFoundIt == FALSE && szSoundFX.Find('*') != -1)
+			{
+				int curPos = 0;
+				CString szFind = szSoundFX.Tokenize(_T("*"), curPos);
+
+				if (szDesc.Find(szFind) != -1)
+				{
+					bFoundIt = TRUE;
+					while (szFind != _T(""))
+					{
+						szFind = szSoundFX.Tokenize(_T("*"), curPos);
+
+						if (szDesc.Find(szFind) == -1)
+						{
+							bFoundIt = FALSE;
+							break;
+						}
+					}
+				}
+			}
+
+			if (bFoundIt)
 			{
 				CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 				szPath.Replace("<$DMAPATH>", m_szEXEPath);
-				PlaySoundFXFromFile(szPath.GetBuffer(0));
-				return;
+				return PlaySoundFXFromFile(szPath.GetBuffer(0), bAsync);
 			}
 		}
 	}
+
+	return FALSE;
 }
 
-void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType)
+BOOL CDMHelperApp::PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync)
+{
+	if (g_bUseSoundEffects == FALSE)
+		return FALSE;
+
+	szDesc.Replace("*", szName);
+
+	if (FALSE == PlaySoundFX(szDesc, bAsync))
+	{
+		szDesc.Replace(szName, szDefault);
+		return PlaySoundFX(szDesc, bAsync);
+	}
+
+	return TRUE;
+}
+
+BOOL CDMHelperApp::PlayEquipItemSFX(CString szDesc, CString szAlternate, BOOL bAsync)
+{
+	if (g_bUseSoundEffects == FALSE)
+		return FALSE;
+
+	CString szName = szDesc;
+	szName.Replace("*", "");
+	szName += " Equip";
+
+	if (TRUE == PlaySoundFX(szName, bAsync))
+		return TRUE;
+
+	szName = szAlternate;
+	szName.Replace("*", "");
+	szName += " Equip";
+
+	if (TRUE == PlaySoundFX(szName, bAsync))
+		return TRUE;
+
+	return PlaySoundFX("Default Equip", bAsync);
+
+}
+
+void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType, BOOL bAsync)
 {
 	if(g_bUseSoundEffects == FALSE)
 		return;
@@ -5018,11 +5164,11 @@ void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType)
 	{
 		if (nSoundType % 2 == 0)
 		{
-			PlaySoundFX("Default Hit");
+			PlaySoundFX("Default Hit", bAsync);
 		}
 		else
 		{
-			PlaySoundFX("Default Miss");
+			PlaySoundFX("Default Miss", bAsync);
 		}
 
 		return;
@@ -5034,11 +5180,19 @@ void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType)
 		{
 			if(m_Settings.m_SoundFX[i][j].m_szDesc[0])
 			{
-				if(strcmp(m_Settings.m_SoundFX[i][j].m_szDesc, m_Settings.m_WeaponSFX[nSoundIndex][nSoundType].m_szDesc) == 0)
+				CString szDesc = m_Settings.m_SoundFX[i][j].m_szDesc;
+				szDesc.MakeUpper();
+
+				CString szWeapon = m_Settings.m_WeaponSFX[nSoundIndex][nSoundType].m_szDesc;
+				szWeapon.MakeUpper();
+
+				//if(strcmp(m_Settings.m_SoundFX[i][j].m_szDesc, m_Settings.m_WeaponSFX[nSoundIndex][nSoundType].m_szDesc) == 0)
+				//if (_strcmpi(m_Settings.m_SoundFX[i][j].m_szDesc, m_Settings.m_WeaponSFX[nSoundIndex][nSoundType].m_szDesc) == 0)
+				if(szDesc == szWeapon)
 				{
 					CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 					szPath.Replace("<$DMAPATH>", m_szEXEPath);
-					PlaySoundFXFromFile(szPath);
+					PlaySoundFXFromFile(szPath, bAsync);
 					return;
 				}
 			}
@@ -5068,7 +5222,14 @@ void CDMHelperApp::PlaySpellSFX(int nSpellID)
 		{
 			if(m_Settings.m_SoundFX[i][j].m_szDesc[0])
 			{
-				if(strcmp(m_Settings.m_SoundFX[i][j].m_szDesc, m_Settings.m_SpellSFX[nSoundIndex].m_szDesc) == 0)
+				CString szDesc = m_Settings.m_SoundFX[i][j].m_szDesc;
+				szDesc.MakeUpper();
+
+				CString szSpell = m_Settings.m_SpellSFX[nSoundIndex].m_szDesc;
+				szSpell.MakeUpper();
+
+				//if(strcmp(m_Settings.m_SoundFX[i][j].m_szDesc, m_Settings.m_SpellSFX[nSoundIndex].m_szDesc) == 0)
+				if(szDesc == szSpell)
 				{
 					CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 					szPath.Replace("<$DMAPATH>", m_szEXEPath);
@@ -6573,4 +6734,25 @@ HWND CDMHelperApp::CreateWeatherDialog(cDMMapViewDialog *pParent, DND_WEATHER_TY
 	pDlg->m_WeatherType = nWeather;
 
 	return pDlg->m_hWnd;
+}
+
+void CDMHelperApp::ImportSoundBoards(CString szFileName, BOOL bSave)
+{
+	FILE *pInFile = fopen(szFileName, "rb");
+
+	if (pInFile != NULL)
+	{
+		fread(&m_Settings.m_SoundFX, sizeof(cDNDSoundEffect)*MAX_SOUNDBOARD_PAGES*SOUNDBOARD_SOUNDS_PER_PAGE, 1, pInFile);
+		fread(&m_Settings.m_szSoundBoardTabLabels, sizeof(char)*MAX_SOUNDBOARD_PAGES * 64, 1, pInFile);
+		fread(&m_Settings.m_WeaponSFX, sizeof(cDNDSoundEffectMapper)*MAX_WEAPONS_DEFINED * 4, 1, pInFile);
+		fread(&m_Settings.m_SpellSFX, sizeof(cDNDSoundEffectMapper) * 5 * MAX_SPELL_LEVELS*MAX_SPELLS_PER_LEVEL, 1, pInFile);
+
+		fclose(pInFile);
+
+		if (bSave)
+		{
+			DeleteFile(szFileName);
+			SaveSettings();
+		}
+	}
 }

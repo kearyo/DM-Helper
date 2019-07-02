@@ -54,6 +54,15 @@ void SetSelectedListBoxItems(CListBox *plctrl, int *nArray);
 int GetSelectedListBoxItemsCount(CListBox *plctrl);
 void CleanMemorizedSpellListBox(CListBox *plctrl);
 
+typedef enum
+{
+	DND_EDIT_TYPE_NONE = 0,
+
+	DND_EDIT_TYPE_COPY,
+	DND_EDIT_TYPE_CUT,
+	DND_EDIT_TYPE_PASTE,
+
+} DND_EDIT_TYPES;
 
 typedef enum
 {
@@ -605,6 +614,11 @@ public:
 
 	DWORD m_dwMasterSpellListHash;
 
+	DND_EDIT_TYPES	m_SoundFXCutPasteType;
+	cDNDSoundEffect *m_pSoundFXCutPasteBuffer;
+
+	int m_nInitiativeCurrentAttackNumber;
+
 	BOOL LoadUpdateParams(char *path);
 	BOOL SaveUpdateParams();
 
@@ -669,11 +683,15 @@ public:
 
 	void LoadSettings();
 	void SaveSettings();
+	void CheckForSoundBoardUpdates();
 
-	BOOL PlaySoundFXFromFile(CString szFile);
-	void PlaySoundFX(CString szDesc);
-	void PlayWeaponSFX(int nWeaponID, int nIndex);
+	BOOL PlaySoundFXFromFile(CString szFile, BOOL bAsync = TRUE);
+	BOOL PlaySoundFX(CString szDesc, BOOL bAsync = TRUE);
+	BOOL PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync = TRUE);
+	BOOL PlayEquipItemSFX(CString szDesc, CString szAlternate, BOOL bAsync = TRUE);
+	void PlayWeaponSFX(int nWeaponID, int nIndex, BOOL bAsync = TRUE);
 	void PlaySpellSFX(int nSpellID);
+
 
 	BOOL SaveConfirmCharacter(cDNDCharacter *pCharacter, BOOL bMultiple);
 	BOOL SaveConfirmParty(cDNDParty *pParty, BOOL bMultiple);
@@ -702,6 +720,8 @@ public:
 	void CallFileManagementDialog(DMLoadFileDescriptor *pFileDesc);
 
 	HWND CreateWeatherDialog(cDMMapViewDialog *pParent, DND_WEATHER_TYPES nWeather);
+
+	void ImportSoundBoards(CString szFileName, BOOL bSave);
 
 // Overrides
 	// ClassWizard generated virtual function overrides

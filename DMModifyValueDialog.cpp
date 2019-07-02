@@ -15,10 +15,10 @@ static char THIS_FILE[] = __FILE__;
 // DMModifyValueDialog dialog
 
 
-void ModifyValue(int *_pnModifyValue, char *szLabel, LONG lAllValue, BOOL bAllowNegative, BOOL bAddValue)
+void ModifyValue(int *_pnModifyValue, char *szLabel, LONG lAllValue, BOOL bAllowNegative, BOOL bAddValue, BOOL *pbMultiplier)
 {
 
-	DMModifyValueDialog *pDlg = new DMModifyValueDialog(_pnModifyValue, szLabel, lAllValue, bAllowNegative, bAddValue);
+	DMModifyValueDialog *pDlg = new DMModifyValueDialog(_pnModifyValue, szLabel, lAllValue, bAllowNegative, bAddValue, pbMultiplier);
 
 	pDlg->DoModal();
 
@@ -27,8 +27,11 @@ void ModifyValue(int *_pnModifyValue, char *szLabel, LONG lAllValue, BOOL bAllow
 }
 
 
-DMModifyValueDialog::DMModifyValueDialog(int *_pnModifyValue, char *szLabel, long lAllValue, BOOL bAllowNegative, BOOL bAddValue, CWnd* pParent /*=NULL*/)
+DMModifyValueDialog::DMModifyValueDialog(int *_pnModifyValue, char *szLabel, long lAllValue, BOOL bAllowNegative, BOOL bAddValue, BOOL *pbMultiplier, CWnd* pParent /*=NULL*/)
 	: CDialog(DMModifyValueDialog::IDD, pParent)
+	, m_bX1Check(TRUE)
+	, m_bX2Check(FALSE)
+	, m_bX3Check(FALSE)
 {
 	//{{AFX_DATA_INIT(DMModifyValueDialog)
 	m_szAddEdit = _T("");
@@ -38,6 +41,7 @@ DMModifyValueDialog::DMModifyValueDialog(int *_pnModifyValue, char *szLabel, lon
 	m_bAllowNegative = bAllowNegative;
 	m_bAddValue = bAddValue;
 	m_lAllValue = lAllValue;
+	m_pbMultiplier = pbMultiplier;
 
 	if(szLabel != NULL)
 	{
@@ -47,8 +51,6 @@ DMModifyValueDialog::DMModifyValueDialog(int *_pnModifyValue, char *szLabel, lon
 	{
 		m_szLabel = _T("");
 	}
-
-	
 }
 
 
@@ -61,6 +63,13 @@ void DMModifyValueDialog::DoDataExchange(CDataExchange* pDX)
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDOK, m_cOKButton);
 	DDX_Control(pDX, IDC_BUTTON_ALL, m_cAllButton);
+	DDX_Control(pDX, IDC_X1_CHECK, m_cX1Check);
+	DDX_Control(pDX, IDC_X2_CHECK, m_cX2Check);
+	DDX_Control(pDX, IDC_X3_CHECK, m_cX3Check);
+	DDX_Check(pDX, IDC_X1_CHECK, m_bX1Check);
+	DDX_Check(pDX, IDC_X2_CHECK, m_bX2Check);
+	DDX_Check(pDX, IDC_X3_CHECK, m_bX3Check);
+	DDX_Control(pDX, IDC_SWORD_ICON, m_cSwordIcon);
 }
 
 
@@ -80,6 +89,10 @@ BEGIN_MESSAGE_MAP(DMModifyValueDialog, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON_BACK, OnButtonBack)
 	//}}AFX_MSG_MAP
 	ON_BN_CLICKED(IDC_BUTTON_ALL, &DMModifyValueDialog::OnBnClickedButtonAll)
+	ON_BN_CLICKED(IDC_X1_CHECK, &DMModifyValueDialog::OnBnClickedX1Check)
+	ON_BN_CLICKED(IDC_X2_CHECK, &DMModifyValueDialog::OnBnClickedX2Check)
+	ON_BN_CLICKED(IDC_X3_CHECK, &DMModifyValueDialog::OnBnClickedX3Check)
+	ON_BN_CLICKED(IDOK, &DMModifyValueDialog::OnOK)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -107,6 +120,18 @@ BOOL DMModifyValueDialog::OnInitDialog()
 	{
 		m_cAllButton.ShowWindow(SW_HIDE);
 	}
+
+	if (m_pbMultiplier == NULL)
+	{
+		m_cX1Check.ShowWindow(SW_HIDE);
+		m_cX2Check.ShowWindow(SW_HIDE);
+		m_cX3Check.ShowWindow(SW_HIDE);
+		m_cSwordIcon.ShowWindow(SW_SHOW);
+	}
+	else
+	{
+		m_cSwordIcon.ShowWindow(SW_HIDE);
+	}
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -121,6 +146,17 @@ void DMModifyValueDialog::OnOK() //add the values
 	if(m_bAllowNegative == FALSE && nAdd < 0)
 	{
 		nAdd = -nAdd;
+	}
+
+	if (m_bX2Check)
+	{
+		nAdd *= 2;
+		*m_pbMultiplier = TRUE;
+	}
+	else if (m_bX3Check)
+	{
+		nAdd *= 3;
+		*m_pbMultiplier = TRUE;
 	}
 
 	*m_pnModifyValue += nAdd;
@@ -236,3 +272,35 @@ void DMModifyValueDialog::OnBnClickedButtonAll()
 
 	UpdateData(FALSE);
 }
+
+
+void DMModifyValueDialog::OnBnClickedX1Check()
+{
+	m_bX1Check = TRUE;
+	m_bX2Check = FALSE;
+	m_bX3Check = FALSE;
+
+	UpdateData(FALSE);
+}
+
+
+void DMModifyValueDialog::OnBnClickedX2Check()
+{
+	m_bX1Check = FALSE;
+	m_bX2Check = TRUE;
+	m_bX3Check = FALSE;
+
+	UpdateData(FALSE);
+}
+
+
+void DMModifyValueDialog::OnBnClickedX3Check()
+{
+	m_bX1Check = FALSE;
+	m_bX2Check = FALSE;
+	m_bX3Check = TRUE;
+
+	UpdateData(FALSE);
+}
+
+

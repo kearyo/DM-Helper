@@ -123,6 +123,10 @@ public:
 	void ClickMissButton(BOOL bOpponentParty);
 	void ClickSpellButton(BOOL bOpponentParty);
 
+	void InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialog, cDMBaseNPCViewDialog *pAttackingNPCDialog, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP);
+	void InitiativeMissileAttack(CDMCharViewDialog *pAttackingCharacterDialog, cDMBaseNPCViewDialog *pAttackingNPCDialog, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP);
+	BOOL InitiativeWound(int nDamage, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP);
+
 
 // Dialog Data
 	//{{AFX_DATA(DMPartyDialog)

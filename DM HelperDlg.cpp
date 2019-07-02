@@ -24,6 +24,7 @@
 #include "DMCustomMonsterDialog.h"
 #include "cDMMapNameDialog.h"
 #include "cDMPDFViewDialog.h"
+#include "cDMAddOnDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -265,6 +266,7 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_DMLIBRARY_UNEARTHEDARCANA, &CDMHelperDlg::OnDmlibraryUnearthedarcana)
 	ON_COMMAND(ID_DMLIBRARY_FROMFILE, &CDMHelperDlg::OnDmlibraryFromfile)
 	ON_COMMAND(ID_CUSTOMIZATIONS_CUSTOMCLASSEDITOR, &CDMHelperDlg::OnCustomizationsCustomclasseditor)
+	ON_COMMAND(ID_HELP_CHECKFORADD, &CDMHelperDlg::OnHelpCheckforadd)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3060,7 +3062,7 @@ void CDMHelperDlg::OpenPDFDocument(CString szFileName, int nPage)
 	szPDFPath.Format("%s\\data\\PDF", m_pApp->m_szEXEPath);
 	CreateDirectory(szPDFPath, NULL);
 
-	#if KEARY_BUILD
+	#if 0 //KEARY_BUILD
 
 	WORD wID;
 	for (POSITION pos = m_pApp->m_PDFViewMap.GetStartPosition(); pos != NULL;)
@@ -3251,3 +3253,9 @@ void CDMHelperDlg::OnDmlibraryFromfile()
 }
 
 
+void CDMHelperDlg::OnHelpCheckforadd()
+{
+	cDMAddOnDialog *pDlg = new cDMAddOnDialog();
+	pDlg->DoModal();
+	delete pDlg;
+}

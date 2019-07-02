@@ -28,6 +28,10 @@ public:
 	CRect m_PickRect[100];
 	int m_nEvents[100];
 
+	int m_nWindowTimer;
+
+	BOOL m_bIsDirty;
+
 	int DrawLogText(char * szData, int x, int y, CDC *memdc);
 	void ClearPicks();
 
@@ -60,4 +64,5 @@ public:
 	afx_msg void OnBnClickedEraseButton();
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };

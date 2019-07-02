@@ -18,7 +18,7 @@
 #define CUSTOM_CLASSES	TRUE
 #define MAX_CUSTOM_CLASSES	12
 
-#define KEARY_BUILD	FALSE
+#define KEARY_BUILD	TRUE
 
 //Dragon Magazines at http://www.annarchive.com/
 
@@ -229,8 +229,13 @@
 	* Added save with confirmation for each character in a party when the party itself is saved
 
 - 1.0.037	XX/XX/XX
-	* More bug fixes for errors caused by adding and removing / copy/ pasting NPCs into parties
+	* Added ability to insert/delete more sound boards as well as cut/copy/paste sound effects
 	* Added button for treasure generation by treasure type to NPC details screen
+	* More bug fixes for errors caused by adding and removing / copy/ pasting NPCs into parties
+	* Nasty bug fixed in the party log screen
+	* Added "Add-Ons" functionality to help menu for downloading and installing optional content
+	** Add-On "Anna's Flanaess circa 598 Map" is available
+	** Add-On "Eddie's Soundboards and Sound Effects" is available
 */
 
 #define PCSTRING CString*
@@ -273,6 +278,12 @@ int RollD00();
 int RollD100();
 
 int nRollDie(int nDieType);
+
+#define WEAPON_SFX_HIT				0
+#define WEAPON_SFX_MISS				1
+#define WEAPON_SFX_MISSILE_HIT		2
+#define WEAPON_SFX_MISSILE_MISS		3
+#define WEAPON_SFX_CRITICAL_HIT		2		// only valid for melee weapons
 
 
 typedef enum

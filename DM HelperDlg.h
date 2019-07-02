@@ -206,6 +206,7 @@ public:
 	afx_msg void OnDmlibraryUnearthedarcana();
 	afx_msg void OnDmlibraryFromfile();
 	afx_msg void OnCustomizationsCustomclasseditor();
+	afx_msg void OnHelpCheckforadd();
 };
 
 //{{AFX_INSERT_LOCATION}}

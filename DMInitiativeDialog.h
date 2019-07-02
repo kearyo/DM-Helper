@@ -29,9 +29,11 @@ public:
 	void Refresh();
 	void RefreshAndSelect();
 	void NextSegment();
+	void ClearSelectedCharacterTarget();
 	BOOL IsSelectedCharacterAlive();
 	BOOL IsCharacterAlive(CDMBaseCharViewDialog *pDlg);
 	BOOL IsSelectedCharacterInOpponentParty();
+	CDMBaseCharViewDialog *GetSelectedCharacterDialog();
 	void SetAttackData(CDMBaseCharViewDialog *pDlg);
 
 // Dialog Data

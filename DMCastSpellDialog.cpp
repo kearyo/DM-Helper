@@ -307,6 +307,8 @@ void DMCastSpellDialog::OnOK()
 				m_pCharacter->CastSpell(pSpellSlot);
 
 				CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+				pApp->PlayPCSoundFX("* Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
 				pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier);
 
 				DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
@@ -353,7 +355,13 @@ void DMCastSpellDialog::OnSpellInfo()
 
 void DMCastSpellDialog::OnCancel() 
 {
-	// TODO: Add extra cleanup here
+	if (m_pBaseCharViewDialog != NULL)
+	{
+		m_pBaseCharViewDialog->m_szInitiativeAction = _T("");
+		m_pBaseCharViewDialog->m_bInitiativeCasting = FALSE;
+		m_pBaseCharViewDialog->m_nCastSpellCursorPos = -1;
+		m_pBaseCharViewDialog->m_nCastingSpellSegments = 0;
+	}
 	
 	CDialog::OnCancel();
 }

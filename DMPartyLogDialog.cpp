@@ -39,6 +39,8 @@ CDMPartyLogDialog::CDMPartyLogDialog(CWnd* pParent /*=NULL*/)
 	m_nEventStart = -1;
 	m_nPickedRect = -1;
 
+	m_nWindowTimer = 0;
+
 	Create(CDMPartyLogDialog::IDD);
 }
 
@@ -71,6 +73,7 @@ BEGIN_MESSAGE_MAP(CDMPartyLogDialog, CDialog)
 	ON_BN_CLICKED(IDC_ERASE_BUTTON, &CDMPartyLogDialog::OnBnClickedEraseButton)
 	ON_WM_MOUSEWHEEL()
 	ON_WM_ERASEBKGND()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -90,6 +93,9 @@ BOOL CDMPartyLogDialog::OnInitDialog()
 
 	ClearPicks();
 
+	m_bIsDirty = FALSE;
+	//m_nWindowTimer = SetTimer(9467, 500, NULL);
+
 	ShowWindow(SW_SHOW);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -108,7 +114,7 @@ void CDMPartyLogDialog::OnBnClickedCancel()
 
 	OnCancel();
 
-	delete this;
+	//delete this;
 }
 
 void CDMPartyLogDialog::OnBnClickedOk()
@@ -128,7 +134,7 @@ void CDMPartyLogDialog::OnClose()
 
 	CDialog::OnClose();
 
-	delete this;
+	//delete this;
 }
 
 
@@ -184,19 +190,6 @@ void CDMPartyLogDialog::OnPaint()
 		m_cEraseLogButton.ShowWindow(SW_HIDE);
 	}
 
-	
-	CFont newfont;
-	CFont* oldfont;
-
-
-	int nSize = 14;
-	int success = newfont.CreatePointFont(nSize * 10, "HamletOrNot", pDC);
-	
-	oldfont = pDC->SelectObject(&newfont);
-
-	SetTextColor(*pDC, 0x000000);
-	SetBkMode(*pDC, TRANSPARENT);
-
 
 	graphics.DrawImage(m_pBackgroundBitmap, rect.left, rect.top, rect.right-24, rect.bottom);
 
@@ -205,6 +198,19 @@ void CDMPartyLogDialog::OnPaint()
 
 	if(m_pParentWindow->m_pPartyLog == NULL)
 		return;
+
+#if 1
+	CFont newfont;
+	CFont* oldfont;
+
+	int nSize = 14;
+	int success = newfont.CreatePointFont(nSize * 10, "HamletOrNot", pDC);
+
+	oldfont = pDC->SelectObject(&newfont);
+#endif
+
+	SetTextColor(*pDC, 0x000000);
+	SetBkMode(*pDC, TRANSPARENT);
 
 	SetScrollRange(SB_VERT, 0, m_pParentWindow->m_pPartyLog->m_LogHeader.m_nEvents, TRUE);
 	
@@ -223,12 +229,15 @@ void CDMPartyLogDialog::OnPaint()
 	
 	ClearPicks();
 
+	int nEventCount = 0;
 	for(int i = m_nEventStart; i >= nEnd; --i)
 	{
 		cDNDPartyLogEvent *pEvent = &m_pParentWindow->m_pPartyLog->m_Event[i];
 
 		if(pEvent->m_EventType == DND_LOG_EVENT_TYPE_UNDEFINED)
 			continue;
+
+		m_nEvents[nEventCount] = i;  // here the fucker is
 
 		int nMonth = (abs(pEvent->m_nMonth)) % m_pApp->m_pSelectedCalendar->m_nMonthsInYear;
 		int nDay = pEvent->m_nDay + 1;
@@ -245,11 +254,15 @@ void CDMPartyLogDialog::OnPaint()
 		int nMinutes = pEvent->m_nTurn * 10 + pEvent->m_nRound;
 		int nSeconds = pEvent->m_nSegment * 6;
 
-//#ifdef _DEBUG
-//		szLogLine.Format("(%d) %02d:%02d:%02d %s", i, pEvent->m_nHour, nMinutes, nSeconds, GetLogEventDesc(pEvent->m_EventType));
-//#else
+		//continue;
+
+#if 0 // #ifdef _DEBUG
+		szLogLine.Format("(%d- (%d:%d)) %02d:%02d:%02d %s", i, nEventCount, m_nPickRects, pEvent->m_nHour, nMinutes, nSeconds, GetLogEventDesc(pEvent->m_EventType));
+#else
 		szLogLine.Format("%02d:%02d:%02d %s", pEvent->m_nHour, nMinutes, nSeconds, GetLogEventDesc(pEvent->m_EventType));
-//#endif
+#endif
+
+		//continue;
 
 		szLogLine.Replace("$PNAME", m_pParentWindow->m_pParty->m_szPartyName);
 		szLogLine.Replace("$CNAME", pEvent->m_szName);
@@ -274,6 +287,9 @@ void CDMPartyLogDialog::OnPaint()
 
 		nLineSize = DrawLogText(szLogLine.GetBuffer(0), 50, nLineY, pDC);
 
+		//continue;
+		TRACE("LOG PAINT %d ERR %d %d\n", i, m_nEventStart, m_nPickRects);
+
 		m_PickRect[m_nPickRects].left = 30;
 		m_PickRect[m_nPickRects].top = nLineY;
 		m_PickRect[m_nPickRects].right = rect.right-80;
@@ -282,7 +298,7 @@ void CDMPartyLogDialog::OnPaint()
 
 		m_PickRect[m_nPickRects].bottom = nLineY;
 
-		m_nEvents[i] = m_nPickRects;
+		//continue;
 
 		if(m_nPickRects == m_nPickedRect)
 		{
@@ -299,7 +315,12 @@ void CDMPartyLogDialog::OnPaint()
 		{
 			m_nPickRects = 99;
 		}
-	}
+
+		++nEventCount;
+
+	} // for(int i = m_nEventStart; i >= nEnd; --i)
+
+	pDC->SelectObject(&oldfont);
 
 }
 
@@ -343,6 +364,7 @@ void CDMPartyLogDialog::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBa
 
 			TRACE("UP %d %d\n", nSBCode, m_nScrollPos);
 			InvalidateRect(NULL);
+			//m_bIsDirty = TRUE;
 
 			break;
 		}
@@ -358,6 +380,7 @@ void CDMPartyLogDialog::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBa
 
 			TRACE("DN %d %d\n", nSBCode, m_nScrollPos);
 			InvalidateRect(NULL);
+			//m_bIsDirty = TRUE;
 
 			break;
 		}
@@ -371,6 +394,7 @@ void CDMPartyLogDialog::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBa
 
 			TRACE("TK %d %d\n", nSBCode, m_nScrollPos);
 			InvalidateRect(NULL);
+			//m_bIsDirty = TRUE;
 
 			break;
 		}
@@ -406,6 +430,7 @@ void CDMPartyLogDialog::OnLButtonDown(UINT nFlags, CPoint point)
 		m_nPickedRect = -1;
 		m_nPickedEvent = -1;
 		InvalidateRect(NULL);
+		//m_bIsDirty = TRUE;
 	}
 
 	if(m_pParentWindow->m_pEventLoggerDialog != NULL && m_pParentWindow->m_pEventLoggerDialog->m_nInsertPosition != APPEND_TO_LOG)
@@ -432,6 +457,7 @@ void CDMPartyLogDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 				TRACE("PICKED EVENT %d\n", m_nPickedEvent);
 
 				InvalidateRect(NULL);
+				//m_bIsDirty = TRUE;
 
 				break;
 			}
@@ -468,7 +494,7 @@ void CDMPartyLogDialog::OnBnClickedInsertButton()
 
 		//m_nPickedRect = -1;
 		//m_nPickedEvent = -1;
-		//InvalidateRect(NULL);
+		InvalidateRect(NULL);
 	}
 }
 
@@ -509,6 +535,7 @@ BOOL CDMPartyLogDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		m_nPickedEvent = -1;
 
 		InvalidateRect(NULL);
+		//m_bIsDirty = TRUE;
 	}
 	else if (zDelta < 0)
 	{
@@ -521,6 +548,7 @@ BOOL CDMPartyLogDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 		m_nPickedEvent = -1;
 
 		InvalidateRect(NULL);
+		//m_bIsDirty = TRUE;
 	}
 
 	return CDialog::OnMouseWheel(nFlags, zDelta, pt);
@@ -534,4 +562,21 @@ BOOL CDMPartyLogDialog::OnEraseBkgnd(CDC* pDC)
 #else
 	return CDialog::OnEraseBkgnd(pDC);
 #endif
+}
+
+
+void CDMPartyLogDialog::OnTimer(UINT_PTR nIDEvent)
+{
+	#if 0
+	if (nIDEvent == 9467)
+	{
+		if (m_bIsDirty)
+		{
+			InvalidateRect(NULL);
+			m_bIsDirty = FALSE;
+		}
+	}
+	#endif
+
+	CDialog::OnTimer(nIDEvent);
 }

@@ -13,6 +13,7 @@
 #define IDREPOSITION                    4
 #define IDC_CLEAR_BUTTON                5
 #define IDPREVIEW                       5
+#define IDC_PLAY_SFX                    5
 #define ID_UP                           6
 #define ID_DOWN                         7
 #define ID_LEFT                         8
@@ -162,6 +163,8 @@
 #define IDD_DIALOG4                     284
 #define IDD_CHARACTER_PORTRAIT_DIALOG   284
 #define IDD_CUSTOM_CLASS_DIALOG         286
+#define IDB_SWORD_ICON_BITMAP           287
+#define IDD_ADD_ON_DIALOG               288
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -790,9 +793,13 @@
 #define IDC_DESC_EDIT                   1329
 #define IDC_CHOOSE_FILE_BUTTON          1330
 #define IDC_BOARDNAME_EDIT              1331
+#define IDC_CUT_SOUND_BUTTON            1331
 #define IDC_BORDER_STATIC               1332
+#define IDC_COPY_SOUND_BUTTON           1332
 #define IDC_ENC_FACTOR_EDIT             1333
+#define IDC_PASTE_SOUND_BUTTON          1333
 #define IDC_GP_STATIC                   1334
+#define IDC_CLEAR_SOUND_BUTTON          1334
 #define IDC_RENAME_ITEM_EDIT            1335
 #define IDC_INFLATION_FACTOR_EDIT       1335
 #define IDC_INFLATION_STATIC            1336
@@ -801,9 +808,13 @@
 #define IDC_MAP_SPELL_SFX_BUTTON        1337
 #define IDC_CACHE_DETAILS_EDIT          1337
 #define IDC_TYPE_LABEL                  1338
+#define IDC_ADD_BOARD_BUTTON            1338
 #define IDC_EVENT_LIST                  1339
+#define IDC_DELETE_BOARD_BUTTON         1339
 #define IDC_SFX_LIST                    1340
+#define IDC_EXPORT_BOARDS_BUTTON        1340
 #define IDC_SWING_HIT_CHECK             1341
+#define IDC_IMPORT_BOARDS_BUTTON        1341
 #define IDC_SWING_MISS_CHECK            1342
 #define IDC_RANGED_HIT_CHECK            1343
 #define IDC_RANGED_MISS_CHECK           1344
@@ -851,7 +862,6 @@
 #define IDC_XP_COMMENT                  1364
 #define IDC_D10_BUTTON                  1365
 #define IDC_WP_STATIC                   1365
-#define IDC_XP_COMMENT2                 1365
 #define IDC_DEBUG_CHAR_ID               1365
 #define IDC_D6_BUTTON                   1366
 #define IDC_INVENTORY_STATIC            1366
@@ -967,6 +977,7 @@
 #define IDC_FILETYPES_CHECK             1440
 #define IDC_SFX_CYCLE_CHECK             1440
 #define IDC_PREREQ_ATTRIB_CHECK_0       1440
+#define IDC_X1_CHECK                    1440
 #define IDC_PP_BUTTON                   1441
 #define IDC_GRID_CHECK                  1441
 #define IDC_EMPATH_CHECK                1441
@@ -974,11 +985,13 @@
 #define IDC_KEEN_EARED_CHECK2           1441
 #define IDC_AMMO_CHECK                  1441
 #define IDC_PREREQ_ATTRIB_CHECK_1       1441
+#define IDC_X2_CHECK                    1441
 #define IDC_GP_BUTTON                   1442
 #define IDC_PARTY_NAME_STATIC           1442
 #define IDC_SPEECH_CHECK                1442
 #define IDC_SWORD_CHECK                 1442
 #define IDC_PREREQ_ATTRIB_CHECK_2       1442
+#define IDC_X3_CHECK                    1442
 #define IDC_EP_BUTTON                   1443
 #define IDC_ENCOUNTER_LIST              1443
 #define IDC_TELEPATH_CHECK              1443
@@ -1208,6 +1221,15 @@
 #define IDC_ADD_WEAPON_PROF_LEVELS_EDIT 1630
 #define IDC_NON_WEAPON_PROF_PENALTY_EDIT 1631
 #define IDC_DEX_COMMENT_STATIC          1632
+#define IDC_FILTER_EDIT                 1633
+#define IDC_SWORD_ICON                  1634
+#define IDC_GO_BUTTON                   1635
+#define IDC_ADD_ON_PROGRESS             1636
+#define IDC_FILE_NAME_STATIC            1637
+#define IDC_ADD_ONS_LIST                1638
+#define IDC_FILE_SIZE_STATIC            1639
+#define IDC_FILE_SIZE_STATIC2           1640
+#define IDC_FILE_PERC_STATIC            1640
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1241,14 +1263,15 @@
 #define ID_DMLIBRARY_UNEARTHEDARCANA    32801
 #define ID_DMLIBRARY_FROMFILE           32802
 #define ID_CUSTOMIZATIONS_CUSTOMCLASSEDITOR 32803
+#define ID_HELP_CHECKFORADD             32804
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        287
-#define _APS_NEXT_COMMAND_VALUE         32804
-#define _APS_NEXT_CONTROL_VALUE         1633
+#define _APS_NEXT_RESOURCE_VALUE        289
+#define _APS_NEXT_COMMAND_VALUE         32805
+#define _APS_NEXT_CONTROL_VALUE         1639
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -8,7 +8,7 @@
 // DMModifyValueDialog.h : header file
 //
 
-void ModifyValue(int *_pnModifyValue, char *szLabel, LONG lAllValue, BOOL bAllowNegative = TRUE, BOOL bAddValue = TRUE);
+void ModifyValue(int *_pnModifyValue, char *szLabel, LONG lAllValue, BOOL bAllowNegative = TRUE, BOOL bAddValue = TRUE, BOOL *pbMultiplier = NULL);
 
 /////////////////////////////////////////////////////////////////////////////
 // DMModifyValueDialog dialog
@@ -17,7 +17,7 @@ class DMModifyValueDialog : public CDialog
 {
 // Construction
 public:
-	DMModifyValueDialog(int *_pnModifyValue, char *szLabel, LONG lAllValue, BOOL bAllowNegative = TRUE, BOOL bAddValue = TRUE, CWnd* pParent = NULL);   // standard constructor
+	DMModifyValueDialog(int *_pnModifyValue, char *szLabel, LONG lAllValue, BOOL bAllowNegative = TRUE, BOOL bAddValue = TRUE, BOOL *pbMultiplier = NULL, CWnd* pParent = NULL);   // standard constructor
 
 	int *m_pnModifyValue;
 
@@ -25,6 +25,7 @@ public:
 	BOOL m_bAllowNegative;
 	BOOL m_bAddValue;
 	LONG m_lAllValue;
+	BOOL *m_pbMultiplier;
 
 // Dialog Data
 	//{{AFX_DATA(DMModifyValueDialog)
@@ -67,6 +68,16 @@ public:
 	CButton m_cOKButton;
 	afx_msg void OnBnClickedButtonAll();
 	CButton m_cAllButton;
+	CButton m_cX1Check;
+	CButton m_cX2Check;
+	CButton m_cX3Check;
+	BOOL m_bX1Check;
+	BOOL m_bX2Check;
+	BOOL m_bX3Check;
+	afx_msg void OnBnClickedX1Check();
+	afx_msg void OnBnClickedX2Check();
+	afx_msg void OnBnClickedX3Check();
+	CStatic m_cSwordIcon;
 };
 
 //{{AFX_INSERT_LOCATION}}

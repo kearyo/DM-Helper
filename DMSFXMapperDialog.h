@@ -107,6 +107,12 @@ protected:
 	afx_msg void OnSelchangeSfxMap1();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedPlaySfx();
+	afx_msg void OnLbnDblclkSfxList();
+	CString m_szFilter;
+	afx_msg void OnEnChangeFilterEdit();
 };
 
 //{{AFX_INSERT_LOCATION}}

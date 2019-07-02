@@ -35,6 +35,7 @@ END_MESSAGE_MAP()
 
 DMSFXMapperDialog::DMSFXMapperDialog(BOOL bSpells, CWnd* pParent /*=NULL*/)
 	: CDialog(DMSFXMapperDialog::IDD, pParent)
+	, m_szFilter(_T(""))
 {
 	//{{AFX_DATA_INIT(DMSFXMapperDialog)
 	m_szTypeLabel = _T("Weapons:");
@@ -85,6 +86,7 @@ void DMSFXMapperDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_ILLUSIONIST_SPELL_CHECK, m_bIllusionistSpellCheck);
 	DDX_Check(pDX, IDC_MAGICUSER_SPELL_CHECK, m_bMagicUserSpellCheck);
 	//}}AFX_DATA_MAP
+	DDX_Text(pDX, IDC_FILTER_EDIT, m_szFilter);
 }
 
 
@@ -107,6 +109,10 @@ BEGIN_MESSAGE_MAP(DMSFXMapperDialog, CDialog)
 	ON_BN_CLICKED(IDC_ILLUSIONIST_SPELL_CHECK, OnIllusionistSpellCheck)
 	ON_LBN_SELCHANGE(IDC_SFX_MAP_1, OnSelchangeSfxMap1)
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDCANCEL, &DMSFXMapperDialog::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_PLAY_SFX, &DMSFXMapperDialog::OnBnClickedPlaySfx)
+	ON_LBN_DBLCLK(IDC_SFX_LIST, &DMSFXMapperDialog::OnLbnDblclkSfxList)
+	ON_EN_CHANGE(IDC_FILTER_EDIT, &DMSFXMapperDialog::OnEnChangeFilterEdit)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -210,6 +216,27 @@ void DMSFXMapperDialog::PopulateSFXList()
 			if(pObj->m_ObjectType != DND_OBJECT_TYPE_WEAPON)
 				continue;
 
+			if (pObj->m_wTypeId >= 13000)
+				continue;	//custom weapons skip
+
+			szTemp.Format("%s", pObj->m_szType);
+			szTemp.Replace("ZZZ", "");
+
+			m_cEventList.InsertString(nCount, szTemp);
+			m_cEventList.SetItemData(nCount, pObj->m_wTypeId);
+			++nCount;
+		}
+
+		for (int i = 0; i < m_pApp->m_ObjectsOrderedTypeArray.GetSize(); ++i)
+		{
+			POBJECTTYPE pObj = m_pApp->m_ObjectsOrderedTypeArray.GetAt(i);
+
+			if (pObj->m_ObjectType != DND_OBJECT_TYPE_WEAPON)
+				continue;
+
+			if (pObj->m_wTypeId < 13000)
+				continue;	//custom weapons add
+
 			szTemp.Format("%s", pObj->m_szType);
 			szTemp.Replace("ZZZ", "");
 
@@ -236,6 +263,16 @@ void DMSFXMapperDialog::PopulateSFXList()
 					
 					if(!m_bSpells && i != 0)
 						continue;
+				}
+
+				if (m_szFilter != "")
+				{
+					CString szTest = m_pApp->m_Settings.m_SoundFX[i][j].m_szDesc;
+
+					if (szTest.Find(m_szFilter) == -1)
+					{
+						continue;
+					}
 				}
 
 				m_cSFXList.InsertString(nCount, m_pApp->m_Settings.m_SoundFX[i][j].m_szDesc);
@@ -591,5 +628,55 @@ void DMSFXMapperDialog::OnSelchangeSfxMap1()
 	// TODO: Add your control notification handler code here
 	
 
-	TRACE("GOT IN !\n");
+	
+}
+
+void DMSFXMapperDialog::OnLbnDblclkSfxList()
+{
+	OnMapSfx();
+
+	int nCursor = m_cEventList.GetCurSel();
+
+	m_cEventList.SetSel(nCursor, FALSE);
+	++nCursor;
+	m_cEventList.SetSel(nCursor);
+
+	//UpdateData(FALSE);
+
+	nCursor = m_cEventList.GetCurSel();
+
+	Refresh();
+}
+
+
+
+void DMSFXMapperDialog::OnBnClickedCancel()
+{
+	// TODO: Add your control notification handler code here
+	CDialog::OnCancel();
+}
+
+
+void DMSFXMapperDialog::OnBnClickedPlaySfx()
+{
+	int nCursor = m_cSFXList.GetCurSel();
+
+	if (nCursor > -1)
+	{
+		char szSFX[64];
+		memset(szSFX, 0, 64 * sizeof(char));
+		m_cSFXList.GetText(nCursor, szSFX);
+
+		CString szDesc = szSFX;
+		m_pApp->PlaySoundFX(szDesc);
+	}
+}
+
+
+void DMSFXMapperDialog::OnEnChangeFilterEdit()
+{
+	UpdateData(TRUE);
+
+	PopulateSFXList();
+	Refresh();
 }

@@ -66,7 +66,7 @@
     <ClCompile>
       <AdditionalOptions>/Zl %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>c:\gdi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>c:\gdi;c:/libcurl-7/include;c:/libcurl-7/include/curl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -89,7 +89,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>c:/gdi/Gdiplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>c:/gdi/Gdiplus.lib;c:/libcurl-7/lib/Release/curllib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\Debug/DM Helper.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -117,7 +117,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>c:\gdi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>c:\gdi;c:/libcurl-7/include;c:/libcurl-7/include/curl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -139,7 +139,7 @@
       <AdditionalIncludeDirectories>c:\gdi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>c:/gdi/Gdiplus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>c:/gdi/Gdiplus.lib;c:/libcurl-7/lib/Release/curllib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>
@@ -157,6 +157,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cDMAddOnDialog.cpp" />
     <ClCompile Include="cDMCharacterPortraitDialog.cpp" />
     <ClCompile Include="cDMDetachedMapDialog.cpp" />
     <ClCompile Include="cDMMapNameDialog.cpp" />
@@ -227,11 +228,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TransparentListBox.cpp" />
+    <ClCompile Include="unzip.cpp" />
+    <ClCompile Include="zip.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cDMAddOnDialog.h" />
     <ClInclude Include="cDMCharacterPortraitDialog.h" />
     <ClInclude Include="cDMDetachedMapDialog.h" />
     <ClInclude Include="cDMMapNameDialog.h" />
@@ -301,9 +305,12 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="TransparentListBox.h" />
+    <ClInclude Include="unzip.h" />
+    <ClInclude Include="zip.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\bitmap2.bmp" />
+    <Image Include="res\bitmap3.bmp" />
     <Image Include="res\calendar_cell.bmp" />
     <Image Include="res\camera_icon.bmp" />
     <Image Include="res\char_sheet_base.bmp" />
@@ -352,6 +359,7 @@
     <Image Include="res\snow_bitmap.bmp" />
     <Image Include="res\spellbook.bmp" />
     <Image Include="res\swap_icon.bmp" />
+    <Image Include="res\sword_icon.bmp" />
     <Image Include="res\thief.bmp" />
     <Image Include="res\up_arrow.bmp" />
     <Image Include="res\up_arrow_pressed.bmp" />

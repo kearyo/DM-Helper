@@ -1058,6 +1058,8 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 					cDNDSpellSlot *pSelectedSpellSlot = (cDNDSpellSlot *)m_cSpellsMemorizedList.GetItemData(i);
 					m_pCharacter->CastSpell(pSelectedSpellSlot);
 
+					m_pApp->PlayPCSoundFX("* Cast Spell", m_pSiblingWindow->m_szCharacterFirstName, "NADA", FALSE);
+
 					m_pApp->PlaySpellSFX(pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier);
 
 					DMPartyDialog *pPartyDlg = m_pApp->FindCharacterPartyDialog(m_pCharacter);

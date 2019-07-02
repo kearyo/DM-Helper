@@ -280,6 +280,8 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 
 	m_bLoadedFromMenu = FALSE;
 
+	m_szCharacterFirstName = _T("");
+
 	m_szSaveFileName = _T("");
 	m_szLoadFileName = _T("");
 	m_szDamageDesc = _T("");  //for party view
@@ -986,6 +988,10 @@ void CDMCharViewDialog::Refresh()
 	m_szCharacterName = m_pCharacter->m_szCharacterName;
 
 	m_szBaseCharName = m_szCharacterName;
+
+	int curPos = 0;
+	m_szCharacterFirstName = m_szCharacterName.Tokenize(_T(" "), curPos);
+
 
 	if(m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_UNDEF)
 	{
@@ -4768,6 +4774,16 @@ void CDMCharViewDialog::OnSwapButton1()
 	OnSelchangeWeaponCombo1();
 
 	m_pCharacter->MarkChanged();
+	
+	for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
+	{
+		if (m_pCharacter->m_Inventory[i].m_dwObjectID == m_pCharacter->m_SelectedWeapons[0].m_dwObjectID &&  m_pCharacter->m_SelectedWeapons[0].m_dwObjectID != 0)
+		{
+			m_pApp->PlayEquipItemSFX(m_pCharacter->m_Inventory[i].m_szType, m_pCharacter->m_SelectedWeapons[0].m_szType);
+			break;
+		}
+	}
+
 }
 
 void CDMCharViewDialog::OnSwapButton2() 

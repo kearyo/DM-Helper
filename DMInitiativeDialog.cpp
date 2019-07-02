@@ -295,7 +295,7 @@ void CDMInitiativeDialog::Refresh()
 #endif
 				m_cCharacterList.SetItemText(nRow, nCol++, szTemp);
 
-				if(pCharDlg->m_pTargetBaseDlg != NULL)
+				if (pCharDlg->m_szInitiativeAction == _T("") && pCharDlg->m_bInitiativeCasting == FALSE && pCharDlg->m_pTargetBaseDlg != NULL)
 				{
 					if (IsCharacterAlive(pCharDlg->m_pTargetBaseDlg))
 					{
@@ -438,7 +438,7 @@ void CDMInitiativeDialog::Refresh()
 				szTemp.Format("%d/%d", nActionSegment, nActionRound % 10);
 				m_cCharacterList.SetItemText(nRow, nCol++, szTemp);
 
-				if(pNPCDlg->m_szInitiativeAction == _T("") && pNPCDlg->m_pTargetBaseDlg != NULL)
+				if (pNPCDlg->m_bInitiativeCasting == FALSE && pNPCDlg->m_szInitiativeAction == _T("") && pNPCDlg->m_pTargetBaseDlg != NULL)
 				{
 					if (IsCharacterAlive(pNPCDlg->m_pTargetBaseDlg))
 					{
@@ -677,10 +677,15 @@ void CDMInitiativeDialog::OnBnClickedNextRoundButton()
 				{
 					pCharDlg->m_nInitiativeRoll = RollD10();
 				}
-				pCharDlg->m_szInitiativeAction = _T("");
-				pCharDlg->m_bInitiativeCasting = FALSE;
-				pCharDlg->m_nCastSpellCursorPos = -1;
-				pCharDlg->m_nCastingSpellSegments = 0;
+				//pCharDlg->m_szInitiativeAction = _T("");
+				//pCharDlg->m_bInitiativeCasting = FALSE;
+				//pCharDlg->m_nCastSpellCursorPos = -1;
+				//pCharDlg->m_nCastingSpellSegments = 0;
+
+				if (pCharDlg->m_bInitiativeCasting == FALSE)
+				{
+					pCharDlg->m_szInitiativeAction = _T("");
+				}
 			}
 			else
 			{
@@ -706,10 +711,15 @@ void CDMInitiativeDialog::OnBnClickedNextRoundButton()
 			{
 				pNPCDlg->m_nInitiativeRoll = RollD10();
 			}
-			pNPCDlg->m_szInitiativeAction = _T("");
-			pNPCDlg->m_bInitiativeCasting = FALSE;
-			pNPCDlg->m_nCastSpellCursorPos = -1;
-			pNPCDlg->m_nCastingSpellSegments = 0;
+			//pNPCDlg->m_szInitiativeAction = _T("");
+			//pNPCDlg->m_bInitiativeCasting = FALSE;
+			//pNPCDlg->m_nCastSpellCursorPos = -1;
+			//pNPCDlg->m_nCastingSpellSegments = 0;
+
+			if (pNPCDlg->m_bInitiativeCasting == FALSE)
+			{
+				pNPCDlg->m_szInitiativeAction = _T("");
+			}
 		}
 	}
 
@@ -1060,6 +1070,25 @@ void CDMInitiativeDialog::OnSize(UINT nType, int cx, int cy)
 	InvalidateRect(NULL);
 }
 
+
+void CDMInitiativeDialog::ClearSelectedCharacterTarget()
+{
+	int nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+	if (nCursor > -1)
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+
+		switch (pDlg->m_CharViewType)
+		{
+			case DND_CHAR_VIEW_TYPE_PC:		((CDMCharViewDialog*)pDlg)->m_pTargetBaseDlg = NULL; return;
+			case DND_CHAR_VIEW_TYPE_NPC:	((cDMBaseNPCViewDialog*)pDlg)->m_pTargetBaseDlg = NULL; return;
+		}
+
+	}
+
+}
+
 BOOL CDMInitiativeDialog::IsSelectedCharacterAlive()
 {
 	int nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
@@ -1112,6 +1141,19 @@ BOOL CDMInitiativeDialog::IsSelectedCharacterInOpponentParty()
 	return bRetVal;
 }
 
+CDMBaseCharViewDialog *CDMInitiativeDialog::GetSelectedCharacterDialog()
+{
+	int nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+	if (nCursor > -1)
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+		return pDlg;
+	}
+
+	return NULL;
+}
+
 void CDMInitiativeDialog::OnBnClickedHitButton()
 {
 	
@@ -1120,6 +1162,8 @@ void CDMInitiativeDialog::OnBnClickedHitButton()
 		NextSegment();
 		return;
 	}
+
+	m_pApp->m_nInitiativeCurrentAttackNumber = m_nCompletedAttacksThisRound;
 
 	m_pParentPartyDialog->ClickHitButton(IsSelectedCharacterInOpponentParty());
 
@@ -1181,9 +1225,15 @@ void CDMInitiativeDialog::OnBnClickedSpellButton()
 		return;
 	}
 
-	m_pParentPartyDialog->ClickSpellButton(IsSelectedCharacterInOpponentParty());
+	CDMBaseCharViewDialog *pDlg = GetSelectedCharacterDialog();
 
-	NextSegment();
+	ClearSelectedCharacterTarget();
+	m_pParentPartyDialog->ClickSpellButton(IsSelectedCharacterInOpponentParty());
+	
+	if (pDlg != NULL && pDlg->m_bInitiativeCasting == FALSE)
+	{
+		NextSegment();
+	}
 }
 
 void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)

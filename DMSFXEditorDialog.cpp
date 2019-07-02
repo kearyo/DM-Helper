@@ -42,6 +42,9 @@ void DMSFXEditorDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_DESC_EDIT, m_szDesc);
 	DDX_Text(pDX, IDC_FILENAME_EDIT, m_szFilename);
 	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_CUT_SOUND_BUTTON, m_cCutSoundButton);
+	DDX_Control(pDX, IDC_COPY_SOUND_BUTTON, m_cCopySoundButton);
+	DDX_Control(pDX, IDC_PASTE_SOUND_BUTTON, m_cPasteSoundButton);
 }
 
 
@@ -49,6 +52,12 @@ BEGIN_MESSAGE_MAP(DMSFXEditorDialog, CDialog)
 	//{{AFX_MSG_MAP(DMSFXEditorDialog)
 	ON_BN_CLICKED(IDC_CHOOSE_FILE_BUTTON, OnChooseFileButton)
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDC_CUT_SOUND_BUTTON, &DMSFXEditorDialog::OnBnClickedCutSoundButton)
+	ON_BN_CLICKED(IDC_COPY_SOUND_BUTTON, &DMSFXEditorDialog::OnBnClickedCopySoundButton)
+	ON_BN_CLICKED(IDC_PASTE_SOUND_BUTTON, &DMSFXEditorDialog::OnBnClickedPasteSoundButton)
+	ON_WM_PAINT()
+	ON_BN_CLICKED(IDCANCEL, &DMSFXEditorDialog::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_CLEAR_SOUND_BUTTON, &DMSFXEditorDialog::OnBnClickedClearSoundButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -63,6 +72,8 @@ BOOL DMSFXEditorDialog::OnInitDialog()
 	m_szDesc = m_pSoundFX->m_szDesc;
 	m_szFilename = m_pSoundFX->m_szFilePath;
 
+	m_bPasted = FALSE;
+
 	UpdateData(FALSE);
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -72,12 +83,22 @@ BOOL DMSFXEditorDialog::OnInitDialog()
 
 void DMSFXEditorDialog::OnOK() 
 {
-	// TODO: Add extra validation here
-
+	
 	UpdateData(TRUE);
 
 	strcpy(m_pSoundFX->m_szDesc, m_szDesc.GetBuffer(0));
 	strcpy(m_pSoundFX->m_szFilePath, m_szFilename.GetBuffer(0));
+
+	if (m_bPasted && m_pApp->m_pSoundFXCutPasteBuffer != NULL)
+	{
+		if (m_pApp->m_SoundFXCutPasteType == DND_EDIT_TYPE_CUT)
+		{
+			memset(m_pApp->m_pSoundFXCutPasteBuffer, 0, sizeof(cDNDSoundEffect));
+		}
+
+		m_pApp->m_SoundFXCutPasteType = DND_EDIT_TYPE_NONE;
+		m_pApp->m_pSoundFXCutPasteBuffer = NULL;
+	}
 	
 	CDialog::OnOK();
 }
@@ -118,4 +139,71 @@ void DMSFXEditorDialog::OnChooseFileButton()
 	}
 	
 }
+
+void DMSFXEditorDialog::OnPaint()
+{
+	CPaintDC dc(this); // device context for painting
+	// TODO: Add your message handler code here
+	// Do not call CDialog::OnPaint() for painting messages
+
+	if (m_pApp->m_pSoundFXCutPasteBuffer == NULL || m_pApp->m_pSoundFXCutPasteBuffer == m_pSoundFX)
+	{
+		m_cPasteSoundButton.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_cPasteSoundButton.EnableWindow(TRUE);
+	}
+}
+
+
+void DMSFXEditorDialog::OnBnClickedCutSoundButton()
+{
+	m_pApp->m_SoundFXCutPasteType = DND_EDIT_TYPE_CUT;
+	m_pApp->m_pSoundFXCutPasteBuffer = m_pSoundFX;
+	InvalidateRect(NULL);
+
+	PostMessage(WM_CLOSE);
+}
+
+
+void DMSFXEditorDialog::OnBnClickedCopySoundButton()
+{
+	m_pApp->m_SoundFXCutPasteType = DND_EDIT_TYPE_COPY;
+	m_pApp->m_pSoundFXCutPasteBuffer = m_pSoundFX;
+	InvalidateRect(NULL);
+
+	PostMessage(WM_CLOSE);
+}
+
+
+void DMSFXEditorDialog::OnBnClickedPasteSoundButton()
+{
+	if (m_pApp->m_pSoundFXCutPasteBuffer != NULL)
+	{
+		m_szDesc = m_pApp->m_pSoundFXCutPasteBuffer->m_szDesc;
+		m_szFilename = m_pApp->m_pSoundFXCutPasteBuffer->m_szFilePath;
+		//m_bPasted = TRUE;
+	}
+
+	UpdateData(FALSE);
+}
+
+
+void DMSFXEditorDialog::OnBnClickedClearSoundButton()
+{
+	m_szDesc = "";
+	m_szFilename = "";
+
+	UpdateData(FALSE);
+
+}
+
+
+void DMSFXEditorDialog::OnBnClickedCancel()
+{
+	// TODO: Add your control notification handler code here
+	CDialog::OnCancel();
+}
+
 

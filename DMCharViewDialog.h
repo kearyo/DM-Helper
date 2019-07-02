@@ -66,6 +66,8 @@ public:
 	CString m_szMonsterPortraitPath;
 	BOOL GetMonsterPortraitPath(CString szMonster);
 
+	CString m_szCharacterFirstName;
+
 	CDMBaseCharViewDialog(DND_CHAR_VIEW_TYPES _ViewType, UINT nIDTemplate, CWnd* pParentWnd)
 	{
 		m_pApp = (CDMHelperApp *)AfxGetApp();
@@ -99,6 +101,8 @@ public:
 		m_bInitDialogCalled = FALSE;
 
 		m_szMonsterPortraitPath = _T("");
+
+		m_szCharacterFirstName = _T("");
 
 		CDialog::CDialog(nIDTemplate, pParentWnd);
 	}

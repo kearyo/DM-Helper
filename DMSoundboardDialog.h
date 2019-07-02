@@ -1,3 +1,4 @@
+#include "afxwin.h"
 #if !defined(AFX_DMSOUNDBOARDDIALOG_H__B281FB7F_6CA1_4808_B680_7D5EFB98947D__INCLUDED_)
 #define AFX_DMSOUNDBOARDDIALOG_H__B281FB7F_6CA1_4808_B680_7D5EFB98947D__INCLUDED_
 
@@ -22,6 +23,8 @@ public:
 
 	int m_nPage;
 	BOOL m_bEditMode;
+
+	void Init();
 
 // Dialog Data
 	//{{AFX_DATA(DMSoundboardDialog)
@@ -59,6 +62,15 @@ protected:
 	afx_msg void OnClose();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedAddBoardButton();
+	afx_msg void OnBnClickedDeleteBoardButton();
+	CButton m_cDeleteBoardButton;
+	CButton m_cAddBoardButton;
+	afx_msg void OnBnClickedExportBoardsButton();
+	afx_msg void OnBnClickedImportBoardsButton();
+	CButton m_cExportBoardsButton;
+	CButton m_cImportBoardsButton;
 };
 
 //{{AFX_INSERT_LOCATION}}

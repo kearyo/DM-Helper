@@ -2707,6 +2707,15 @@ void DMNPCViewDialog::OnSwapButton1()
 	Refresh();	
 
 	OnSelchangeWeaponCombo1();
+
+	for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
+	{
+		if (m_pNPC->m_Inventory[i].m_dwObjectID == m_pNPC->m_SelectedWeapons[0].m_dwObjectID &&  m_pNPC->m_SelectedWeapons[0].m_dwObjectID != 0)
+		{
+			m_pApp->PlayEquipItemSFX(m_pNPC->m_Inventory[i].m_szType, m_pNPC->m_SelectedWeapons[0].m_szType);
+			break;
+		}
+	}
 }
 
 void DMNPCViewDialog::OnSwapButton2() 
