@@ -23,6 +23,7 @@ char g_SFX_szFilename[MAX_PATH];
 
 DMSFXEditorDialog::DMSFXEditorDialog(cDNDSoundEffect *_pSoundFX, CWnd* pParent /*=NULL*/)
 	: CDialog(DMSFXEditorDialog::IDD, pParent)
+	, m_szExplainText(_T(""))
 {
 	//{{AFX_DATA_INIT(DMSFXEditorDialog)
 	m_szDesc = _T("");
@@ -45,6 +46,9 @@ void DMSFXEditorDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CUT_SOUND_BUTTON, m_cCutSoundButton);
 	DDX_Control(pDX, IDC_COPY_SOUND_BUTTON, m_cCopySoundButton);
 	DDX_Control(pDX, IDC_PASTE_SOUND_BUTTON, m_cPasteSoundButton);
+	DDX_Control(pDX, IDC_ENCRYPT_BUTTON, m_cEncryptButton);
+	DDX_Text(pDX, IDC_EXPLAIN_TEXT, m_szExplainText);
+	DDX_Control(pDX, IDC_DESC_EDIT, m_cDescEdit);
 }
 
 
@@ -58,6 +62,9 @@ BEGIN_MESSAGE_MAP(DMSFXEditorDialog, CDialog)
 	ON_WM_PAINT()
 	ON_BN_CLICKED(IDCANCEL, &DMSFXEditorDialog::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_CLEAR_SOUND_BUTTON, &DMSFXEditorDialog::OnBnClickedClearSoundButton)
+	ON_BN_CLICKED(IDC_ENCRYPT_BUTTON, &DMSFXEditorDialog::OnBnClickedEncryptButton)
+	ON_EN_CHANGE(IDC_DESC_EDIT, &DMSFXEditorDialog::OnEnChangeDescEdit)
+	ON_EN_CHANGE(IDC_FILENAME_EDIT, &DMSFXEditorDialog::OnEnChangeFilenameEdit)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -74,10 +81,189 @@ BOOL DMSFXEditorDialog::OnInitDialog()
 
 	m_bPasted = FALSE;
 
-	UpdateData(FALSE);
+	#ifdef _DEBUG
+	if (m_szFilename.Find(".DMS") >= 0)
+	{
+		m_cEncryptButton.SetWindowText("DECRYPT");
+	}
+
+	m_cEncryptButton.ShowWindow(SW_SHOW);
+	#endif
+
+	Refresh();
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+BOOL DMSFXEditorDialog::StringContainsEvent(CString szEvent)
+{
+
+	CString szEvents[6] = {"ATTACK", "WAR CRY", "HURT", "DIE", "BREATH WEAPON", "EQUIP"};
+
+	szEvent.MakeUpper();
+
+	for (int i = 0; i < 6; ++i)
+	{
+		if (szEvent.Find(szEvents[i]) > -1)
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+void DMSFXEditorDialog::Refresh()
+{
+	m_szExplainText = _T("");
+
+	CString szFileName = m_szFilename;
+
+	szFileName.MakeUpper();
+
+	CString szDiskName = _T("");
+	CString szText1 = _T("");
+	CString szText2 = _T("");
+
+	int nEndPath = szFileName.ReverseFind('\\');
+	if (nEndPath >= 0)
+	{
+		szDiskName = szFileName.Mid(nEndPath+1, szFileName.GetLength() - nEndPath);
+	}
+
+	CString szDesc = m_szDesc;
+	szDesc.MakeUpper();
+	int nFindPC = szDesc.Find(" PC ");
+	if (nFindPC > 0 && StringContainsEvent(szDesc))
+	{
+		CString szPCName = m_szDesc.Mid(0, nFindPC);
+		CString szEvent = m_szDesc.Mid(nFindPC + 4, MAX_PATH);
+
+		if (szDesc.Find("CHILD PC") >= 0)
+		{
+			// do nuthin
+		}
+		else if (szDesc.Find("MALE") >= 0)
+		{
+			szText1.Format("This sound is triggered by the event '%s' for a character with the gender '%s' assuming a more specific event is not defined\n", szEvent, szPCName);
+		}
+		else
+		{
+			szText1.Format("This sound is triggered by the event '%s' for a character with the first name '%s'\n", szEvent, szPCName);
+		}
+	}
+
+	if (szText1 == _T(""))
+	{
+		int nFindEquip = szDesc.Find(" EQUIP");
+		if (nFindEquip > 0 && szDesc.Find("DEFAULT") == -1)
+		{
+			CString szWeapon = m_szDesc.Mid(0, nFindEquip);
+			szText1.Format("This sound is triggered by the event '%s' for weapons called '%s'\n", "EQUIP", szWeapon);
+		}
+		int nFindBreath = szDesc.Find(" BREATH WEAPON");
+		if (nFindBreath > 0)
+		{
+			CString szType = m_szDesc.Mid(0, nFindBreath);
+			szText1.Format("This sound is triggered by the event '%s' for monsters called '%s'\n", "BREATH WEAPON", szType);
+		}
+		int nFindWildCard= szDesc.Find(" * ");
+		if (nFindWildCard > 0)
+		{
+			CString szName = m_szDesc.Mid(0, nFindWildCard);
+			CString szEvent = m_szDesc.Mid(nFindWildCard+3, MAX_PATH);
+			szText1.Format("This sound is triggered by the event '%s' for monsters with names that wildcard match '%s'\n", szEvent, szName);
+		}
+	}
+
+	if (szText1 == _T(""))
+	{
+		int nFindEvent = szDesc.Find(" WAR CRY");
+
+		if (-1 == nFindEvent)
+			nFindEvent = szDesc.Find(" ATTACK");
+
+		if (-1 == nFindEvent)
+			nFindEvent = szDesc.Find(" DIE");
+
+		if (-1 != nFindEvent)
+		{
+			CString szName = m_szDesc.Mid(0, nFindEvent);
+			CString szEvent = m_szDesc.Mid(nFindEvent + 1, MAX_PATH);
+			szText1.Format("This sound is triggered by the event '%s' for entities that match '%s'\n", szEvent, szName);
+		}
+	}
+
+	int nFindRandom = szFileName.Find("RANDOM_");
+	if (nFindRandom > 0 && szFileName.Find("_00.") > 0)
+	{
+		CString szNum = szFileName.Mid(nFindRandom + 7, 2);
+
+		int nNumFiles = atoi(szNum.GetBuffer(0));
+		CString szLastName = szDiskName;
+		szNum.Format("_%02d.", nNumFiles - 1);
+		szLastName.Replace("_00.", szNum);
+
+		szText2.Format("When played, this sound effect will play one of %d random sound files\n%s thru %s", nNumFiles, szDiskName, szLastName);
+
+	}
+
+	int nFindMulti = szFileName.Find("MULTI_");
+	if (nFindMulti > 0 && szFileName.Find("_00.") > 0)
+	{
+		CString szNum = szFileName.Mid(nFindRandom + 7, 2);
+
+		int nNumFiles = atoi(szNum.GetBuffer(0));
+		CString szLastName = szDiskName;
+		
+		szLastName.Replace("_00.", "_XX.");
+
+		szText2.Format("When played, this sound effect will play a sound file %s where XX is the attack # of the monster for the current round",szLastName);
+
+	}
+
+	if (szText1 != _T("") || szText2 != _T(""))
+	{
+		m_szExplainText = "Notes:\n";
+		m_szExplainText += szText1;
+
+		if (szText2 != _T(""))
+		{
+			m_szExplainText += szDiskName;
+			m_szExplainText += ":\n";
+
+			m_szExplainText += szText2;
+		}	
+	}
+
+	
+	UpdateData(FALSE);
+}
+
+
+void DMSFXEditorDialog::OnEnChangeFilenameEdit()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialog::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	UpdateData(TRUE);
+
+	Refresh();
+}
+
+
+void DMSFXEditorDialog::OnEnChangeDescEdit()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialog::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+	UpdateData(TRUE);
+
+	Refresh();
 }
 
 
@@ -110,6 +296,8 @@ void DMSFXEditorDialog::OnChooseFileButton()
 
 	CString szPath;
 
+	g_SFX_szFilename[0] = 0;
+
 	ZeroMemory(&g_ofn, sizeof(OPENFILENAME));
 	g_ofn.lStructSize = sizeof(OPENFILENAME);
 	g_ofn.nMaxFile = MAX_PATH;
@@ -134,7 +322,7 @@ void DMSFXEditorDialog::OnChooseFileButton()
 
 		m_szFilename = szPath;
 
-		UpdateData(FALSE);
+		Refresh();
 		
 	}
 	
@@ -205,5 +393,102 @@ void DMSFXEditorDialog::OnBnClickedCancel()
 	// TODO: Add your control notification handler code here
 	CDialog::OnCancel();
 }
+
+
+BOOL DMSFXEditorDialog::FileExists(CString szPath)
+{
+
+	FILE *pInFile = fopen(szPath, "rb");
+
+	if (NULL == pInFile)
+	{
+		return FALSE;
+	}
+
+	fclose(pInFile);
+
+	return TRUE;
+}
+
+void DMSFXEditorDialog::OnBnClickedEncryptButton()
+{
+
+#ifdef DEBUG
+
+	m_szFilename.MakeUpper();
+	if (m_szFilename.Find(".DMS") >= 0)  // decrypt
+	{
+		CString szFileName = m_szFilename;
+
+		szFileName.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
+
+		FILE *pInfile = fopen(szFileName, "rb");
+
+		if (pInfile != NULL)
+		{
+			fseek(pInfile, 0, SEEK_END);
+			LONG lSize = ftell(pInfile);
+			lSize -= DM_ENCRYPT_OFFSET;
+
+			char *pBuffer = (char *)malloc(lSize * sizeof(char));
+			memset(pBuffer, 0, lSize * sizeof(char));
+
+			fseek(pInfile, DM_ENCRYPT_OFFSET, SEEK_SET);
+
+			fread(pBuffer, 1, lSize*sizeof(char), pInfile);
+			fclose(pInfile);
+
+			DeleteFile(szFileName);
+			m_szFilename.Replace(".DMS", ".WAV");
+			szFileName.Replace(".DMS", ".WAV");
+
+			FILE *pOutfile = fopen(szFileName, "wb");
+
+			if (pOutfile != NULL)
+			{
+				fwrite(pBuffer, 1, lSize*sizeof(char), pOutfile);
+
+				fclose(pOutfile);
+			}
+
+			free(pBuffer);
+
+			UpdateData(FALSE);
+
+			OnOK();
+		}
+
+	}
+	else
+	{
+		CString szFileName = m_szFilename;
+
+		if (m_pApp->EncryptWAVFile(szFileName))
+		{
+			m_szFilename.Replace(".WAV", ".DMS");
+
+			UpdateData(FALSE);
+
+			OnOK();
+		}	
+		else
+		{
+			szFileName.Replace(".WAV", ".DMS");
+
+			if (TRUE == FileExists(szFileName))
+			{
+				m_szFilename.Replace(".WAV", ".DMS");
+
+				UpdateData(FALSE);
+
+				OnOK();
+			}
+		}
+	}
+
+#endif
+}
+
+
 
 

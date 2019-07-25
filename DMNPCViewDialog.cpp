@@ -425,9 +425,19 @@ void cDMBaseNPCViewDialog::ProcessCharStats()
 			++nWeaponCount;
 		}
 
+		m_bHasBreathWeapon = FALSE;
 		if (pMonster != NULL)
 		{
+			m_szMonsterManualName.Format("%s", pMonster->m_szMMName);
 			m_szNumAttacks.Format("%s/1", pMonster->m_szNumAttacks);
+
+			//check for breath weapon
+			CString szSpecialAttack = pMonster->m_szSpecialAttack;
+			szSpecialAttack.MakeUpper();
+			if (szSpecialAttack.Find("BREATH WEAPON") >= 0)
+			{
+				m_bHasBreathWeapon = TRUE;
+			}
 		}
 		else
 		{

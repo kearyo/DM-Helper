@@ -823,6 +823,8 @@ void DMPartyDialog::UpdateSelections()
 	BOOL bEnableMissileWeapon = FALSE;
 	BOOL bEnableMeleeWeapon = FALSE;
 	BOOL bIsSpellCaster = FALSE;
+	BOOL bHasBreathWeapon = FALSE;
+
 	//crash here next line
 	if(m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
 	{
@@ -850,6 +852,7 @@ void DMPartyDialog::UpdateSelections()
 		}
 	}
 
+	m_cCastSpellButton.SetWindowText("Cast SPELL");
 	if(m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL)
 	{
 		bEnableCharCmds = TRUE;
@@ -872,6 +875,12 @@ void DMPartyDialog::UpdateSelections()
 			{
 				bEnableMeleeWeapon = TRUE;
 			}
+
+			if (m_pSelectedNPCDialog->m_bHasBreathWeapon)
+			{
+				bHasBreathWeapon = TRUE;
+				m_cCastSpellButton.SetWindowText("BREATHE");
+			}
 			
 		}
 	}
@@ -883,7 +892,7 @@ void DMPartyDialog::UpdateSelections()
 	m_cAttackHitButton.EnableWindow(bEnableMeleeWeapon);
 	m_cMissileMissButton.EnableWindow(bEnableMissileWeapon);
 	m_cMissileHitButton.EnableWindow(bEnableMissileWeapon);
-	m_cCastSpellButton.EnableWindow(bIsSpellCaster);
+	m_cCastSpellButton.EnableWindow(bIsSpellCaster || bHasBreathWeapon);
 
 
 	int nWvACType2 = -1;
@@ -1175,6 +1184,7 @@ void DMPartyDialog::UpdateSelections()
 		BOOL bEnableMissileWeapon = FALSE;
 		BOOL bEnableMeleeWeapon = FALSE;
 		BOOL bIsSpellCaster = FALSE;
+		BOOL bHasBreathWeapon = FALSE;
 		if(m_pOpposingCharacterDialog != NULL && m_pOpposingCharacterDialog->m_pCharacter != NULL)
 		{
 			bEnableCharCmds = TRUE;
@@ -1200,6 +1210,7 @@ void DMPartyDialog::UpdateSelections()
 			}
 		}
 
+		m_cCastSpellButton2.SetWindowText("Cast SPELL");
 		if(m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL)
 		{
 			bEnableCharCmds = TRUE;
@@ -1222,6 +1233,12 @@ void DMPartyDialog::UpdateSelections()
 				{
 					bEnableMeleeWeapon = TRUE;
 				}
+
+				if (m_pOpposingNPCDialog->m_bHasBreathWeapon)
+				{
+					bHasBreathWeapon = TRUE;
+					m_cCastSpellButton2.SetWindowText("BREATHE");
+				}
 			}
 		}
 
@@ -1233,7 +1250,7 @@ void DMPartyDialog::UpdateSelections()
 		m_cAttackHitButton2.EnableWindow(bEnableMeleeWeapon);
 		m_cMissileMissButton2.EnableWindow(bEnableMissileWeapon);
 		m_cMissileHitButton2.EnableWindow(bEnableMissileWeapon);
-		m_cCastSpellButton2.EnableWindow(bIsSpellCaster);
+		m_cCastSpellButton2.EnableWindow(bIsSpellCaster || bHasBreathWeapon);
 
 	}
 	else
@@ -3018,7 +3035,13 @@ void DMPartyDialog::FreeParty()
 {
 	if(m_dwSubPartyID == 0)
 	{
-		m_pPartyClockThread = NULL;
+		if (m_pPartyClockThread != NULL)
+		{
+			CWinThread *pPartyClockThread = m_pPartyClockThread;
+			m_pPartyClockThread = NULL;
+
+			WaitForSingleObject(pPartyClockThread->m_hThread, 5000);
+		}
 
 		if(m_pPartyLog != NULL)	
 		{
@@ -3504,12 +3527,12 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 		if (pAttackingCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
 		}
 
 	}
@@ -3533,7 +3556,12 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 
 	if (NULL != pAttackingNPCDialog)
 	{
-		m_pApp->PlayPCSoundFX("* Attack", pAttackingNPCDialog->m_szMonsterName, "Monster", FALSE);
+		if (m_pApp->PlayPCSoundFX("* War Cry", pAttackingNPCDialog->m_szMonsterName, "Monster", TRUE) == FALSE)
+		{
+			//CString szTemp;
+			//szTemp.Format("Monster %02d War Cry", (pAttackingNPCDialog->m_pNPC->m_nMonsterIndex % 11) + 1);
+			//m_pApp->PlayPCSoundFX(szTemp, pAttackingNPCDialog->m_szMonsterName, "Monster", TRUE);
+		}
 	}
 	else
 	{
@@ -3563,6 +3591,11 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 	}
 
 	ModifyValue((int *)&nDamage, "Add Damage:", nMaxDamage, FALSE, TRUE, &bCriticalHit);
+
+	if (NULL != pAttackingNPCDialog)
+	{
+		m_pApp->PlayPCSoundFX("* Attack", pAttackingNPCDialog->m_szMonsterName, "Monster", FALSE);
+	}
 
 	CString szLogEntry = _T("");
 
@@ -3597,6 +3630,7 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 		}
 	}
 
+	
 	if (bCriticalHit)
 	{
 		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_CRITICAL_HIT, FALSE);
@@ -3848,12 +3882,12 @@ void DMPartyDialog::OnAttackHitButton()
 		if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
 		}
 
 		m_pApp->PlaySoundFX("Whiff", FALSE);
@@ -3866,6 +3900,18 @@ void DMPartyDialog::OnAttackHitButton()
 
 	if (m_pSelectedNPCDialog != NULL)
 	{
+		// here Keary
+		if (m_pApp->m_dwInitiativeCurrentAttackerID != m_pSelectedNPCDialog->m_pNPC->m_dwCharacterID)
+		{
+			m_pApp->m_nInitiativeCurrentAttackNumber = 0;
+		}
+		else
+		{
+			int nNumAttacksThisRound = m_pSelectedNPCDialog->GetAttacksPerRound(m_pParty->m_nRound);
+			m_pApp->m_nInitiativeCurrentAttackNumber = (m_pApp->m_nInitiativeCurrentAttackNumber + 1) % nNumAttacksThisRound;
+		}
+		m_pApp->m_dwInitiativeCurrentAttackerID = m_pSelectedNPCDialog->m_pNPC->m_dwCharacterID;
+
 		m_pSelectedNPCDialog->FireAmmo();
 
 		int nWeapon = m_pSelectedNPCDialog->m_pNPC->m_SelectedWeapons[0].m_wTypeId;
@@ -3924,12 +3970,12 @@ void DMPartyDialog::OnAttackMissButton()
 		if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
 		}
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
@@ -3937,6 +3983,18 @@ void DMPartyDialog::OnAttackMissButton()
 
 	if(m_pSelectedNPCDialog != NULL)
 	{
+		// here Keary
+		if (m_pApp->m_dwInitiativeCurrentAttackerID != m_pSelectedNPCDialog->m_pNPC->m_dwCharacterID)
+		{
+			m_pApp->m_nInitiativeCurrentAttackNumber = 0;
+		}
+		else
+		{
+			int nNumAttacksThisRound = m_pSelectedNPCDialog->GetAttacksPerRound(m_pParty->m_nRound);
+			m_pApp->m_nInitiativeCurrentAttackNumber = (m_pApp->m_nInitiativeCurrentAttackNumber + 1) % nNumAttacksThisRound;
+		}
+		m_pApp->m_dwInitiativeCurrentAttackerID = m_pSelectedNPCDialog->m_pNPC->m_dwCharacterID;
+
 		m_pSelectedNPCDialog->FireAmmo();
 
 		int nWeapon = m_pSelectedNPCDialog->m_pNPC->m_SelectedWeapons[0].m_wTypeId;
@@ -4073,6 +4131,12 @@ void DMPartyDialog::OnCastSpellButton()
 			m_pSelectedCharacterDialog->Refresh();
 		}
 	}	
+
+	if (m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL && m_pSelectedNPCDialog->m_bHasBreathWeapon)
+	{
+		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pSelectedNPCDialog->m_szMonsterManualName, "Monster", TRUE);
+	}
+
 }
 
 void DMPartyDialog::OnWoundButton() 
@@ -4176,6 +4240,8 @@ void DMPartyDialog::OnHealButton()
 		m_pSelectedCharacterDialog->ProcessCharStats();
 
 		m_pSelectedCharacterDialog->Refresh();
+
+		//m_pApp->PlaySoundFX("Heal");
 	}
 
 	if(m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL)
@@ -4192,6 +4258,8 @@ void DMPartyDialog::OnHealButton()
 		m_pSelectedNPCDialog->ProcessCharStats();
 
 		m_pSelectedNPCDialog->Refresh();
+
+		//m_pApp->PlaySoundFX("Heal");
 	}
 
 	Refresh();
@@ -4278,6 +4346,18 @@ void DMPartyDialog::OnAttackHitButton2()
 
 	if(m_pOpposingNPCDialog != NULL)
 	{
+		// here Keary
+		if (m_pApp->m_dwInitiativeCurrentAttackerID != m_pOpposingNPCDialog->m_pNPC->m_dwCharacterID)
+		{
+			m_pApp->m_nInitiativeCurrentAttackNumber = 0;
+		}
+		else
+		{
+			int nNumAttacksThisRound = m_pOpposingNPCDialog->GetAttacksPerRound(m_pParty->m_nRound);
+			m_pApp->m_nInitiativeCurrentAttackNumber = (m_pApp->m_nInitiativeCurrentAttackNumber + 1) % nNumAttacksThisRound;
+		}
+		m_pApp->m_dwInitiativeCurrentAttackerID = m_pOpposingNPCDialog->m_pNPC->m_dwCharacterID;
+
 		m_pOpposingNPCDialog->FireAmmo();
 
 		int nWeapon = m_pOpposingNPCDialog->m_pNPC->m_SelectedWeapons[0].m_wTypeId;
@@ -4336,12 +4416,12 @@ void DMPartyDialog::OnAttackMissButton2()
 		if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
 		}
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
@@ -4349,6 +4429,18 @@ void DMPartyDialog::OnAttackMissButton2()
 
 	if(m_pOpposingNPCDialog != NULL)
 	{
+		// here Keary
+		if (m_pApp->m_dwInitiativeCurrentAttackerID != m_pOpposingNPCDialog->m_pNPC->m_dwCharacterID)
+		{
+			m_pApp->m_nInitiativeCurrentAttackNumber = 0;
+		}
+		else
+		{
+			int nNumAttacksThisRound = m_pOpposingNPCDialog->GetAttacksPerRound(m_pParty->m_nRound);
+			m_pApp->m_nInitiativeCurrentAttackNumber = (m_pApp->m_nInitiativeCurrentAttackNumber + 1) % nNumAttacksThisRound;
+		}
+		m_pApp->m_dwInitiativeCurrentAttackerID = m_pOpposingNPCDialog->m_pNPC->m_dwCharacterID;
+
 		m_pOpposingNPCDialog->FireAmmo();
 
 		int nWeapon = m_pOpposingNPCDialog->m_pNPC->m_SelectedWeapons[0].m_wTypeId;
@@ -4487,6 +4579,11 @@ void DMPartyDialog::OnCastSpellButton2()
 			m_pOpposingCharacterDialog->Refresh();
 		}
 	}
+
+	if (m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL && m_pOpposingNPCDialog->m_bHasBreathWeapon)
+	{
+		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pOpposingNPCDialog->m_szMonsterManualName, "Monster", TRUE);
+	}
 	
 }
 
@@ -4598,6 +4695,8 @@ void DMPartyDialog::OnHealButton2()
 		m_pOpposingCharacterDialog->ProcessCharStats();
 
 		m_pOpposingCharacterDialog->Refresh();
+
+		//m_pApp->PlaySoundFX("Heal");
 	}
 	
 	if(m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL)
@@ -4614,6 +4713,8 @@ void DMPartyDialog::OnHealButton2()
 		m_pOpposingNPCDialog->ProcessCharStats();
 
 		m_pOpposingNPCDialog->Refresh();
+
+		//m_pApp->PlaySoundFX("Heal");
 	}
 
 	Refresh();
@@ -4769,6 +4870,8 @@ void DMPartyDialog::OnBnClickedHealPartyButton()
 			}
 		}
 	}
+
+	m_pApp->PlaySoundFX("Heal");
 
 	Refresh();
 }

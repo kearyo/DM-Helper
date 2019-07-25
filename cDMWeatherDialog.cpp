@@ -121,6 +121,7 @@ UINT DMWeatherParticleThreadProc(LPVOID pData)
 		pWeatherDlg->m_pDMMapViewDialog->m_bWeatherThreadRunning = TRUE;
 		pWeatherDlg->UpdateParticles(bVisible);
 		Sleep(5);
+
 	} while (pWeatherDlg->m_bShuttingDown == FALSE && pWeatherDlg->m_pDMMapViewDialog->m_bShuttingDown == FALSE);
 
 	pWeatherDlg->m_pDMMapViewDialog->m_bWeatherThreadRunning = FALSE;
@@ -285,6 +286,12 @@ void cDMWeatherDialog::Cleanup()
 		m_bShuttingDown = TRUE;
 
 		Sleep(100);
+	}
+
+	if (m_pParticleThread != NULL)
+	{
+		WaitForSingleObject(m_pParticleThread->m_hThread, 5000);
+		m_pParticleThread = NULL;
 	}
 
 	if (m_pDMMapViewDialog != NULL && m_pDMMapViewDialog->m_bWeatherThreadRunning)

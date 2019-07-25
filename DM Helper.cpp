@@ -633,8 +633,10 @@ BOOL CDMHelperApp::InitInstance()
 
 	m_SoundFXCutPasteType = DND_EDIT_TYPE_NONE;
 	m_pSoundFXCutPasteBuffer = NULL;
+	m_pEncryptedSoundBuffer = NULL;
 
 	m_nInitiativeCurrentAttackNumber = 0;
+	m_dwInitiativeCurrentAttackerID = 0;
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -846,6 +848,12 @@ int CDMHelperApp::ExitInstance()
 	{
 		delete m_pIsometricDungeonTilesBitmap;
 		m_pIsometricDungeonTilesBitmap = NULL;
+	}
+
+	if (m_pEncryptedSoundBuffer != NULL)
+	{
+		free(m_pEncryptedSoundBuffer);
+		m_pEncryptedSoundBuffer = NULL;
 	}
 
 	SaveSettings();
@@ -4962,13 +4970,18 @@ void CDMHelperApp::SaveSettings()
 
 void CDMHelperApp::CheckForSoundBoardUpdates()
 {
-	#if 0 
+	#ifdef DEBUG
+
+	int nNumEncrypts = 0;
+
 	for (int i = 0; i < MAX_SOUNDBOARD_PAGES; ++i)
 	{
 		for (int j = 0; j < SOUNDBOARD_SOUNDS_PER_PAGE; ++j)
 		{
 			CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
+			szPath.MakeUpper();
 
+			#if 0
 			if (szPath.Find("SOUNDS\\UO") != -1)
 			{
 				szPath.Replace("SOUNDS\\UO", "SOUNDS\\GROUP0");
@@ -4979,9 +4992,38 @@ void CDMHelperApp::CheckForSoundBoardUpdates()
 				szPath.Replace("SOUNDS\\GROUP 1", "SOUNDS\\GROUP1");
 				strcpy(m_Settings.m_SoundFX[i][j].m_szFilePath, szPath.GetBuffer(0));
 			}
+			#endif
+
+			if (szPath.Find("LICENSED") != -1 && szPath.Find(".WAV") != -1) // (szPath.Find(".WAV") != -1) || szPath.Find(".DMS") != -1)
+			{
+				BOOL bRetVal = FALSE;
+				if (szPath.Find("RANDOM_") != -1)
+				{
+					bRetVal = EncryptRandomSounds(szPath, &nNumEncrypts);
+				}
+				else
+				{
+					bRetVal = EncryptWAVFile(szPath);
+					++nNumEncrypts;
+				}
+
+				if (bRetVal)
+				{
+					szPath.Replace(".WAV", ".DMS");
+					strcpy(m_Settings.m_SoundFX[i][j].m_szFilePath, szPath.GetBuffer(0));
+				}
+			}
 
 		}
 	}
+
+	if (nNumEncrypts)
+	{
+		CString szMsg;
+		szMsg.Format("Encrypted %d Licensed Files !", nNumEncrypts);
+		AfxMessageBox(szMsg, MB_OK);
+	}
+
 	#endif
 
 	CString szTemp;
@@ -4990,11 +5032,85 @@ void CDMHelperApp::CheckForSoundBoardUpdates()
 
 }
 
+BOOL CDMHelperApp::EncryptRandomSounds(CString szFileName, int *pnNumEncrypts)
+{
+	CString szPath = szFileName;
+	BOOL bRetVal = FALSE;
+	static int nLastFile = -1;
+
+	szPath.MakeUpper();
+
+	int nFindRandom = szPath.Find("RANDOM_");
+	if (nFindRandom > 0)
+	{
+		CString szNum = szPath.Mid(nFindRandom + 7, 2);
+
+		int nNumFiles = atoi(szNum.GetBuffer(0));
+
+		for (int i = 0; i < nNumFiles; ++i)
+		{
+			CString szTemp = szPath;
+			szNum.Format("_%02d.", i);
+			szTemp.Replace("_00.", szNum);
+			szTemp.Replace(".DMS", ".WAV");
+
+			if (EncryptWAVFile(szTemp) == FALSE)
+			{
+				return(FALSE);
+			}
+
+			*pnNumEncrypts += 1;
+		}
+	}
+
+	return(TRUE);
+}
+
+BOOL CDMHelperApp::PlayLicensedSound(CString szFile, BOOL bAsync)
+{
+	BOOL bRetVal = FALSE;
+
+	PlaySound(NULL, 0, 0);
+
+	if (m_pEncryptedSoundBuffer != NULL)
+	{
+		free(m_pEncryptedSoundBuffer);
+		m_pEncryptedSoundBuffer = NULL;
+	}
+
+	FILE *pInfile = fopen(szFile, "rb");
+
+	if (pInfile != NULL)
+	{
+		fseek(pInfile, 0, SEEK_END);
+		LONG lSize = ftell(pInfile);
+
+		m_pEncryptedSoundBuffer = (char *)malloc(lSize * sizeof(char));
+		rewind(pInfile);
+
+		fread(m_pEncryptedSoundBuffer, 1, lSize*sizeof(char), pInfile);
+		fclose(pInfile);
+
+		char *pOffest = m_pEncryptedSoundBuffer + DM_ENCRYPT_OFFSET;
+
+		if (bAsync)
+			bRetVal = PlaySound(pOffest, AfxGetInstanceHandle(), SND_MEMORY | SND_ASYNC);
+		else
+			bRetVal = PlaySound(pOffest, AfxGetInstanceHandle(), SND_MEMORY);
+
+		return(TRUE);
+	}
+
+	return(bRetVal);
+}
+
 BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync)
 {
 	CString szPath = szFile;
 	BOOL bRetVal = FALSE;
 	static int nLastFile = -1;
+
+	szFile.MakeUpper();
 
 	int nFindRandom = szPath.Find("RANDOM_");
 	if (nFindRandom > 0)
@@ -5030,7 +5146,11 @@ BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync)
 		szPath.Replace("_00.", szNum);
 	}
 
-	if (bAsync)
+	if (szFile.Find(".DMS") >= 0)
+	{
+		bRetVal = PlayLicensedSound(szPath, bAsync);
+	}
+	else if (bAsync)
 	{
 		bRetVal = PlaySound((LPCSTR)szPath.GetBuffer(0), AfxGetInstanceHandle(), SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
 	}
@@ -6755,4 +6875,53 @@ void CDMHelperApp::ImportSoundBoards(CString szFileName, BOOL bSave)
 			SaveSettings();
 		}
 	}
+}
+
+BOOL CDMHelperApp::EncryptWAVFile(CString szFileName)
+{
+
+	if (szFileName.Find(".DMS") != -1)
+	{
+		return(TRUE);
+	}
+
+	szFileName.Replace("<$DMAPATH>", m_szEXEPath);
+
+	FILE *pInfile = fopen(szFileName, "rb");
+
+	if (pInfile != NULL)
+	{
+		fseek(pInfile, 0, SEEK_END);
+		LONG lSize = ftell(pInfile);
+		lSize += DM_ENCRYPT_OFFSET;
+
+		char *pBuffer = (char *)malloc(lSize * sizeof(char));
+		memset(pBuffer, 0, lSize * sizeof(char));
+		sprintf(pBuffer, "DUNGEONMAESTRO0x522%ld\0", 1949);
+
+		rewind(pInfile);
+
+		char *pOffset = pBuffer + DM_ENCRYPT_OFFSET;
+
+		fread(pOffset, 1, lSize*sizeof(char) - DM_ENCRYPT_OFFSET, pInfile);
+		fclose(pInfile);
+
+		DeleteFile(szFileName);
+		szFileName.Replace(".WAV", ".DMS");
+
+		FILE *pOutfile = fopen(szFileName, "wb");
+
+		if (pOutfile != NULL)
+		{
+			fwrite(pBuffer, 1, lSize*sizeof(char), pOutfile);
+
+			fclose(pOutfile);
+		}
+
+		free(pBuffer);
+
+		return(TRUE);
+	}
+
+	return(FALSE);
 }

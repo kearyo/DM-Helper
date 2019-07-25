@@ -78,4 +78,5 @@ public:
 	afx_msg void OnBnClickedSpellButton();
 	CString m_szAttacksText;
 	afx_msg void OnBnClickedWeaponSwapButton();
+	CButton m_cSpellButton;
 };

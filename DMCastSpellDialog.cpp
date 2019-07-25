@@ -308,7 +308,7 @@ void DMCastSpellDialog::OnOK()
 
 				CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
 
-				pApp->PlayPCSoundFX("* Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
+				pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
 				pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier);
 
 				DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);

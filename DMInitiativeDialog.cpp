@@ -54,6 +54,7 @@ void CDMInitiativeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_DEBUG_TEXT, m_cDebugText);
 	DDX_Text(pDX, IDC_DEBUG_TEXT, m_szDebugText);
 	DDX_Text(pDX, IDC_ATTACKS_TEXT, m_szAttacksText);
+	DDX_Control(pDX, IDC_SPELL_BUTTON, m_cSpellButton);
 }
 
 
@@ -1227,8 +1228,13 @@ void CDMInitiativeDialog::OnBnClickedSpellButton()
 
 	CDMBaseCharViewDialog *pDlg = GetSelectedCharacterDialog();
 
-	ClearSelectedCharacterTarget();
+	if (pDlg->m_bHasBreathWeapon == FALSE)
+	{
+		ClearSelectedCharacterTarget();
+	}
+
 	m_pParentPartyDialog->ClickSpellButton(IsSelectedCharacterInOpponentParty());
+
 	
 	if (pDlg != NULL && pDlg->m_bInitiativeCasting == FALSE)
 	{
@@ -1245,31 +1251,17 @@ void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 	{
 		return;
 	}
-	int nNum = 0;
-	int nDem = 0;
 
-	sscanf(pDlg->m_szNumAttacks.GetBuffer(0), "%d/%d", &nNum, &nDem);
-
-	if (nDem == 0)
+	if (pDlg->m_bHasBreathWeapon)
 	{
-		nDem = 1;
-	}
-
-	if (nDem > 1)
-	{
-		if (m_pParentPartyDialog->m_pParty->m_nRound % 2 == 0)
-		{
-			m_nNumAttacksThisRound = (nNum / nDem) + 1;
-		}
-		else
-		{
-			m_nNumAttacksThisRound = (nNum % nDem);
-		}
+		m_cSpellButton.SetWindowText("BREATH");
 	}
 	else
 	{
-		m_nNumAttacksThisRound = nNum;
+		m_cSpellButton.SetWindowText("SPELL");
 	}
+
+	m_nNumAttacksThisRound = pDlg->GetAttacksPerRound(m_pParentPartyDialog->m_pParty->m_nRound);
 
 	m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
 }

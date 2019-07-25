@@ -98,7 +98,7 @@ UINT DMDownloadFileThreadProc(LPVOID pData)
 			CString szURL;
 			szURL.Format("%s/%s/%s", pApp->m_UpdateParams.m_szUpdateURL, "AddOns", pFileData->m_szFileName);
 			szURL.Replace(" ", "%20");
-			szURL.Replace("\\", "/");  // so Linux doesn't take a shit on it
+			szURL.Replace("\\", "/");  // so Linux doesn't take offense to it
 
 			char url[MAX_PATH];
 			memset(url, 0, MAX_PATH * sizeof(char));

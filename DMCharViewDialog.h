@@ -67,6 +67,9 @@ public:
 	BOOL GetMonsterPortraitPath(CString szMonster);
 
 	CString m_szCharacterFirstName;
+	CString m_szMonsterManualName;
+
+	BOOL m_bHasBreathWeapon;
 
 	CDMBaseCharViewDialog(DND_CHAR_VIEW_TYPES _ViewType, UINT nIDTemplate, CWnd* pParentWnd)
 	{
@@ -103,6 +106,9 @@ public:
 		m_szMonsterPortraitPath = _T("");
 
 		m_szCharacterFirstName = _T("");
+		m_szMonsterManualName = _T("");
+
+		m_bHasBreathWeapon = FALSE;
 
 		CDialog::CDialog(nIDTemplate, pParentWnd);
 	}
@@ -130,6 +136,40 @@ public:
 			m_pSpellsDialog = NULL;
 		}
 	}
+
+	int GetAttacksPerRound(int nCurrentRound)
+	{
+		int nNum = 0;
+		int nDem = 0;
+
+		int nNumAttacks = 0;
+
+		sscanf(m_szNumAttacks.GetBuffer(0), "%d/%d", &nNum, &nDem);
+
+		if (nDem == 0)
+		{
+			nDem = 1;
+		}
+
+		if (nDem > 1)
+		{
+			if (nCurrentRound % 2 == 0)
+			{
+				nNumAttacks = (nNum / nDem) + 1;
+			}
+			else
+			{
+				nNumAttacks = (nNum % nDem);
+			}
+		}
+		else
+		{
+			nNumAttacks = nNum;
+		}
+
+		return nNumAttacks;
+	}
+
 };
 
 class CDMCharViewDialog : public CDMBaseCharViewDialog

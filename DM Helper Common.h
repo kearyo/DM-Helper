@@ -18,7 +18,7 @@
 #define CUSTOM_CLASSES	TRUE
 #define MAX_CUSTOM_CLASSES	12
 
-#define KEARY_BUILD	TRUE
+#define KEARY_BUILD	FALSE
 
 //Dragon Magazines at http://www.annarchive.com/
 
@@ -228,10 +228,10 @@
 - 1.0.036	1/31/19
 	* Added save with confirmation for each character in a party when the party itself is saved
 
-- 1.0.037	XX/XX/XX
+- 1.0.037	7/20/19
 	* Added ability to insert/delete more sound boards as well as cut/copy/paste sound effects
 	* Added button for treasure generation by treasure type to NPC details screen
-	* More bug fixes for errors caused by adding and removing / copy/ pasting NPCs into parties
+	* More bug fixes for errors caused by adding and removing / copy / pasting NPCs into parties
 	* Nasty bug fixed in the party log screen
 	* Added "Add-Ons" functionality to help menu for downloading and installing optional content
 	** Add-On "Anna's Flanaess circa 598 Map" is available
@@ -242,6 +242,8 @@
 typedef CTypedPtrMap <CMapWordToPtr, WORD, PCSTRING> PCSTRINGMAP;
 
 //global variables (yeah I know, so sue me)
+
+#define DM_ENCRYPT_OFFSET	67
 
 #define PI 3.14159265358979323846f
 

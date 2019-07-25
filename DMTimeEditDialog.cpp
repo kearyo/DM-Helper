@@ -383,7 +383,11 @@ void DMTimeEditDialog::OnBnClickedStartClockButton()
 		}
 		else
 		{
+			CWinThread *pPartyClockThread = m_pPartyDialog->m_pPartyClockThread;
 			m_pPartyDialog->m_pPartyClockThread = NULL;
+
+			WaitForSingleObject(pPartyClockThread->m_hThread, 5000);
+
 			m_cStartClockButton.SetWindowText("Start Clock");
 		}
 	}

@@ -1228,8 +1228,9 @@
 #define IDC_FILE_NAME_STATIC            1637
 #define IDC_ADD_ONS_LIST                1638
 #define IDC_FILE_SIZE_STATIC            1639
-#define IDC_FILE_SIZE_STATIC2           1640
+#define IDC_ENCRYPT_BUTTON              1639
 #define IDC_FILE_PERC_STATIC            1640
+#define IDC_EXPLAIN_TEXT                1640
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1271,7 +1272,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        289
 #define _APS_NEXT_COMMAND_VALUE         32805
-#define _APS_NEXT_CONTROL_VALUE         1639
+#define _APS_NEXT_CONTROL_VALUE         1641
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

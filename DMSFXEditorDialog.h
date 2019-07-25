@@ -23,6 +23,11 @@ public:
 
 	BOOL m_bPasted;
 
+	BOOL StringContainsEvent(CString szEvent);
+	void Refresh();
+	BOOL FileExists(CString szPath);
+
+
 // Dialog Data
 	//{{AFX_DATA(DMSFXEditorDialog)
 	enum { IDD = IDD_SFX_EDITOR_DIALOG };
@@ -58,6 +63,12 @@ public:
 	afx_msg void OnPaint();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedClearSoundButton();
+	CButton m_cEncryptButton;
+	afx_msg void OnBnClickedEncryptButton();
+	CString m_szExplainText;
+	CEdit m_cDescEdit;
+	afx_msg void OnEnChangeDescEdit();
+	afx_msg void OnEnChangeFilenameEdit();
 };
 
 //{{AFX_INSERT_LOCATION}}

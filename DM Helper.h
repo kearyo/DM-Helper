@@ -617,7 +617,10 @@ public:
 	DND_EDIT_TYPES	m_SoundFXCutPasteType;
 	cDNDSoundEffect *m_pSoundFXCutPasteBuffer;
 
+	char *m_pEncryptedSoundBuffer;
+
 	int m_nInitiativeCurrentAttackNumber;
+	DWORD m_dwInitiativeCurrentAttackerID;
 
 	BOOL LoadUpdateParams(char *path);
 	BOOL SaveUpdateParams();
@@ -685,6 +688,7 @@ public:
 	void SaveSettings();
 	void CheckForSoundBoardUpdates();
 
+	BOOL PlayLicensedSound(CString szFile, BOOL bAsync);
 	BOOL PlaySoundFXFromFile(CString szFile, BOOL bAsync = TRUE);
 	BOOL PlaySoundFX(CString szDesc, BOOL bAsync = TRUE);
 	BOOL PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync = TRUE);
@@ -722,6 +726,9 @@ public:
 	HWND CreateWeatherDialog(cDMMapViewDialog *pParent, DND_WEATHER_TYPES nWeather);
 
 	void ImportSoundBoards(CString szFileName, BOOL bSave);
+
+	BOOL EncryptRandomSounds(CString szFileName, int *pnNumEncrypts);
+	BOOL EncryptWAVFile(CString szFileName);
 
 // Overrides
 	// ClassWizard generated virtual function overrides
