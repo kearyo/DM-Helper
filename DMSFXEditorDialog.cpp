@@ -162,6 +162,12 @@ void DMSFXEditorDialog::Refresh()
 			CString szWeapon = m_szDesc.Mid(0, nFindEquip);
 			szText1.Format("This sound is triggered by the event '%s' for weapons called '%s'\n", "EQUIP", szWeapon);
 		}
+		int nFindHit = szDesc.Find(" HIT");
+		if (nFindHit > 0 && szDesc.Find("DEFAULT") == -1)
+		{
+			CString szWeapon = m_szDesc.Mid(0, nFindHit);
+			szText1.Format("This sound is triggered by the event '%s' for weapons called '%s'\n", "HIT", szWeapon);
+		}
 		int nFindBreath = szDesc.Find(" BREATH WEAPON");
 		if (nFindBreath > 0)
 		{
@@ -205,7 +211,7 @@ void DMSFXEditorDialog::Refresh()
 		szNum.Format("_%02d.", nNumFiles - 1);
 		szLastName.Replace("_00.", szNum);
 
-		szText2.Format("When played, this sound effect will play one of %d random sound files\n%s thru %s", nNumFiles, szDiskName, szLastName);
+		szText2.Format("When played this sound effect will play one of %d random sounds chosen from :\n%s thru %s", nNumFiles, szDiskName, szLastName);
 
 	}
 

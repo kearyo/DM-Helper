@@ -25,6 +25,7 @@
 #include "cDMMapNameDialog.h"
 #include "cDMPDFViewDialog.h"
 #include "cDMAddOnDialog.h"
+#include "cDMRandomNameGeneratorDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -62,6 +63,8 @@ static int _MainTabControls[] =
 	IDC_FIEND_FOLIO_CHECK,
 	IDC_USE_WEAPONS_VS_AC_CHECK,
 	IDC_SMALL_FONT_CHECK,
+	IDC_MONITOR_DPMI_EDIT,
+	IDC_DPMI_STATIC,
 	-1
 };
 
@@ -132,6 +135,7 @@ CDMHelperDlg::CDMHelperDlg(CWnd* pParent /*=NULL*/)
 	, m_bUseFiendFolio(FALSE)
 	, m_bUseWeapons_vs_AC_Chart(FALSE)
 	, m_bUseSmallFont(FALSE)
+	, m_szMonitorDPMIEdit(_T(""))
 {
 
 	m_pApp = (CDMHelperApp *)AfxGetApp();
@@ -147,7 +151,11 @@ CDMHelperDlg::CDMHelperDlg(CWnd* pParent /*=NULL*/)
 	m_szInflationFactor = _T("100");
 	//}}AFX_DATA_INIT
 	// Note that LoadIcon does not require a subsequent DestroyIcon in Win32
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	if (m_pApp->m_hInstance != NULL) // unit test support
+	{
+		m_hIcon = m_pApp->LoadIcon(IDR_MAINFRAME);
+	}
 
 	m_bCloseandUpdate = FALSE;
 
@@ -195,6 +203,8 @@ void CDMHelperDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_FIEND_FOLIO_CHECK, m_bUseFiendFolio);
 	DDX_Check(pDX, IDC_USE_WEAPONS_VS_AC_CHECK, m_bUseWeapons_vs_AC_Chart);
 	DDX_Check(pDX, IDC_SMALL_FONT_CHECK, m_bUseSmallFont);
+	DDX_Text(pDX, IDC_MONITOR_DPMI_EDIT, m_szMonitorDPMIEdit);
+	DDV_MaxChars(pDX, m_szMonitorDPMIEdit, 3);
 }
 
 BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
@@ -267,6 +277,8 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_DMLIBRARY_FROMFILE, &CDMHelperDlg::OnDmlibraryFromfile)
 	ON_COMMAND(ID_CUSTOMIZATIONS_CUSTOMCLASSEDITOR, &CDMHelperDlg::OnCustomizationsCustomclasseditor)
 	ON_COMMAND(ID_HELP_CHECKFORADD, &CDMHelperDlg::OnHelpCheckforadd)
+	ON_EN_CHANGE(IDC_MONITOR_DPMI_EDIT, &CDMHelperDlg::OnEnChangeMonitorDpmiEdit)
+	ON_COMMAND(ID_RANDOMS_RANDOMNAMEGENERATOR, &CDMHelperDlg::OnRandomsRandomnamegenerator)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -349,6 +361,13 @@ BOOL CDMHelperDlg::OnInitDialog()
 
 	m_szEncumbranceFactorEdit.Format("%d", m_pApp->m_Settings.m_nGPEncumbranceFactor);
 	m_szInflationFactor.Format("%d", m_pApp->m_Settings.m_nVendorPriceInflationFactor);
+
+	if (m_pApp->m_Settings.m_nMonitorDPMIFactor == 0)
+	{
+		m_pApp->m_Settings.m_nMonitorDPMIFactor = 96;
+	}
+
+	m_szMonitorDPMIEdit.Format("%d", m_pApp->m_Settings.m_nMonitorDPMIFactor);
 
 	UpdateData(FALSE);
 
@@ -2483,6 +2502,14 @@ void CDMHelperDlg::OnChangeInflationFactorEdit()
 	m_pApp->m_Settings.m_nVendorPriceInflationFactor = abs(atoi(m_szInflationFactor.GetBuffer(0)));
 }
 
+void CDMHelperDlg::OnEnChangeMonitorDpmiEdit()
+{
+	UpdateData(TRUE);
+
+	m_pApp->m_Settings.m_nMonitorDPMIFactor = abs(atoi(m_szMonitorDPMIEdit.GetBuffer(0)));
+}
+
+
 void CDMHelperDlg::OnHelpAboutdungeonmaestro()
 {
 	CAboutDlg *pDlg = new CAboutDlg();
@@ -3256,6 +3283,14 @@ void CDMHelperDlg::OnDmlibraryFromfile()
 void CDMHelperDlg::OnHelpCheckforadd()
 {
 	cDMAddOnDialog *pDlg = new cDMAddOnDialog();
+	pDlg->DoModal();
+	delete pDlg;
+}
+
+
+void CDMHelperDlg::OnRandomsRandomnamegenerator()
+{
+	cDMRandomNameGeneratorDialog *pDlg = new cDMRandomNameGeneratorDialog();
 	pDlg->DoModal();
 	delete pDlg;
 }

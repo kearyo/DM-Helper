@@ -9,7 +9,7 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10037
+#define DMH_CURRENT_VERSION 10038
 
 #define USE_CANTRIPS	TRUE
 
@@ -19,6 +19,8 @@
 #define MAX_CUSTOM_CLASSES	12
 
 #define KEARY_BUILD	FALSE
+
+#define USE_DX_SOUND	TRUE
 
 //Dragon Magazines at http://www.annarchive.com/
 
@@ -236,6 +238,11 @@
 	* Added "Add-Ons" functionality to help menu for downloading and installing optional content
 	** Add-On "Anna's Flanaess circa 598 Map" is available
 	** Add-On "Eddie's Soundboards and Sound Effects" is available
+
+- 1.0.038	-/--/19
+	* Occasional crasher bug with party "Kill for XP" button
+	* Random name generator added to main menu under "Randoms"
+
 */
 
 #define PCSTRING CString*
@@ -264,7 +271,8 @@ extern BOOL g_bUseSoundEffects;
 #define ATTRIB_COM		6
 #define ATTRIB_EXSTR	7
 
-
+DWORD GetUniversalTime(void);
+DWORD GetUniqueID(void);
 float GetDistance(float x1, float y1, float x2, float y2); 
 
 int RollD3();
@@ -331,6 +339,7 @@ typedef enum
 	DND_CHARACTER_CLASS_CAVALIER = 120,
 	DND_CHARACTER_CLASS_PALADIN = 121,
 	DND_CHARACTER_CLASS_BARBARIAN = 130,
+	DND_CHARACTER_CLASS_NONE = 140,			// zero level humans or halflings
 
 	DND_CHARACTER_CLASS_CLERIC = 200,
 	DND_CHARACTER_CLASS_DRUID = 210,
@@ -1355,6 +1364,7 @@ public:
 			case DND_CHARACTER_CLASS_PALADIN:
 			case DND_CHARACTER_CLASS_BARBARIAN:
 			case DND_CHARACTER_CLASS_ASSASSIN:
+			case DND_CHARACTER_CLASS_NONE:
 			{
 				return TRUE;
 			}
@@ -1978,19 +1988,25 @@ public:
 	cDNDSpell *m_pSpell;
 	int *m_pnMemorizedSlot;
 	int m_nChargesExpended;
+	int m_nCastLevel;  // level of the caster, not the spell
+	BOOL m_bCastFromDevice;
 
 	cDNDSpellSlot()
 	{
 		m_pSpell = NULL;
 		m_pnMemorizedSlot = NULL;
 		m_nChargesExpended = 0;
+		m_nCastLevel = 0;
+		m_bCastFromDevice = FALSE;
 	}
 
-	cDNDSpellSlot(cDNDSpell *_pSpell, int *_pnMemorizedSlot, int nChargesExpended)
+	cDNDSpellSlot(cDNDSpell *_pSpell, int *_pnMemorizedSlot, int nChargesExpended, int nCastLevel, BOOL bCastFromDevice)
 	{
 		m_pSpell = _pSpell;
 		m_pnMemorizedSlot = _pnMemorizedSlot;
 		m_nChargesExpended = nChargesExpended;
+		m_nCastLevel = nCastLevel;
+		m_bCastFromDevice = bCastFromDevice;
 	}
 
 	~cDNDSpellSlot()

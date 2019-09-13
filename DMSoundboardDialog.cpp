@@ -52,6 +52,7 @@ void DMSoundboardDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ADD_BOARD_BUTTON, m_cAddBoardButton);
 	DDX_Control(pDX, IDC_EXPORT_BOARDS_BUTTON, m_cExportBoardsButton);
 	DDX_Control(pDX, IDC_IMPORT_BOARDS_BUTTON, m_cImportBoardsButton);
+	DDX_Control(pDX, IDC_RESET_DX_SOUNDS_BUTTON, m_cResetDXSoundsButton);
 }
 
 
@@ -70,6 +71,7 @@ BEGIN_MESSAGE_MAP(DMSoundboardDialog, CDialog)
 	ON_BN_CLICKED(IDC_DELETE_BOARD_BUTTON, &DMSoundboardDialog::OnBnClickedDeleteBoardButton)
 	ON_BN_CLICKED(IDC_EXPORT_BOARDS_BUTTON, &DMSoundboardDialog::OnBnClickedExportBoardsButton)
 	ON_BN_CLICKED(IDC_IMPORT_BOARDS_BUTTON, &DMSoundboardDialog::OnBnClickedImportBoardsButton)
+	ON_BN_CLICKED(IDC_RESET_DX_SOUNDS_BUTTON, &DMSoundboardDialog::OnBnClickedResetDxSoundsButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -87,6 +89,10 @@ BOOL DMSoundboardDialog::OnInitDialog()
 	#if KEARY_BUILD
 	m_cExportBoardsButton.ShowWindow(SW_SHOW);
 	m_cImportBoardsButton.ShowWindow(SW_SHOW);
+	#endif
+
+	#ifdef _DEBUG
+	m_cResetDXSoundsButton.ShowWindow(SW_SHOW);
 	#endif
 
 	Init();
@@ -524,4 +530,11 @@ void DMSoundboardDialog::OnBnClickedImportBoardsButton()
 
 		m_pApp->ImportSoundBoards(szFileName, FALSE);
 	}
+}
+
+void DMSoundboardDialog::OnBnClickedResetDxSoundsButton()
+{
+	#if USE_DX_SOUND
+	m_pApp->ShutDownDXSoundFX();
+	#endif
 }

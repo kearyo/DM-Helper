@@ -15,6 +15,8 @@
 #include "DMHPEditDialog.h"
 #include "DMNPCViewDialog.h"
 #include "DMLanguageSelectDialog.h"
+#include "cDMMapViewDialog.h"
+#include "cDMStrikeOrThrowDialog.h"
 
 
 #ifdef _DEBUG
@@ -27,7 +29,7 @@ static OPENFILENAME    g_ofn;
 char g_CV_szFilename[MAX_PATH];
 
 #if CUSTOM_CLASSES
-#define NUM_CHARVIEW_CLASSES 26
+#define NUM_CHARVIEW_CLASSES 27
 #else
 #define NUM_CHARVIEW_CLASSES 14
 #endif
@@ -36,6 +38,7 @@ int nClasses[NUM_CHARVIEW_CLASSES] =
 {
 	DND_CHARACTER_CLASS_UNDEF,
 
+	DND_CHARACTER_CLASS_NONE,
 	DND_CHARACTER_CLASS_FIGHTER, 
 	DND_CHARACTER_CLASS_RANGER,
 	DND_CHARACTER_CLASS_CAVALIER,
@@ -305,7 +308,10 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 	m_szDamageStat = "";
 	m_szCharStats = "";
 
-	Create(CDMCharViewDialog::IDD, pParent);
+	if (m_pApp->m_hInstance != NULL) // unit test support
+	{
+		Create(CDMCharViewDialog::IDD, pParent);
+	}
 	
 }
 
@@ -894,7 +900,11 @@ void CDMCharViewDialog::OnSelchangeCharClassCombo1()
 
 	m_pCharacter->m_Class[0] = (DND_CHARACTER_CLASSES)m_cClassCombo_1.GetItemData(nCursor);
 
-	if(m_pCharacter->m_Class[0] != DND_CHARACTER_CLASS_UNDEF && m_pCharacter->m_nLevel[0] == 0)
+	if (m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_NONE)
+	{
+		m_pCharacter->m_nLevel[0] = 0;
+	}
+	else if(m_pCharacter->m_Class[0] != DND_CHARACTER_CLASS_UNDEF && m_pCharacter->m_nLevel[0] == 0)
 	{
 		m_pCharacter->m_nLevel[0] = 1;
 	}
@@ -949,9 +959,11 @@ void CDMCharViewDialog::OnSelchangeCharClassCombo3()
 }
 
 
-
 void CDMCharViewDialog::Refresh()
 {
+	if (m_hWnd == NULL) // unit test support
+		return;
+
 	if(m_pCharacter == NULL)
 		return;
 
@@ -998,7 +1010,11 @@ void CDMCharViewDialog::Refresh()
 		m_pCharacter->m_Class[0] = DND_CHARACTER_CLASS_FIGHTER;
 	}
 
-	if(m_pCharacter->m_nLevel[0] == 0)
+	if (m_pCharacter->m_Class[0] == DND_CHARACTER_CLASS_NONE)
+	{
+		m_pCharacter->m_nLevel[0] = 0;
+	}
+	else if(m_pCharacter->m_nLevel[0] == 0)
 	{
 		m_pCharacter->m_nLevel[0] = 1;
 	}
@@ -2574,7 +2590,7 @@ void CDMCharViewDialog::ProcessCharStats()
 		}
 		#endif
 
-		if (m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_RANGER || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_MONK || bClassHas2HDAtFirstLevel == TRUE)// || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_BARBARIAN)
+		if (m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_NONE || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_RANGER || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_MONK || bClassHas2HDAtFirstLevel == TRUE)// || m_pCharacter->m_Class[j] == DND_CHARACTER_CLASS_BARBARIAN)
 		{
 			nStartAtLevel = 0;
 		}
@@ -2786,9 +2802,12 @@ void CDMCharViewDialog::ProcessCharStats()
 		IDC_TURN_UNDEAD_EDIT_13
 	};
 
-	for(i = 0; i< 15; ++i)
+	if (m_hWnd != NULL)
 	{
-		(GetDlgItem( nTurnUndeadControls[i] ))->ShowWindow(nShowTurnUndead);
+		for (i = 0; i < 15; ++i)
+		{
+			(GetDlgItem(nTurnUndeadControls[i]))->ShowWindow(nShowTurnUndead);
+		}
 	}
 
 	//////////////////////////////////////////////
@@ -2843,9 +2862,12 @@ void CDMCharViewDialog::ProcessCharStats()
 		IDC_THIEF_SKILL_EDIT_8
 	};
 
-	for(i = 0; i< 17; ++i)
+	if (m_hWnd != NULL)
 	{
-		(GetDlgItem( nThiefControls[i] ))->ShowWindow(nShowThiefStats);
+		for (i = 0; i < 17; ++i)
+		{
+			(GetDlgItem(nThiefControls[i]))->ShowWindow(nShowThiefStats);
+		}
 	}
 
 	//////////////////////////////////////////////
@@ -2909,149 +2931,154 @@ void CDMCharViewDialog::ProcessCharStats()
 		IDC_ASS_SKILL_EDIT_10
 	};
 
-	for(i = 0; i< 21; ++i)
+	if (m_hWnd != NULL) // unit test support
 	{
-		(GetDlgItem( nAssControls[i] ))->ShowWindow(nShowAssassinStats);
+		for (i = 0; i < 21; ++i)
+		{
+			(GetDlgItem(nAssControls[i]))->ShowWindow(nShowAssassinStats);
+		}
 	}
-
-
 
 	//////////////////////////////////////////////
 
-	BOOL bRemove = m_cWeaponChartList.DeleteAllItems();
-
-	int nAttackMatrix[21];
-	GetToHitChart(m_pCharacter, nAttackMatrix);
-
-	m_cWeaponChartList.InsertItem(0, "BASE");
-	
-	//m_szDamageDesc = "-";
-	m_szDamageDesc.Format("%s", m_pCharacter->GetUnarmedDamageDesc());
-	m_cWeaponChartList.SetItemText(0,23,m_szDamageDesc);
-
-	for(i=0; i< 21; ++i)
+	if (m_hWnd != NULL) // unit test support
 	{
-		szTemp.Format("%d",nAttackMatrix[i] - nSTRToHitAdj);
-		m_nAttackMatrix[i] = nAttackMatrix[i] - nSTRToHitAdj;
-		m_cWeaponChartList.SetItemText(0,i+2,szTemp);
-	}
+		BOOL bRemove = m_cWeaponChartList.DeleteAllItems();
 
-	int nWeaponCount = 1;
-	for(j=0; j < 4; ++j)
-	{
-		if(!m_pCharacter->m_SelectedWeapons[j].m_wTypeId)
-			continue;
+		int nAttackMatrix[21];
+		GetToHitChart(m_pCharacter, nAttackMatrix);
 
-		if(m_pCharacter->m_SelectedWeapons[j].m_wTypeId > m_pApp->m_WeaponsIndexedTypeArray.GetSize())
-			continue;
+		m_cWeaponChartList.InsertItem(0, "BASE");
 
-		m_cWeaponChartList.InsertItem(nWeaponCount, m_pCharacter->m_SelectedWeapons[j].m_szType);
+		//m_szDamageDesc = "-";
+		m_szDamageDesc.Format("%s", m_pCharacter->GetUnarmedDamageDesc());
+		m_cWeaponChartList.SetItemText(0, 23, m_szDamageDesc);
 
-		int nMagicAdj = m_pCharacter->m_SelectedWeapons[j].m_nMagicAdj;
-
-		cDNDWeapon *pDamageWeapon = &m_pCharacter->m_SelectedWeapons[j];
-
-		if(IsMissileWeapon(&m_pCharacter->m_SelectedWeapons[j]) && IsValidAmmoForWeapon(&m_pCharacter->m_SelectedWeapons[j], &m_pCharacter->m_SelectedAmmo))
+		for (i = 0; i < 21; ++i)
 		{
-			nMagicAdj += m_pCharacter->m_SelectedAmmo.m_nMagicAdj;
+			szTemp.Format("%d", nAttackMatrix[i] - nSTRToHitAdj);
+			m_nAttackMatrix[i] = nAttackMatrix[i] - nSTRToHitAdj;
+			m_cWeaponChartList.SetItemText(0, i + 2, szTemp);
+		}
 
-			if(m_pCharacter->m_SelectedAmmo.m_szDamageSmall[0] != '-')  // for sling stone weirdness
+		int nWeaponCount = 1;
+		for (j = 0; j < 4; ++j)
+		{
+			if (!m_pCharacter->m_SelectedWeapons[j].m_wTypeId)
+				continue;
+
+			if (m_pCharacter->m_SelectedWeapons[j].m_wTypeId > m_pApp->m_WeaponsIndexedTypeArray.GetSize())
+				continue;
+
+			m_cWeaponChartList.InsertItem(nWeaponCount, m_pCharacter->m_SelectedWeapons[j].m_szType);
+
+			int nMagicAdj = m_pCharacter->m_SelectedWeapons[j].m_nMagicAdj;
+
+			cDNDWeapon *pDamageWeapon = &m_pCharacter->m_SelectedWeapons[j];
+
+			if (IsMissileWeapon(&m_pCharacter->m_SelectedWeapons[j]) && IsValidAmmoForWeapon(&m_pCharacter->m_SelectedWeapons[j], &m_pCharacter->m_SelectedAmmo))
 			{
-				pDamageWeapon = &m_pCharacter->m_SelectedAmmo;
+				nMagicAdj += m_pCharacter->m_SelectedAmmo.m_nMagicAdj;
+
+				if (m_pCharacter->m_SelectedAmmo.m_szDamageSmall[0] != '-')  // for sling stone weirdness
+				{
+					pDamageWeapon = &m_pCharacter->m_SelectedAmmo;
+				}
 			}
-		}
 
-		int nSpecializedToHitBonus = 0;
-		int nSpecializedDamageBonus = 0;
-		if(m_pCharacter->IsProficientWithWeapon(&m_pCharacter->m_SelectedWeapons[j], &nSpecializedToHitBonus, &nSpecializedDamageBonus) == FALSE)
-		{
-			int nProfPenalty = 0;
-			int nNumProfs = CalculateWeaponProficiencies(m_pCharacter, &nProfPenalty);
-			nMagicAdj += nProfPenalty;
-		}
-
-		if(nMagicAdj)
-		{
-			if(nMagicAdj > 0)
-				szTemp.Format("+%d",nMagicAdj);
-			else
-				szTemp.Format("%d",nMagicAdj);
-
-			m_cWeaponChartList.SetItemText(nWeaponCount,1,szTemp);
-		}
-		
-		int nToHitAdj = 0;
-		int nDamageAdj = 0;
-
-		nToHitAdj += nSpecializedToHitBonus;
-		nDamageAdj += nSpecializedDamageBonus;
-
-		if(m_pCharacter->m_SelectedWeapons[j].m_nExceptionalStrength)
-		{
-			nToHitAdj += nSTRToHitAdj;
-			nDamageAdj += nSTRDamAdj;
-		}
-
-		nToHitAdj += nMagicAdj;
-		nDamageAdj += nMagicAdj;
-
-		for(i=0; i< 21; ++i)
-		{
-			szTemp.Format("%d",nAttackMatrix[i] - nToHitAdj);
-			m_cWeaponChartList.SetItemText(nWeaponCount,i+2,szTemp);
-
-			if(j == 0)
+			int nSpecializedToHitBonus = 0;
+			int nSpecializedDamageBonus = 0;
+			if (m_pCharacter->IsProficientWithWeapon(&m_pCharacter->m_SelectedWeapons[j], &nSpecializedToHitBonus, &nSpecializedDamageBonus) == FALSE)
 			{
-				m_nAttackMatrix[i] = nAttackMatrix[i] - nToHitAdj;
+				int nProfPenalty = 0;
+				int nNumProfs = CalculateWeaponProficiencies(m_pCharacter, &nProfPenalty);
+				nMagicAdj += nProfPenalty;
 			}
-		}
 
-		if(nDamageAdj)
-		{
-			szTemp.Format("%s +%d / %s +%d %s", pDamageWeapon->m_szDamageSmall, nDamageAdj, pDamageWeapon->m_szDamageLarge, nDamageAdj, GetMonkWeaponDamageAdj(m_pCharacter, j));
-		}
-		else
-		{
-			szTemp.Format("%s / %s %s", pDamageWeapon->m_szDamageSmall, pDamageWeapon->m_szDamageLarge, GetMonkWeaponDamageAdj(m_pCharacter, j));
-		}
-
-		if(IsMissileWeapon(&m_pCharacter->m_SelectedWeapons[j]) && !IsValidAmmoForWeapon(&m_pCharacter->m_SelectedWeapons[j], &m_pCharacter->m_SelectedAmmo))
-		{
-			if(nWeaponCount == 1)
+			if (nMagicAdj)
 			{
-				szTemp = "NO AMMO";
+				if (nMagicAdj > 0)
+					szTemp.Format("+%d", nMagicAdj);
+				else
+					szTemp.Format("%d", nMagicAdj);
+
+				m_cWeaponChartList.SetItemText(nWeaponCount, 1, szTemp);
+			}
+
+			int nToHitAdj = 0;
+			int nDamageAdj = 0;
+
+			nToHitAdj += nSpecializedToHitBonus;
+			nDamageAdj += nSpecializedDamageBonus;
+
+			if (m_pCharacter->m_SelectedWeapons[j].m_nExceptionalStrength)
+			{
+				nToHitAdj += nSTRToHitAdj;
+				nDamageAdj += nSTRDamAdj;
+			}
+
+			nToHitAdj += nMagicAdj;
+			nDamageAdj += nMagicAdj;
+
+			for (i = 0; i < 21; ++i)
+			{
+				szTemp.Format("%d", nAttackMatrix[i] - nToHitAdj);
+				m_cWeaponChartList.SetItemText(nWeaponCount, i + 2, szTemp);
+
+				if (j == 0)
+				{
+					m_nAttackMatrix[i] = nAttackMatrix[i] - nToHitAdj;
+				}
+			}
+
+			if (nDamageAdj)
+			{
+				szTemp.Format("%s +%d / %s +%d %s", pDamageWeapon->m_szDamageSmall, nDamageAdj, pDamageWeapon->m_szDamageLarge, nDamageAdj, GetMonkWeaponDamageAdj(m_pCharacter, j));
 			}
 			else
 			{
-				szTemp = _T("");
+				szTemp.Format("%s / %s %s", pDamageWeapon->m_szDamageSmall, pDamageWeapon->m_szDamageLarge, GetMonkWeaponDamageAdj(m_pCharacter, j));
 			}
+
+			if (IsMissileWeapon(&m_pCharacter->m_SelectedWeapons[j]) && !IsValidAmmoForWeapon(&m_pCharacter->m_SelectedWeapons[j], &m_pCharacter->m_SelectedAmmo))
+			{
+				if (nWeaponCount == 1)
+				{
+					szTemp = "NO AMMO";
+				}
+				else
+				{
+					szTemp = _T("");
+				}
+			}
+
+			if (j == 0)
+			{
+				szTemp.Replace("+-", "-");
+				m_szDamageDesc = szTemp;
+				m_szDamageStat = szTemp;
+				m_szDamageStat.Replace(" ", "");
+			}
+
+			m_cWeaponChartList.SetItemText(nWeaponCount, 23, szTemp);
+
+			++nWeaponCount;
 		}
 
-		if(j  == 0)
-		{
-			szTemp.Replace("+-", "-");
-			m_szDamageDesc = szTemp;
-			m_szDamageStat = szTemp;
-			m_szDamageStat.Replace(" ", "");
-		}
+		m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pCharacter));
 
-		m_cWeaponChartList.SetItemText(nWeaponCount,23,szTemp);
+		m_pCharacter->ValidateLanguages();
 
-		++nWeaponCount;
+		//////////////////////////////////////////////
+
+		//if (strcmp(m_pCharacter->m_szCharacterName, "Elric") == 0)
+		//{
+		//	TRACE("!");
+		//}
+
+		UpdateData(FALSE);
+
 	}
-
-	m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pCharacter));
-
-	m_pCharacter->ValidateLanguages();
-
-	//////////////////////////////////////////////
-
-	//if (strcmp(m_pCharacter->m_szCharacterName, "Elric") == 0)
-	//{
-	//	TRACE("!");
-	//}
-
-	UpdateData(FALSE);
 	
 }
 
@@ -3155,6 +3182,11 @@ void CDMCharViewDialog::NPCRollStats()
 	RollHitpoints();
 
 	m_pCharacter->m_dwCharacterID = dwOldID;
+}
+
+void CDMCharViewDialog::ExternalRollPCStats() // unit test support
+{
+	OnRollStats();
 }
 
 void CDMCharViewDialog::OnRollStats()  //also grant earned XP
@@ -4872,19 +4904,37 @@ void CDMCharViewDialog::OnAddHpButton()
 	
 }
 
-void CDMCharViewDialog::FireAmmo() 
+void CDMCharViewDialog::FireAmmo(BOOL bCheckThrow)
 {
-
 	for(int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
 	{
+		BOOL bThrow = FALSE;
 		if(m_pCharacter->m_Inventory[i].m_wTypeId == m_pCharacter->m_SelectedAmmo.m_wTypeId && m_pCharacter->m_Inventory[i].m_lAmount == m_pCharacter->m_SelectedAmmo.m_lAmount && m_pCharacter->m_Inventory[i].m_nMagicAdj == m_pCharacter->m_SelectedAmmo.m_nMagicAdj)
 		{
+			// check flags
+			if (bCheckThrow && IsThrowableWeapon(m_pCharacter->m_Inventory[i].m_nFlags))
+			{
+				cDMStrikeOrThrowDialog *pDlg = new cDMStrikeOrThrowDialog(&bThrow);
+				pDlg->DoModal();
+
+				if (bThrow == FALSE)
+				{
+					return;
+				}
+			}
+
 			m_pCharacter->m_Inventory[i].m_lAmount -= 1;
 
 			AddToRecoveryInventory(i, 1);
 
 			if(m_pCharacter->m_Inventory[i].m_lAmount <= 0)
 			{
+				//gob ammo
+				if (IsThrowableWeapon(m_pCharacter->m_Inventory[i].m_nFlags))
+				{
+					m_dwLastThrownObjectID = m_pCharacter->m_Inventory[i].m_dwObjectID;
+				}
+
 				cDNDObject _BlankObj;
 				_BlankObj.CopyFull(&m_pCharacter->m_Inventory[i]);
 				
@@ -4918,6 +4968,11 @@ void CDMCharViewDialog::AddToRecoveryInventory(int nCharInventorySlot, int nAmou
 
 			m_RecoverAmmoInventory[i].m_nMagicAdj = m_pCharacter->m_Inventory[nCharInventorySlot].m_nMagicAdj;
 			m_RecoverAmmoInventory[i].m_lAmount = nAmount;
+
+			if (m_pCharacter->m_Inventory[nCharInventorySlot].m_lAmount == 0)
+			{
+				m_RecoverAmmoInventory[i].m_dwObjectID = m_pCharacter->m_Inventory[nCharInventorySlot].m_dwObjectID;
+			}
 			
 			ValidateRecoveryInventory();
 
@@ -4966,6 +5021,18 @@ void CDMCharViewDialog::CollapseRecoveryInventory()
 			if(m_RecoverAmmoInventory[i].m_wTypeId == m_RecoverAmmoInventory[j].m_wTypeId && m_RecoverAmmoInventory[i].m_nMagicAdj == m_RecoverAmmoInventory[j].m_nMagicAdj)
 			{
 				m_RecoverAmmoInventory[i].m_lAmount += m_RecoverAmmoInventory[j].m_lAmount;
+
+				DWORD dwObjectID = 0;
+				if (m_RecoverAmmoInventory[i].m_dwObjectID)
+					dwObjectID = m_RecoverAmmoInventory[i].m_dwObjectID;
+				else if (m_RecoverAmmoInventory[j].m_dwObjectID)
+					dwObjectID = m_RecoverAmmoInventory[j].m_dwObjectID;
+
+				if (dwObjectID)
+				{
+					m_RecoverAmmoInventory[i].m_dwObjectID = dwObjectID;
+				}
+
 				_BlankObj.CopyFull(&m_RecoverAmmoInventory[j]);
 			}
 		}
@@ -4973,22 +5040,32 @@ void CDMCharViewDialog::CollapseRecoveryInventory()
 
 }
 
+void CDMCharViewDialog::ExternalRecoverAmmo()
+{
+	m_cRecoverAmmoCombo.SetCurSel(0);
+	UpdateData(TRUE);
+	OnRecoverAmmo();
+}
+
 void CDMCharViewDialog::OnRecoverAmmo() 
 {
 	cDNDObject _BlankObj;
+	CString szTemp;
 
 	int nCursor = m_cRecoverAmmoCombo.GetCurSel();
 
 	if(nCursor > -1)
 	{
-		int nRecovered = 0;
-
-		ModifyValue((int *)&nRecovered, "Recover how many ?", FALSE);
-
 		cDNDObject *pObject = (cDNDObject *)m_cRecoverAmmoCombo.GetItemData(nCursor);
 
-		if(nRecovered > pObject->m_lAmount)
+		int nRecovered = 0;
+		szTemp.Format("Recover how many ? (%d max)", pObject->m_lAmount);
+		ModifyValue((int *)&nRecovered, szTemp.GetBuffer(0), pObject->m_lAmount, FALSE);
+
+		if (nRecovered > pObject->m_lAmount)
+		{
 			nRecovered = pObject->m_lAmount;
+		}
 
 		BOOL bRecovered = FALSE;
 		BOOL bFoundIt = FALSE;
@@ -5013,7 +5090,10 @@ void CDMCharViewDialog::OnRecoverAmmo()
 
 				m_pCharacter->m_Inventory[nSlot].m_lAmount = nRecovered;
 
-				m_pCharacter->m_Inventory[nSlot].m_dwObjectID = GetUniqueID();
+				if (m_pCharacter->m_Inventory[nSlot].m_dwObjectID == 0)
+				{
+					m_pCharacter->m_Inventory[nSlot].m_dwObjectID = GetUniqueID();
+				}
 
 				bRecovered = TRUE;
 			}
@@ -5027,12 +5107,32 @@ void CDMCharViewDialog::OnRecoverAmmo()
 
 			m_pCharacter->ValidateInventory();
 
+			//gob ammo
+			if (m_dwLastThrownObjectID)
+			{
+				Refresh();
+
+				for (i = 0; i < m_cWeaponCombo_1.GetCount(); ++i)
+				{
+					DWORD dwWeaponId = m_cWeaponCombo_1.GetItemData(i);
+
+					if (dwWeaponId == m_dwLastThrownObjectID)
+					{
+						m_cWeaponCombo_1.SetCurSel(i);
+						UpdateData(TRUE);
+						break;
+					}
+				}
+			}
+
 			OnSelchangeWeaponCombo1();
 
 			Refresh();
 
 			m_pCharacter->MarkChanged();
 		}
+
+		m_dwLastThrownObjectID = 0;
 
 	}
 	
@@ -5334,4 +5434,31 @@ void CDMCharViewDialog::OnCbnSelchangeLightSourceCombo()
 	}
 
 	Refresh();
+
+	//m_pCharacter->m_nLightSourceRange;
+
+	for (POSITION pos = m_pApp->m_MapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_pApp->m_MapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL && pMapDlg->m_pDNDMap != NULL && pMapDlg->m_pDNDMap->m_bMapScaleFeet)
+		{
+			::PostMessage(pMapDlg->m_hWnd, DND_DIRTY_WINDOW_MESSAGE, 0, 0);
+		}
+	}
+
+	for (POSITION pos = m_pApp->m_DetachedMapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_pApp->m_DetachedMapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL && pMapDlg->m_pDNDMap != NULL && pMapDlg->m_pDNDMap->m_bMapScaleFeet) 
+		{
+			::PostMessage(pMapDlg->m_hWnd, DND_DIRTY_WINDOW_MESSAGE, 0, 0);
+		}
+	}
+
 }

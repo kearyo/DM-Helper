@@ -520,7 +520,7 @@ void DMCharSpellsDialog::Refresh()
 							m_cSpellsMemorizedList.InsertString(nRow, szTemp);
 
 							//hier
-							PSPELLSLOT pSpellSlot = new cDNDSpellSlot(pSpell, &m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][pSpell->m_nSpellNumber], 1);
+							PSPELLSLOT pSpellSlot = new cDNDSpellSlot(pSpell, &m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][pSpell->m_nSpellNumber], 1, m_pCharacter->m_nCastingLevels[m_nSelectedSpellClass], FALSE);
 							m_cSpellsMemorizedList.SetItemData(nRow, (ULONG)pSpellSlot);
 
 							break;
@@ -1060,7 +1060,8 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 
 					m_pApp->PlayPCSoundFX("* PC Cast Spell", m_pSiblingWindow->m_szCharacterFirstName, "NADA", FALSE);
 
-					m_pApp->PlaySpellSFX(pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier);
+					int nSoundRepeats = m_pApp->GetSpellRepeats(pSelectedSpellSlot);
+					m_pApp->PlaySpellSFX(pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
 
 					DMPartyDialog *pPartyDlg = m_pApp->FindCharacterPartyDialog(m_pCharacter);
 					if(pPartyDlg != NULL)

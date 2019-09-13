@@ -182,6 +182,8 @@ public:
 
 	int m_nOrientation;
 
+	BOOL m_bUpdateDetachedScale;
+
 	BOOL m_bCatchMe;	//this is a debugging variable
 
 	//DWORD m_dwRandomDungeonPartyID;
@@ -415,6 +417,7 @@ public:
 	afx_msg void OnBnClickedCachesCheck();
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	afx_msg LRESULT OnDirtyWindow(UINT wParam, LONG lParam);
 	
 	CButton m_cTravelMountedButton;
 	CButton m_cTravelHoursCheck;
@@ -472,6 +475,10 @@ public:
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnBnClickedPartyCharactersButton();
 	BOOL m_bShowSelectedPartyCheck;
+	CButton m_cCenterButton;
+	afx_msg void OnBnClickedCenterButton();
+	afx_msg void OnBnClicked25mmButton();
+	CButton m_c25mmButton;
 };
 
 

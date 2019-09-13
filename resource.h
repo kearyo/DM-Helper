@@ -165,6 +165,10 @@
 #define IDD_CUSTOM_CLASS_DIALOG         286
 #define IDB_SWORD_ICON_BITMAP           287
 #define IDD_ADD_ON_DIALOG               288
+#define IDB_CENTER_BUTTON_BITMAP        290
+#define IDD_PICK_LOCK_DIALOG            291
+#define IDD_RANDOM_NAME_GENERATOR_DIALOG 292
+#define IDD_STRIKEORTHROW_DIALOG        293
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -332,8 +336,10 @@
 #define IDC_MAP_PIXELS_X_EDIT           1071
 #define IDC_ADD_XP_BUTTON_3             1071
 #define IDC_MAIN_TAB                    1071
+#define IDC_CENTER_BUTTON               1071
 #define IDC_MAP_PIXELS_Y_EDIT           1072
 #define IDC_CHAR_INVENTORY              1072
+#define IDC_25MM_BUTTON                 1072
 #define IDC_AMMO_COMBO                  1073
 #define IDC_MAP_SCALE_EDIT              1073
 #define IDC_CW_STATIC                   1074
@@ -632,7 +638,10 @@
 #define IDC_STAT_BLOCK_BUTTON2          1162
 #define IDC_PARENT_MAP_COMBO            1163
 #define IDC_PLOT_PARTY_EXTEND_ROUTE_BUTTON 1163
+#define IDC_PICK_LOCK_BUTTON            1163
 #define IDC_PARTIES_CHECK               1164
+#define IDC_RECOVER_AMMO__BUTTON        1164
+#define IDC_RECOVER_AMMO_BUTTON         1164
 #define IDC_ROUTES_CHECK                1165
 #define IDC_CHILD_MAPS_CHECK            1166
 #define IDC_SHOW_STATIC                 1167
@@ -807,8 +816,10 @@
 #define IDC_CACHE_NAME_EDIT             1336
 #define IDC_MAP_SPELL_SFX_BUTTON        1337
 #define IDC_CACHE_DETAILS_EDIT          1337
+#define IDC_MONITOR_DPMI_EDIT           1337
 #define IDC_TYPE_LABEL                  1338
 #define IDC_ADD_BOARD_BUTTON            1338
+#define IDC_DPMI_STATIC                 1338
 #define IDC_EVENT_LIST                  1339
 #define IDC_DELETE_BOARD_BUTTON         1339
 #define IDC_SFX_LIST                    1340
@@ -816,6 +827,7 @@
 #define IDC_SWING_HIT_CHECK             1341
 #define IDC_IMPORT_BOARDS_BUTTON        1341
 #define IDC_SWING_MISS_CHECK            1342
+#define IDC_RESET_DX_SOUNDS_BUTTON      1342
 #define IDC_RANGED_HIT_CHECK            1343
 #define IDC_RANGED_MISS_CHECK           1344
 #define IDC_INFO_TEXT                   1345
@@ -978,6 +990,7 @@
 #define IDC_SFX_CYCLE_CHECK             1440
 #define IDC_PREREQ_ATTRIB_CHECK_0       1440
 #define IDC_X1_CHECK                    1440
+#define IDC_MALE_CHECK                  1440
 #define IDC_PP_BUTTON                   1441
 #define IDC_GRID_CHECK                  1441
 #define IDC_EMPATH_CHECK                1441
@@ -986,6 +999,7 @@
 #define IDC_AMMO_CHECK                  1441
 #define IDC_PREREQ_ATTRIB_CHECK_1       1441
 #define IDC_X2_CHECK                    1441
+#define IDC_FEMALE_CHECK                1441
 #define IDC_GP_BUTTON                   1442
 #define IDC_PARTY_NAME_STATIC           1442
 #define IDC_SPEECH_CHECK                1442
@@ -1231,6 +1245,18 @@
 #define IDC_ENCRYPT_BUTTON              1639
 #define IDC_FILE_PERC_STATIC            1640
 #define IDC_EXPLAIN_TEXT                1640
+#define IDC_HUMAN_BUTTON                1643
+#define IDC_ELVEN_BUTTON                1644
+#define IDC_DWARVEN_BUTTON              1645
+#define IDC_HALFLING_BUTTON             1646
+#define IDC_GNOME_BUTTON                1647
+#define IDC_BUGBEAR_BUTTON              1648
+#define IDC_DRAGON_BUTTON               1649
+#define IDC_GOBLIN_BUTTON               1650
+#define IDC_HOBGOBLIN_BUTTON            1651
+#define IDC_KOBOLD_BUTTON               1652
+#define IDC_OGRE_BUTTON                 1653
+#define IDC_ORC_BUTTON                  1654
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1265,14 +1291,16 @@
 #define ID_DMLIBRARY_FROMFILE           32802
 #define ID_CUSTOMIZATIONS_CUSTOMCLASSEDITOR 32803
 #define ID_HELP_CHECKFORADD             32804
+#define ID_RANDOMS_RANDOMNAMEGENERATOR  32805
+#define ID_RANDOMS_RANDOMNAMEGENERATOR32806 32806
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        289
-#define _APS_NEXT_COMMAND_VALUE         32805
-#define _APS_NEXT_CONTROL_VALUE         1641
+#define _APS_NEXT_RESOURCE_VALUE        294
+#define _APS_NEXT_COMMAND_VALUE         32807
+#define _APS_NEXT_CONTROL_VALUE         1644
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

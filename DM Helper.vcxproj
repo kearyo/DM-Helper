@@ -89,7 +89,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>c:/gdi/Gdiplus.lib;c:/libcurl-7/lib/Release/curllib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>c:/gdi/Gdiplus.lib;c:/libcurl-7/lib/Release/curllib.lib;D:\MSDXSDX9\Lib\x86\dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\Debug/DM Helper.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -139,7 +139,7 @@
       <AdditionalIncludeDirectories>c:\gdi;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>c:/gdi/Gdiplus.lib;c:/libcurl-7/lib/Release/curllib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>c:/gdi/Gdiplus.lib;c:/libcurl-7/lib/Release/curllib.lib;D:\MSDXSDX9\Lib\x86\dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <UACUIAccess>false</UACUIAccess>
@@ -164,7 +164,10 @@
     <ClCompile Include="cDMMapSFXDialog.cpp" />
     <ClCompile Include="cDMMapSizingDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
+    <ClCompile Include="cDMOpenLockDialog.cpp" />
     <ClCompile Include="cDMPDFViewDialog.cpp" />
+    <ClCompile Include="cDMRandomNameGeneratorDialog.cpp" />
+    <ClCompile Include="cDMStrikeOrThrowDialog.cpp" />
     <ClCompile Include="cDMWeatherDialog.cpp" />
     <ClCompile Include="ColoredListCtrl.cpp" />
     <ClCompile Include="DM Helper Common.cpp" />
@@ -223,6 +226,7 @@
     <ClCompile Include="DungeonGen.cpp" />
     <ClCompile Include="ImageEx.cpp" />
     <ClCompile Include="pdfviewerctrl1.cpp" />
+    <ClCompile Include="SoundClass.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -242,7 +246,10 @@
     <ClInclude Include="cDMMapSFXDialog.h" />
     <ClInclude Include="cDMMapSizingDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
+    <ClInclude Include="cDMOpenLockDialog.h" />
     <ClInclude Include="cDMPDFViewDialog.h" />
+    <ClInclude Include="cDMRandomNameGeneratorDialog.h" />
+    <ClInclude Include="cDMStrikeOrThrowDialog.h" />
     <ClInclude Include="cDMWeatherDialog.h" />
     <ClInclude Include="ColoredListCtrl.h" />
     <ClInclude Include="DM Helper Common.h" />
@@ -303,6 +310,7 @@
     <ClInclude Include="memdc.h" />
     <ClInclude Include="pdfviewerctrl1.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SoundClass.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="TransparentListBox.h" />
     <ClInclude Include="unzip.h" />
@@ -313,6 +321,7 @@
     <Image Include="res\bitmap3.bmp" />
     <Image Include="res\calendar_cell.bmp" />
     <Image Include="res\camera_icon.bmp" />
+    <Image Include="res\center_button.bmp" />
     <Image Include="res\char_sheet_base.bmp" />
     <Image Include="res\cleric.bmp" />
     <Image Include="res\d100_button.bmp" />

@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A2272492-0C85-40D8-A664-B8CD3C618AE3}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>DMHelper_tests</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../;C:/gdi;c:/libcurl-7/include;c:/libcurl-7/include/curl;$(VCInstallDir)UnitTest\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UseFullPaths>true</UseFullPaths>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <DisableSpecificWarnings>4800;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>c:/libcurl-7/lib/Release/curllib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(VCInstallDir)UnitTest\include;../;C:/gdi;c:/libcurl-7/include;c:/libcurl-7/include/curl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <UseFullPaths>true</UseFullPaths>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\DMCharacterSelectorDialog.h" />
+    <ClInclude Include="..\DMCharViewDialog.h" />
+    <ClInclude Include="DMUnitTestDialog.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\cDMAddOnDialog.cpp" />
+    <ClCompile Include="..\cDMCharacterPortraitDialog.cpp" />
+    <ClCompile Include="..\cDMDetachedMapDialog.cpp" />
+    <ClCompile Include="..\cDMMapNameDialog.cpp" />
+    <ClCompile Include="..\cDMMapSFXDialog.cpp" />
+    <ClCompile Include="..\cDMMapSizingDialog.cpp" />
+    <ClCompile Include="..\cDMMapViewDialog.cpp" />
+    <ClCompile Include="..\cDMOpenLockDialog.cpp" />
+    <ClCompile Include="..\cDMPDFViewDialog.cpp" />
+    <ClCompile Include="..\cDMRandomNameGeneratorDialog.cpp" />
+    <ClCompile Include="..\cDMStrikeOrThrowDialog.cpp" />
+    <ClCompile Include="..\cDMWeatherDialog.cpp" />
+    <ClCompile Include="..\ColoredListCtrl.cpp" />
+    <ClCompile Include="..\DM Helper Common.cpp" />
+    <ClCompile Include="..\DM Helper.cpp" />
+    <ClCompile Include="..\DM HelperDlg.cpp" />
+    <ClCompile Include="..\DMAboutDialog.cpp" />
+    <ClCompile Include="..\DMCalendarDialog.cpp" />
+    <ClCompile Include="..\DMCastSpellDialog.cpp" />
+    <ClCompile Include="..\DMCharacterNotesDialog.cpp" />
+    <ClCompile Include="..\DMCharacterSelectorDialog.cpp" />
+    <ClCompile Include="..\DMCharSheetDialog.cpp" />
+    <ClCompile Include="..\DMCharSpellsDialog.cpp" />
+    <ClCompile Include="..\DMCharViewDialog.cpp" />
+    <ClCompile Include="..\DMContainerDetailsDialog.cpp" />
+    <ClCompile Include="..\DMCustomArmorDialog.cpp" />
+    <ClCompile Include="..\DMCustomClassDialog.cpp" />
+    <ClCompile Include="..\DMCustomItemsDialog.cpp" />
+    <ClCompile Include="..\DMCustomMonsterDialog.cpp" />
+    <ClCompile Include="..\DMCustomSpellDialog.cpp" />
+    <ClCompile Include="..\DMCustomWeaponDialog.cpp" />
+    <ClCompile Include="..\DMDiceRollerDialog.cpp" />
+    <ClCompile Include="..\DMDungeonMonsterDialog.cpp" />
+    <ClCompile Include="..\DMEditMapLayersDialog.cpp" />
+    <ClCompile Include="..\DMEventLoggerDialog.cpp" />
+    <ClCompile Include="..\DMFileManagementDialog.cpp" />
+    <ClCompile Include="..\DMHPEditDialog.cpp" />
+    <ClCompile Include="..\DMInitiativeDialog.cpp" />
+    <ClCompile Include="..\DMInputDialog.cpp" />
+    <ClCompile Include="..\DMInventoryDialog.cpp" />
+    <ClCompile Include="..\DMItemDescriptionDialog.cpp" />
+    <ClCompile Include="..\DMLanguageSelectDialog.cpp" />
+    <ClCompile Include="..\DMLoadFileDialog.cpp" />
+    <ClCompile Include="..\DMMagicSwordPropertiesDialog.cpp" />
+    <ClCompile Include="..\DMMapEditDialog.cpp" />
+    <ClCompile Include="..\DMModifyValueDialog.cpp" />
+    <ClCompile Include="..\DMMundaneTypeSelectorDialog.cpp" />
+    <ClCompile Include="..\DMNPCPortraitSelectDialog.cpp" />
+    <ClCompile Include="..\DMNPCViewDialog.cpp" />
+    <ClCompile Include="..\DMPartyDialog.cpp" />
+    <ClCompile Include="..\DMPartyLogDialog.cpp" />
+    <ClCompile Include="..\DMPCDetailsDialog.cpp" />
+    <ClCompile Include="..\DMRandomEncounterDialog.cpp" />
+    <ClCompile Include="..\DMSaveConfirmDialog.cpp" />
+    <ClCompile Include="..\DMScrollDetailsDialog.cpp" />
+    <ClCompile Include="..\DMSFXEditorDialog.cpp" />
+    <ClCompile Include="..\DMSFXMapperDialog.cpp" />
+    <ClCompile Include="..\DMSoundboardDialog.cpp" />
+    <ClCompile Include="..\DMSoundFXDialog.cpp" />
+    <ClCompile Include="..\DMSpellDescDialog.cpp" />
+    <ClCompile Include="..\DMSpellSelectorDialog.cpp" />
+    <ClCompile Include="..\DMStringSelectorDialog.cpp" />
+    <ClCompile Include="..\DMSubPartyDialog.cpp" />
+    <ClCompile Include="..\DMTestDialog.cpp" />
+    <ClCompile Include="..\DMTimeEditDialog.cpp" />
+    <ClCompile Include="..\DMTreasureTypeDialog.cpp" />
+    <ClCompile Include="..\DungeonGen.cpp" />
+    <ClCompile Include="..\ImageEx.cpp" />
+    <ClCompile Include="..\pdfviewerctrl1.cpp" />
+    <ClCompile Include="..\SoundClass.cpp" />
+    <ClCompile Include="..\TransparentListBox.cpp" />
+    <ClCompile Include="..\unzip.cpp" />
+    <ClCompile Include="..\zip.cpp" />
+    <ClCompile Include="DMUnitTestDialog.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="_DMHelper_Unit_Tests_0.cpp" />
+    <ClCompile Include="_DMHelper_Unit_Tests_1.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DMHelper_tests.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="DMHelper_tests.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

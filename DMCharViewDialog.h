@@ -71,6 +71,8 @@ public:
 
 	BOOL m_bHasBreathWeapon;
 
+	DWORD m_dwLastThrownObjectID;
+
 	CDMBaseCharViewDialog(DND_CHAR_VIEW_TYPES _ViewType, UINT nIDTemplate, CWnd* pParentWnd)
 	{
 		m_pApp = (CDMHelperApp *)AfxGetApp();
@@ -109,6 +111,8 @@ public:
 		m_szMonsterManualName = _T("");
 
 		m_bHasBreathWeapon = FALSE;
+
+		m_dwLastThrownObjectID = 0;
 
 		CDialog::CDialog(nIDTemplate, pParentWnd);
 	}
@@ -216,11 +220,13 @@ public:
 	void SaveExternal();
 	void SaveCharacterToFile(char *szFileName);
 	void SwapWeapon();
-	void FireAmmo();
+	void FireAmmo(BOOL bCheckThrow);
 	void AddToRecoveryInventory(int nCharInventorySlot, int nAmount);
 	void ValidateRecoveryInventory();
 	void CollapseRecoveryInventory();
 	void NPCRollStats();
+	void ExternalRollPCStats();
+	void ExternalRecoverAmmo();
 
 	BOOL m_bHasPainted;
 	int m_nPage;

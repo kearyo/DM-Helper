@@ -71,6 +71,8 @@ public:
 	afx_msg void OnBnClickedImportBoardsButton();
 	CButton m_cExportBoardsButton;
 	CButton m_cImportBoardsButton;
+	CButton m_cResetDXSoundsButton;
+	afx_msg void OnBnClickedResetDxSoundsButton();
 };
 
 //{{AFX_INSERT_LOCATION}}

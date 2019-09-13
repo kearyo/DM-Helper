@@ -1,14 +1,23 @@
 // stdafx.h : include file for standard system include files,
-//  or project specific include files that are used frequently, but
-//      are changed infrequently
+// or project specific include files that are used frequently, but
+// are changed infrequently
 //
+
+#pragma once
+
+/*
+#include "targetver.h"
+
+// Headers for CppUnitTest
+#include "CppUnitTest.h"
+*/
 
 #define WINVER 0x0600
 
 #define NO_WARN_MBCS_MFC_DEPRECATION TRUE
 
-#if !defined(AFX_STDAFX_H__4FB782FA_3217_4CF2_9FC1_BAAB14031BE1__INCLUDED_)
-#define AFX_STDAFX_H__4FB782FA_3217_4CF2_9FC1_BAAB14031BE1__INCLUDED_
+#if !defined(AFX_STDAFX_H__4FB782FA_3217_4CF2_9FC1_FAAB14031BE1__INCLUDED_)
+#define AFX_STDAFX_H__4FB782FA_3217_4CF2_9FC1_FAAB14031BE1__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,6 +38,9 @@
 #include <afxmt.h>
 
 #include <afxsock.h>		// MFC socket extensions
+
+#include "resource.h"
+#include "CppUnitTest.h"
 
 #include <Unknwn.h> 
 #include <windows.h>
@@ -60,5 +72,10 @@ using namespace Gdiplus;
 #include <afxdisp.h>
 #include <afxdisp.h>
 #include <afxdisp.h>
+
+
+
 //#include <afxcontrolbars.h>
 // #include <afxcontrolbars.h>
+
+

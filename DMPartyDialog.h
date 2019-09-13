@@ -255,6 +255,10 @@ public:
 	CEdit m_cRoundEdit;
 	afx_msg void OnBnClickedStatBlockButton();
 	afx_msg void OnBnClickedStatBlockButton2();
+	CButton m_cPickLockButton;
+	afx_msg void OnBnClickedPickLockButton();
+	CButton m_cRecoverAmmoButton;
+	afx_msg void OnBnClickedRecoverAmmoButton();
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -148,7 +148,7 @@ void DMCastSpellDialog::Refresh()
 
 						m_cSpellList.InsertString(nSpellCount, szTemp);
 
-						PSPELLSLOT pSpellSlot = new cDNDSpellSlot(pSpell, &m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell], 1);
+						PSPELLSLOT pSpellSlot = new cDNDSpellSlot(pSpell, &m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell], 1, m_pCharacter->m_nCastingLevels[nSpellClass], FALSE);
 						m_cSpellList.SetItemData(nSpellCount, (ULONG)pSpellSlot);
 
 						++nSpellCount;
@@ -176,6 +176,7 @@ void DMCastSpellDialog::Refresh()
 					{
 						int *pnCharges = NULL;
 						int nChargesExpended = 1;
+						BOOL bCastFromDevice = FALSE;
 
 						if(m_pCharacter->m_Inventory[i].IsScroll())
 						{
@@ -213,6 +214,7 @@ void DMCastSpellDialog::Refresh()
 
 							pnCharges = &m_pCharacter->m_Inventory[i].m_nCharges;
 							nChargesExpended = max(m_pCharacter->m_Inventory[i].m_nContentsCount[j], 1); 
+							bCastFromDevice = TRUE;
 						}
 						else if(m_pCharacter->m_Inventory[i].IsMagicStaff())
 						{
@@ -220,6 +222,7 @@ void DMCastSpellDialog::Refresh()
 
 							pnCharges = &m_pCharacter->m_Inventory[i].m_nCharges;
 							nChargesExpended = max(m_pCharacter->m_Inventory[i].m_nContentsCount[j], 1); 
+							bCastFromDevice = TRUE;
 						}
 						else if(m_pCharacter->m_Inventory[i].IsMagicWand())
 						{
@@ -227,6 +230,7 @@ void DMCastSpellDialog::Refresh()
 
 							pnCharges = &m_pCharacter->m_Inventory[i].m_nCharges;
 							nChargesExpended = max(m_pCharacter->m_Inventory[i].m_nContentsCount[j], 1); 
+							bCastFromDevice = TRUE;
 						}
 						else if(m_pCharacter->m_Inventory[i].IsMagicRing())
 						{
@@ -234,11 +238,12 @@ void DMCastSpellDialog::Refresh()
 
 							pnCharges = &m_pCharacter->m_Inventory[i].m_nCharges;
 							nChargesExpended = max(m_pCharacter->m_Inventory[i].m_nContentsCount[j], 1); 
+							bCastFromDevice = TRUE;
 						}
 
 						m_cSpellList.InsertString(nSpellCount, szTemp);
 
-						PSPELLSLOT pSpellSlot = new cDNDSpellSlot(pSpell, pnCharges, nChargesExpended);
+						PSPELLSLOT pSpellSlot = new cDNDSpellSlot(pSpell, pnCharges, nChargesExpended, 7, bCastFromDevice);
 						m_cSpellList.SetItemData(nSpellCount, (ULONG)pSpellSlot);
 
 						++nSpellCount;
@@ -308,8 +313,14 @@ void DMCastSpellDialog::OnOK()
 
 				CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
 
-				pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
-				pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier);
+				if (pSpellSlot->m_bCastFromDevice == FALSE)
+				{
+					pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
+				}
+
+				//flatulence
+				int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
+				pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
 
 				DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
 				if(pPartyDlg != NULL)

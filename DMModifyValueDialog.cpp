@@ -271,6 +271,8 @@ void DMModifyValueDialog::OnBnClickedButtonAll()
 	m_szAddEdit.Format("%ld", m_lAllValue);
 
 	UpdateData(FALSE);
+
+	OnOK();
 }
 
 

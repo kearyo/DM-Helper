@@ -27,6 +27,44 @@ BOOL g_bUseSoundEffects;
 
 cDNDCustomClass _gCustomClass[12];	// yep global, so sue me
 
+DWORD GetUniversalTime(void)
+{
+	// this function returns the current seconds since midnight (00:00:00), January 1, 1970
+	//do not mess with this function unless you are SURE what you are doing
+
+	static DWORD dwMinClock = 0L;
+
+	time_t ltime;
+
+	time(&ltime);
+
+	if ((DWORD)ltime < dwMinClock)
+		return dwMinClock;
+
+	dwMinClock = (DWORD)ltime;
+
+	return (DWORD)ltime;
+
+} // end GetUniversalTime
+
+
+DWORD dwLastUniqueID = 0L;
+
+DWORD GetUniqueID(void)
+{
+	DWORD dwRetVal = GetUniversalTime();
+
+	if (dwRetVal <= dwLastUniqueID)
+	{
+		dwRetVal = dwLastUniqueID + 1;
+	}
+
+	dwLastUniqueID = dwRetVal;
+
+	return dwRetVal;
+
+}
+
 
 WORD GetMinMapKey(CMapWordToPtr *pMap)
 {
@@ -2863,6 +2901,7 @@ int GetMaxHitDiceByClass(DND_CHARACTER_CLASSES nClass, int *nAdditionalHP)
 {
 	switch(nClass)
 	{
+		case DND_CHARACTER_CLASS_NONE:			*nAdditionalHP = 0; return 1;
 		case DND_CHARACTER_CLASS_FIGHTER:		*nAdditionalHP = 3; return 9;
 		case DND_CHARACTER_CLASS_RANGER:		*nAdditionalHP = 2; return 10; // 11		
 		case DND_CHARACTER_CLASS_CAVALIER:		*nAdditionalHP = 3; return 10;	
@@ -3063,6 +3102,7 @@ int GetHitDieTypeByClass(DND_CHARACTER_CLASSES nClass)
 {
 	switch(nClass)
 	{
+		case DND_CHARACTER_CLASS_NONE:			return 6;
 		case DND_CHARACTER_CLASS_FIGHTER:		return 10;
 		case DND_CHARACTER_CLASS_RANGER:		return 8;
 		case DND_CHARACTER_CLASS_CAVALIER:		return 10;
@@ -3190,6 +3230,7 @@ int GetFighterClass(cDNDCharacter *pCharacter)
 	{
 		switch(pCharacter->m_Class[i])
 		{
+			case DND_CHARACTER_CLASS_NONE:
 			case DND_CHARACTER_CLASS_FIGHTER:		
 			case DND_CHARACTER_CLASS_RANGER:		
 			case DND_CHARACTER_CLASS_CAVALIER:	
@@ -3353,6 +3394,7 @@ BOOL IsDefinedClass(DND_CHARACTER_CLASSES nClass)
 
 	switch (nClass)
 	{
+		case DND_CHARACTER_CLASS_NONE:
 		case DND_CHARACTER_CLASS_FIGHTER:	
 		case DND_CHARACTER_CLASS_RANGER:		
 		case DND_CHARACTER_CLASS_CAVALIER:	
@@ -3424,6 +3466,7 @@ char *GetClassName(DND_CHARACTER_CLASSES nClass)
 
 	switch(nClass)
 	{
+		case DND_CHARACTER_CLASS_NONE:			return("None (0 Level)");
 		case DND_CHARACTER_CLASS_FIGHTER:		return("Fighter");
 		case DND_CHARACTER_CLASS_RANGER:		return("Ranger");
 		case DND_CHARACTER_CLASS_CAVALIER:		return("Cavalier");
@@ -3674,6 +3717,19 @@ void GetMinimumStatsByClass(cDNDCharacter *pCharacter, int *nMinStats)
 
 	switch(pCharacter->m_Class[0])
 	{
+		case DND_CHARACTER_CLASS_NONE:
+		{
+			nMinStats[0] = 0;   //STR
+			nMinStats[1] = 0;   //INT
+			nMinStats[2] = 0;   //WIS
+			nMinStats[3] = 0;   //DEX
+			nMinStats[4] = 0;   //CON
+			nMinStats[5] = 0;	//CHA
+			nMinStats[6] = 0;	//COM
+
+			break;
+		}
+
 		case DND_CHARACTER_CLASS_FIGHTER:
 		{
 			nMinStats[0] = 9;   //STR
@@ -3995,25 +4051,24 @@ int GetExperienceLevelByClass(cDNDCharacter *pCharacter, int nClass)
 
 	LONG lXP = pCharacter->m_lExperience[nClass];
 
-	for(int i = 1; i < 100; ++i)
+	for (int i = 1; i < 100; ++i)
 	{
 		LONG lThisLevel = GetExperiencePointsForLevelByClass(pCharacter->m_Class[nClass], i);
 
-		if(lThisLevel > lXP)
+		if (lThisLevel > lXP)
 		{
-			nRetVal = i-1;
+			nRetVal = i - 1;
 
 			int nMaxLevel = max(0, CalculateLevelLimits(pCharacter, pCharacter->m_Class[nClass]));
 
-			if(nRetVal > nMaxLevel)
+			if (nRetVal > nMaxLevel)
 				nRetVal = nMaxLevel;
 
 			break;
 		}
-	}	
+	}
 
 	return nRetVal;
-
 }
 
 
@@ -4029,6 +4084,11 @@ LONG GetExperiencePointsForLevelByClass(DND_CHARACTER_CLASSES nClass, int nLevel
 
 	switch(nClass)
 	{
+		case DND_CHARACTER_CLASS_NONE:
+		{
+			lRetVal = 0;
+			break;
+		}
 		case DND_CHARACTER_CLASS_FIGHTER:
 		{
 			switch(nLevel)
@@ -6514,6 +6574,11 @@ int CalculateExperienceBonus(cDNDCharacter *pCharacter, int nClass, int *pnNumCl
 	{
 		switch(pCharacter->m_Class[i])
 		{
+			case DND_CHARACTER_CLASS_NONE:
+			{
+				++nClasses;
+				break;
+			}
 			case DND_CHARACTER_CLASS_CLERIC:
 			{
 				++nClasses;
@@ -7148,6 +7213,12 @@ int CalculateWeaponProficiencies(cDNDCharacter *pCharacter, int *pnProfPenalty)
 
 	switch(nCombatClass)
 	{
+		case DND_CHARACTER_CLASS_NONE:
+		{
+			nRetVal = 1;
+			*pnProfPenalty = -4;
+			break;
+		}
 		case DND_CHARACTER_CLASS_FIGHTER:
 		case DND_CHARACTER_CLASS_BARBARIAN:
 		{
@@ -7765,6 +7836,7 @@ CString GetCharacterBook(DND_CHARACTER_CLASSES nClass)
 {
 	switch (nClass)
 	{
+		case DND_CHARACTER_CLASS_NONE:			return "PH pg. 22";
 		case DND_CHARACTER_CLASS_FIGHTER:		return "PH pg. 22";
 		case DND_CHARACTER_CLASS_RANGER:		return "PH pg. 24";
 		case DND_CHARACTER_CLASS_CAVALIER:		return "UA pg. 20";
@@ -8343,6 +8415,7 @@ int GenerateCharacterAge(cDNDCharacter *pCharacter)
 			{
 				switch(pCharacter->m_Class[i])
 				{
+					case DND_CHARACTER_CLASS_NONE:
 					case DND_CHARACTER_CLASS_CLERIC:		
 					case DND_CHARACTER_CLASS_DRUID:			
 					case DND_CHARACTER_CLASS_MONK:			
@@ -8394,6 +8467,7 @@ int GenerateCharacterAge(cDNDCharacter *pCharacter)
 			{
 				switch(pCharacter->m_Class[i])
 				{
+					case DND_CHARACTER_CLASS_NONE:			nBaseAge[i] = 15;	nDieAddLow[i] = 1;	nDieAddHigh[i] = 4;	break;
 					case DND_CHARACTER_CLASS_FIGHTER:		nBaseAge[i] = 15;	nDieAddLow[i] = 1;	nDieAddHigh[i] = 4;	break;
 					case DND_CHARACTER_CLASS_RANGER:		nBaseAge[i] = 20;	nDieAddLow[i] = 1;	nDieAddHigh[i] = 4;	break;
 					case DND_CHARACTER_CLASS_PALADIN:		nBaseAge[i] = 17;	nDieAddLow[i] = 1;	nDieAddHigh[i] = 4;	break;
@@ -8554,6 +8628,7 @@ int GetXPValueForCharacter(cDNDCharacter *pCharacter, int *pnSpecialAbility, int
 	{
 		switch(pCharacter->m_Class[i])
 		{
+			case DND_CHARACTER_CLASS_NONE:
 			case DND_CHARACTER_CLASS_FIGHTER:
 			{
 				break;

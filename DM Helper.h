@@ -42,6 +42,7 @@ To enable/disable Edit and Continue
 
 #define DND_WM_MESSAGE  (WM_APP + 1)
 #define DND_WEATHER_MESSAGE (DND_WM_MESSAGE + 0x0001)
+#define DND_DIRTY_WINDOW_MESSAGE (DND_WM_MESSAGE + 0x0002)
 
 
 int GetSelectedListCtrlItem(CListCtrl *plctrl);
@@ -324,9 +325,10 @@ public:
 
 	int m_nGPEncumbranceFactor;
 	int m_nVendorPriceInflationFactor;
+	int m_nMonitorDPMIFactor;
 
 
-	int m_nReserved[128];
+	int m_nReserved[127];
 
 	ULONG m_lReserved[128];
 	float m_fReserved[128];
@@ -363,10 +365,11 @@ public:
 		m_nGPEncumbranceFactor = 1;
 		m_nVendorPriceInflationFactor = 100;
 
+		m_nMonitorDPMIFactor = 96;
 		
 		memset(m_bReserved, 0, 118*sizeof(BOOL));
 
-		memset(m_nReserved, 0, 128*sizeof(int));
+		memset(m_nReserved, 0, 127*sizeof(int));
 
 		memset(m_lReserved, 0, 128*sizeof(ULONG));
 		memset(m_fReserved, 0, 128*sizeof(float));
@@ -453,8 +456,6 @@ public:
 #define PDNDTABTYPE cDNDDisplayTab*
 typedef CTypedPtrArray <CPtrArray, PDNDTABTYPE> PDNDTABTYPEARRAY;
 
-DWORD GetUniversalTime(void);
-DWORD GetUniqueID(void);
 void TimeSpan(char *szLabel, DWORD *dwStartTime);
 void WaitExecute(BOOL *bWaitFlag);
 void WaitTime(DWORD dwMilliSeconds);
@@ -622,6 +623,16 @@ public:
 	int m_nInitiativeCurrentAttackNumber;
 	DWORD m_dwInitiativeCurrentAttackerID;
 
+	#if USE_DX_SOUND
+	SoundClass *m_pDXSound;
+
+	void InitDXSoundFX();
+	void ShutDownDXSoundFX();
+
+	#endif
+
+	BOOL PlayDXSFX(CString szWAVPath);
+
 	BOOL LoadUpdateParams(char *path);
 	BOOL SaveUpdateParams();
 
@@ -693,8 +704,9 @@ public:
 	BOOL PlaySoundFX(CString szDesc, BOOL bAsync = TRUE);
 	BOOL PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync = TRUE);
 	BOOL PlayEquipItemSFX(CString szDesc, CString szAlternate, BOOL bAsync = TRUE);
-	void PlayWeaponSFX(int nWeaponID, int nIndex, BOOL bAsync = TRUE);
-	void PlaySpellSFX(int nSpellID);
+	void PlayWeaponSFX(int nWeaponID, int nIndex, CString szMagicWeaponName = _T(""), BOOL bAsync = TRUE);
+	void PlaySpellSFX(int nSpellID, int nRepeats);
+	int GetSpellRepeats(PSPELLSLOT pSpellSlot);
 
 
 	BOOL SaveConfirmCharacter(cDNDCharacter *pCharacter, BOOL bMultiple);

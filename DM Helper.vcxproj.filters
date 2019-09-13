@@ -225,6 +225,18 @@
     <ClCompile Include="cDMAddOnDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cDMOpenLockDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMRandomNameGeneratorDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMStrikeOrThrowDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -448,6 +460,18 @@
     <ClInclude Include="cDMAddOnDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cDMOpenLockDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMRandomNameGeneratorDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMStrikeOrThrowDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\bitmap2.bmp">
@@ -625,6 +649,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\sword_icon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\center_button.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

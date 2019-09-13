@@ -196,43 +196,6 @@ CDMHelperApp::CDMHelperApp()
 /////////////////////////////////////////////////////////////////////////////
 // The one and only CDMHelperApp object
 
-DWORD GetUniversalTime(void)
-{
-	// this function returns the current seconds since midnight (00:00:00), January 1, 1970
-	//do not mess with this function unless you are SURE what you are doing
-
-	static DWORD dwMinClock = 0L;
-
-	time_t ltime;
-
-	time( &ltime );
-
-	if((DWORD)ltime < dwMinClock)
-		return dwMinClock;
-
-	dwMinClock = (DWORD)ltime;
-
-	return (DWORD) ltime;
-
-} // end GetUniversalTime
-
-
-DWORD dwLastUniqueID = 0L;
-
-DWORD GetUniqueID(void)
-{
-	DWORD dwRetVal = GetUniversalTime();
-
-	if(dwRetVal <= dwLastUniqueID)
-	{
-		dwRetVal = dwLastUniqueID + 1;
-	}
-
-	dwLastUniqueID = dwRetVal;
-
-	return dwRetVal;
-
-}
 
 void TimeSpan(char *szLabel, DWORD *dwStartTime)
 {
@@ -516,6 +479,7 @@ BOOL CDMHelperApp::InitInstance()
 	szWhut[5] = 0;
 	*/
 
+
 	TCHAR buff[MAX_PATH];
     memset(buff, 0, MAX_PATH);
     ::GetModuleFileName(NULL,buff,sizeof(buff));    
@@ -616,6 +580,10 @@ BOOL CDMHelperApp::InitInstance()
 
 	szTemp.Format("%sData\\tables\\CustomClasses.dat", m_szEXEPath.GetBuffer(0));
 	LoadCustomClasses(szTemp.GetBuffer(0));
+
+	#if USE_DX_SOUND
+	m_pDXSound = NULL;
+	#endif
 
 
 	m_bSaveAllParties = FALSE;
@@ -855,6 +823,10 @@ int CDMHelperApp::ExitInstance()
 		free(m_pEncryptedSoundBuffer);
 		m_pEncryptedSoundBuffer = NULL;
 	}
+
+	#if USE_DX_SOUND
+	ShutDownDXSoundFX();
+	#endif
 
 	SaveSettings();
 
@@ -4088,6 +4060,54 @@ void CDMHelperApp::LoadCustomClasses(char *path)
 	}
 }
 
+#if USE_DX_SOUND
+void CDMHelperApp::InitDXSoundFX()
+{
+	m_pDXSound = new SoundClass();
+	m_pDXSound->Initialize(m_pMainWnd->m_hWnd);
+}
+
+void CDMHelperApp::ShutDownDXSoundFX()
+{
+	if (NULL == m_pDXSound)
+	{
+		return;
+	}
+
+
+	m_pDXSound->Shutdown();
+	delete m_pDXSound;
+
+	m_pDXSound = NULL;
+	
+}
+
+BOOL CDMHelperApp::PlayDXSFX(CString szWAVPath)
+{
+	if (NULL == m_pDXSound)
+	{
+		InitDXSoundFX();
+	}
+
+	if(NULL == m_pDXSound)
+	{
+		return FALSE;
+	}
+
+	if (szWAVPath == _T(""))
+	{
+		return FALSE;
+	}
+
+	return m_pDXSound->PlayDXSoundFromFile(szWAVPath);
+}
+#else
+BOOL CDMHelperApp::PlayDXSFX(CString szWAVPath)
+{
+	return TRUE;
+}
+#endif
+
 CString CDMHelperApp::Capitalize(CString szInString)
 {
 	CString szRetVal =  _T("");
@@ -5265,7 +5285,7 @@ BOOL CDMHelperApp::PlayEquipItemSFX(CString szDesc, CString szAlternate, BOOL bA
 
 }
 
-void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType, BOOL bAsync)
+void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType, CString szMagicWeaponName, BOOL bAsync)
 {
 	if(g_bUseSoundEffects == FALSE)
 		return;
@@ -5294,6 +5314,51 @@ void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType, BOOL bAsync)
 		return;
 	}
 
+	if (szMagicWeaponName != _T(""))
+	{
+		szMagicWeaponName += " HIT";
+
+		for (i = 0; i < MAX_SOUNDBOARD_PAGES; ++i)
+		{
+			for (int j = 0; j < SOUNDBOARD_SOUNDS_PER_PAGE; ++j)
+			{
+				if (m_Settings.m_SoundFX[i][j].m_szDesc[0])
+				{
+					CString szDesc = m_Settings.m_SoundFX[i][j].m_szDesc;
+					szDesc.MakeUpper();
+
+					CString szWeapon = szMagicWeaponName;
+					szWeapon.MakeUpper();
+
+					if (szDesc == szWeapon)
+					{
+						CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
+
+						szPath.MakeUpper();
+
+						int nFindRandom = szPath.Find("RANDOM_");
+						if (nFindRandom > 0)
+						{
+							CString szNum = szPath.Mid(nFindRandom + 7, 2);
+
+							int nNumFiles = atoi(szNum.GetBuffer(0));
+
+							int nFile = rand() % nNumFiles;
+
+							szNum.Format("_%02d.", nFile);
+
+							szPath.Replace("_00.", szNum);
+						}
+
+						szPath.Replace("<$DMAPATH>", m_szEXEPath);
+						PlayDXSFX(szPath);
+						break;
+					}
+				}
+			}
+		}
+	}
+
 	for(i = 0; i < MAX_SOUNDBOARD_PAGES; ++ i)
 	{
 		for(int j = 0; j < SOUNDBOARD_SOUNDS_PER_PAGE; ++j)
@@ -5306,21 +5371,40 @@ void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType, BOOL bAsync)
 				CString szWeapon = m_Settings.m_WeaponSFX[nSoundIndex][nSoundType].m_szDesc;
 				szWeapon.MakeUpper();
 
-				//if(strcmp(m_Settings.m_SoundFX[i][j].m_szDesc, m_Settings.m_WeaponSFX[nSoundIndex][nSoundType].m_szDesc) == 0)
-				//if (_strcmpi(m_Settings.m_SoundFX[i][j].m_szDesc, m_Settings.m_WeaponSFX[nSoundIndex][nSoundType].m_szDesc) == 0)
 				if(szDesc == szWeapon)
 				{
 					CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 					szPath.Replace("<$DMAPATH>", m_szEXEPath);
 					PlaySoundFXFromFile(szPath, bAsync);
-					return;
+					break;
 				}
 			}
 		}
 	}
+
 }
 
-void CDMHelperApp::PlaySpellSFX(int nSpellID)
+int CDMHelperApp::GetSpellRepeats(PSPELLSLOT pSpellSlot)
+{
+	int nRepeats = 1;
+
+	CString szSpellName = pSpellSlot->m_pSpell->m_szSpellName;
+	szSpellName.MakeUpper();
+
+	if (szSpellName == "MAGIC MISSILE")
+	{
+		nRepeats = (pSpellSlot->m_nCastLevel / 2) + 1;
+
+		if (pSpellSlot->m_bCastFromDevice)
+		{
+			nRepeats = 2;
+		}
+	}
+
+	return nRepeats;
+}
+
+void CDMHelperApp::PlaySpellSFX(int nSpellID, int nRepeats)
 {
 
 	if(g_bUseSoundEffects == FALSE)
@@ -5353,7 +5437,15 @@ void CDMHelperApp::PlaySpellSFX(int nSpellID)
 				{
 					CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 					szPath.Replace("<$DMAPATH>", m_szEXEPath);
-					PlaySoundFXFromFile(szPath);
+
+					for (int k = 0; k < nRepeats; ++k)
+					{
+						PlaySoundFXFromFile(szPath);
+						if (nRepeats)
+						{
+							Sleep(250);
+						}
+					}
 					return;
 				}
 			}
@@ -6698,7 +6790,7 @@ BOOL CDMHelperApp::AddItemToInventoryByName(cDNDNonPlayerCharacter *pNPC, char *
 				szCompare.MakeLower();
 				szCompare.Replace(" ", "");
 
-				//if(szCompare.Find("mace") >= 0)
+				//if(szCompare.Find("leather") >= 0)
 				//{
 				//	TRACE("schlager!\n");
 				//}

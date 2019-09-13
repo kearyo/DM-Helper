@@ -390,7 +390,7 @@ void CDMScrollDetailsDialog::OnBnClickedCastButton()
 
 		if(bCast)
 		{
-			m_pApp->PlaySpellSFX(m_nSelectedSpellIndex-1);
+			m_pApp->PlaySpellSFX(m_nSelectedSpellIndex-1, 1);
 		}
 
 		m_pParentWindow->m_pSelectedInventorySlot->m_bEnchanted = FALSE;

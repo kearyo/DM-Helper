@@ -22,6 +22,7 @@
 #include "DMEventLoggerDialog.h"
 #include "DMInitiativeDialog.h"
 #include "DMRandomEncounterDialog.h"
+#include "cDMOpenLockDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -209,6 +210,8 @@ void DMPartyDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_PARTY_NAME_STATIC, m_szPartyNameStatic);
 	DDX_Control(pDX, IDC_SEGMENT_EDIT, m_cSegmentEdit);
 	DDX_Control(pDX, IDC_ROUND_EDIT, m_cRoundEdit);
+	DDX_Control(pDX, IDC_PICK_LOCK_BUTTON, m_cPickLockButton);
+	DDX_Control(pDX, IDC_RECOVER_AMMO_BUTTON, m_cRecoverAmmoButton);
 }
 
 
@@ -272,6 +275,8 @@ BEGIN_MESSAGE_MAP(DMPartyDialog, CDialog)
 	ON_MESSAGE(DND_WM_MESSAGE, OnDNDMessage)
 	ON_BN_CLICKED(IDC_STAT_BLOCK_BUTTON, &DMPartyDialog::OnBnClickedStatBlockButton)
 	ON_BN_CLICKED(IDC_STAT_BLOCK_BUTTON2, &DMPartyDialog::OnBnClickedStatBlockButton2)
+	ON_BN_CLICKED(IDC_PICK_LOCK_BUTTON, &DMPartyDialog::OnBnClickedPickLockButton)
+	ON_BN_CLICKED(IDC_RECOVER_AMMO_BUTTON, &DMPartyDialog::OnBnClickedRecoverAmmoButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -558,6 +563,7 @@ void DMPartyDialog::UpdateSelections()
 				pCharDlg->m_nDayofMonth = m_pParty->m_nDayofMonth;
 				pCharDlg->m_nMonth = m_pParty->m_nMonth;
 				pCharDlg->m_nYear = m_pParty->m_nYear;
+
 			}
 
 			if(pChar == NULL)
@@ -825,6 +831,9 @@ void DMPartyDialog::UpdateSelections()
 	BOOL bIsSpellCaster = FALSE;
 	BOOL bHasBreathWeapon = FALSE;
 
+	m_cPickLockButton.ShowWindow(SW_HIDE);
+	m_cRecoverAmmoButton.ShowWindow(SW_HIDE);
+
 	//crash here next line
 	if(m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
 	{
@@ -849,6 +858,19 @@ void DMPartyDialog::UpdateSelections()
 				bEnableMeleeWeapon = TRUE;
 			}
 			
+		}
+
+		float fThiefSkillMatrix[8];
+		GetThiefSkills(m_pSelectedCharacterDialog->m_pCharacter, fThiefSkillMatrix);
+
+		if (fThiefSkillMatrix[2] > 0.0f)
+		{
+			m_cPickLockButton.ShowWindow(SW_SHOW);
+		}
+
+		if (m_pSelectedCharacterDialog->m_RecoverAmmoInventory[0].m_wTypeId != 0)
+		{
+			m_cRecoverAmmoButton.ShowWindow(SW_SHOW);
 		}
 	}
 
@@ -3490,6 +3512,10 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 	int nWeapon = 0;
 	int nDamage = 0;
 	int nMaxDamage = 0;
+	int nMagicAdj = 0;
+	CString szMagicWeaponName = _T("");
+
+	//snicker
 
 	CString szAttackerName = _T("");
 	CString szTargetName = _T("");
@@ -3510,9 +3536,23 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 	{
 		szAttackerName = pAttackingCharacterDialog->m_pCharacter->m_szCharacterName;
 
-		pAttackingCharacterDialog->FireAmmo();
+		pAttackingCharacterDialog->FireAmmo(TRUE);
 
 		nWeapon = pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+		nMagicAdj = pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_nMagicAdj;
+
+		if (nMagicAdj)
+		{
+			//Get the weapon name so we can play a magic sound effect for it if necessary
+			for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
+			{
+				if (pAttackingCharacterDialog->m_pCharacter->m_Inventory[i].m_dwObjectID == pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_dwObjectID &&  pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_dwObjectID != 0)
+				{
+					szMagicWeaponName = pAttackingCharacterDialog->m_pCharacter->m_Inventory[i].m_szType;
+					break;
+				}
+			}
+		}
 
 		if (nWeapon == 0)
 		{
@@ -3633,11 +3673,11 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 	
 	if (bCriticalHit)
 	{
-		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_CRITICAL_HIT, FALSE);
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_CRITICAL_HIT, szMagicWeaponName, FALSE);
 	}
 	else
 	{
-		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT, FALSE);
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT, szMagicWeaponName, FALSE);
 	}
 
 	if (nDamage == 0)
@@ -3680,7 +3720,7 @@ void DMPartyDialog::InitiativeMissileAttack(CDMCharViewDialog *pAttackingCharact
 
 	if (pAttackingCharacterDialog != NULL)
 	{
-		pAttackingCharacterDialog->FireAmmo();
+		pAttackingCharacterDialog->FireAmmo(FALSE);
 
 		nWeapon = pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
 
@@ -3743,7 +3783,7 @@ void DMPartyDialog::InitiativeMissileAttack(CDMCharViewDialog *pAttackingCharact
 		}
 	}
 
-	m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_MISSILE_HIT, FALSE);
+	m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_MISSILE_HIT, "", FALSE);
 
 	InitiativeWound(nDamage, pTargetCharacterDialog, pTargetNPCDialog, bGrantXP);
 }
@@ -3856,12 +3896,28 @@ void DMPartyDialog::OnAttackHitButton()
 		m_pBaseCharDlg->m_pTargetBaseDlg = m_pBaseOpposingCharDlg;
 	}
 
-
 	if (m_pSelectedCharacterDialog != NULL)
 	{
-		m_pSelectedCharacterDialog->FireAmmo();
+		//m_pSelectedCharacterDialog->FireAmmo(TRUE);  NO NOT HERE
 
 		int nWeapon = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+		int nMagicAdj = 0;
+		CString szMagicWeaponName = _T("");
+
+		nMagicAdj = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_nMagicAdj;
+
+		if (nMagicAdj)
+		{
+			//Get the weapon name so we can play a magic sound effect for it if necessary
+			for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
+			{
+				if (m_pSelectedCharacterDialog->m_pCharacter->m_Inventory[i].m_dwObjectID == m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_dwObjectID &&  m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_dwObjectID != 0)
+				{
+					szMagicWeaponName = m_pSelectedCharacterDialog->m_pCharacter->m_Inventory[i].m_szType;
+					break;
+				}
+			}
+		}
 
 		if (nWeapon == 0)
 		{
@@ -3892,7 +3948,7 @@ void DMPartyDialog::OnAttackHitButton()
 
 		m_pApp->PlaySoundFX("Whiff", FALSE);
 
-		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT);
+		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT, szMagicWeaponName);
 
 		OnWoundButton2();
 
@@ -3900,7 +3956,6 @@ void DMPartyDialog::OnAttackHitButton()
 
 	if (m_pSelectedNPCDialog != NULL)
 	{
-		// here Keary
 		if (m_pApp->m_dwInitiativeCurrentAttackerID != m_pSelectedNPCDialog->m_pNPC->m_dwCharacterID)
 		{
 			m_pApp->m_nInitiativeCurrentAttackNumber = 0;
@@ -3949,7 +4004,7 @@ void DMPartyDialog::OnAttackMissButton()
 
 	if(m_pSelectedCharacterDialog != NULL)
 	{
-		m_pSelectedCharacterDialog->FireAmmo();
+		//m_pSelectedCharacterDialog->FireAmmo(TRUE);  NO NOT HERE
 
 		int nWeapon = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
 
@@ -4029,7 +4084,7 @@ void DMPartyDialog::OnMissileHitButton()
 
 	if(m_pSelectedCharacterDialog != NULL)
 	{
-		m_pSelectedCharacterDialog->FireAmmo();
+		m_pSelectedCharacterDialog->FireAmmo(FALSE);
 
 		int nWeapon = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
 
@@ -4078,9 +4133,9 @@ void DMPartyDialog::OnMissileMissButton()
 
 	if(m_pSelectedCharacterDialog != NULL)
 	{
-		m_pSelectedCharacterDialog->FireAmmo();
-
 		int nWeapon = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+
+		m_pSelectedCharacterDialog->FireAmmo(FALSE);
 
 		if(m_pInitiativeDialog != NULL)
 		{
@@ -4306,9 +4361,28 @@ void DMPartyDialog::OnAttackHitButton2()
 
 	if(m_pOpposingCharacterDialog != NULL)
 	{
-		m_pOpposingCharacterDialog->FireAmmo();
+		//m_pOpposingCharacterDialog->FireAmmo(TRUE);  NO NOT HERE
 
 		int nWeapon = m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+		//snicker
+
+		int nMagicAdj = 0;
+		CString szMagicWeaponName = _T("");
+
+		nMagicAdj = m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_nMagicAdj;
+
+		if (nMagicAdj)
+		{
+			//Get the weapon name so we can play a magic sound effect for it if necessary
+			for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
+			{
+				if (m_pOpposingCharacterDialog->m_pCharacter->m_Inventory[i].m_dwObjectID == m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_dwObjectID &&  m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_dwObjectID != 0)
+				{
+					szMagicWeaponName = m_pOpposingCharacterDialog->m_pCharacter->m_Inventory[i].m_szType;
+					break;
+				}
+			}
+		}
 
 		if(nWeapon == 0)
 		{
@@ -4339,7 +4413,7 @@ void DMPartyDialog::OnAttackHitButton2()
 
 		m_pApp->PlaySoundFX("Whiff", FALSE);
 
-		m_pApp->PlayWeaponSFX(nWeapon, 0);
+		m_pApp->PlayWeaponSFX(nWeapon, 0, szMagicWeaponName);
 
 		OnWoundButton();
 	}
@@ -4395,7 +4469,7 @@ void DMPartyDialog::OnAttackMissButton2()
 
 	if(m_pOpposingCharacterDialog != NULL)
 	{
-		m_pOpposingCharacterDialog->FireAmmo();
+		m_pOpposingCharacterDialog->FireAmmo(TRUE);
 
 		int nWeapon = m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
 
@@ -4476,7 +4550,7 @@ void DMPartyDialog::OnMissileHitButton2()
 
 	if(m_pOpposingCharacterDialog != NULL)
 	{
-		m_pOpposingCharacterDialog->FireAmmo();
+		m_pOpposingCharacterDialog->FireAmmo(FALSE);
 
 		int nWeapon = m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
 
@@ -4525,9 +4599,9 @@ void DMPartyDialog::OnMissileMissButton2()
 
 	if(m_pOpposingCharacterDialog != NULL)
 	{
-		m_pOpposingCharacterDialog->FireAmmo();
-
 		int nWeapon = m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+
+		m_pOpposingCharacterDialog->FireAmmo(FALSE);
 
 		if(m_pInitiativeDialog != NULL)
 		{
@@ -5090,7 +5164,10 @@ void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_
 		pPartyLog->m_LogHeader.m_nEvents = 2047;
 		nPosition = APPEND_TO_LOG;
 		nType = DND_LOG_EVENT_TYPE_MISC;
-		strcpy(szComment, "LOG IS FULL !");
+		if (szComment != NULL)
+		{
+			strcpy(szComment, "LOG IS FULL !");
+		}
 	}
 
 	int nLogEvent = pPartyLog->m_LogHeader.m_nEvents;
@@ -5207,7 +5284,10 @@ void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_
 				m_pParty->m_lXP += lAmount;
 			}
 
-			Refresh();
+			if (m_hWnd != NULL)
+			{
+				Refresh();
+			}
 
 			m_pParty->MarkChanged();
 
@@ -5230,7 +5310,10 @@ void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_
 		pPartyLog = NULL;
 	}
 
-	Refresh();
+	if (m_hWnd != NULL)
+	{
+		Refresh();
+	}
 }
 
 void  DMPartyDialog::GrantXPBonusToSelectedCharacter(int nXP)
@@ -5363,12 +5446,12 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 	//if((m_pSelectedCharacterDialog != NULL || m_pSelectedNPCDialog != NULL) && (m_pOpposingCharacterDialog != NULL || m_pOpposingNPCDialog != NULL))
 	CDMBaseCharViewDialog *pKillerDlg = NULL;
 
-	if(m_pSelectedCharacterDialog != NULL)
+	if (m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
 	{
 		szKiller = m_pSelectedCharacterDialog->m_pCharacter->m_szCharacterName;
 		pKillerDlg = m_pSelectedCharacterDialog;
 	}
-	else if(m_pSelectedNPCDialog != NULL)
+	else if (m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL)
 	{
 		szKiller.Format("%s (%s)", m_pSelectedNPCDialog->m_pNPC->m_szCharacterName, m_pSelectedNPCDialog->m_szMonsterName);
 		pKillerDlg = m_pSelectedNPCDialog;
@@ -5383,7 +5466,7 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 
 	CString szVictim = _T("");
 
-	if(m_pOpposingCharacterDialog != NULL)
+	if (m_pOpposingCharacterDialog != NULL && m_pOpposingCharacterDialog->m_pCharacter != NULL)
 	{
 		szVictim.Format("%s killed %s", szKiller, m_pOpposingCharacterDialog->m_pCharacter->m_szCharacterName);
 		lXP = (LONG)m_pOpposingCharacterDialog->m_nCalculatedXPValue;
@@ -5393,7 +5476,7 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 			m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage = m_pOpposingCharacterDialog->m_pCharacter->m_nHitPoints;
 		}
 	}
-	else if(m_pOpposingNPCDialog != NULL)
+	else if (m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL)
 	{
 		szVictim.Format("%s killed %s (%s)", szKiller, m_pOpposingNPCDialog->m_pNPC->m_szCharacterName, m_pOpposingNPCDialog->m_szMonsterName);
 		lXP = (LONG)m_pOpposingNPCDialog->m_pNPC->m_nNPCXPValue;
@@ -6008,4 +6091,21 @@ void DMPartyDialog::GenerateStatBlock(cDNDParty *pParty)
 }
 
 
+void DMPartyDialog::OnBnClickedPickLockButton()
+{
+	if (m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
+	{
+		cDMOpenLockDialog *pDlg = new cDMOpenLockDialog(m_pSelectedCharacterDialog->m_pCharacter);
+		pDlg->DoModal();
+	}
+}
 
+
+void DMPartyDialog::OnBnClickedRecoverAmmoButton()
+{
+	if (m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
+	{
+		m_pSelectedCharacterDialog->ExternalRecoverAmmo();
+		Refresh();
+	}
+}

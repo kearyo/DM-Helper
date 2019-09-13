@@ -133,6 +133,8 @@ int _MapControlStater[][2] =
 	IDC_RAIN_CHECK,						TRUE,
 	IDC_SNOW_CHECK,						TRUE,
 
+	IDC_25MM_BUTTON,					TRUE,
+
 	-1,									TRUE
 };
 
@@ -187,6 +189,7 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	m_bMouseDrag = FALSE;
 
 	m_bCatchMe = FALSE;
+	m_bUpdateDetachedScale = FALSE;
 
 	m_pUpdateRect = NULL;
 
@@ -319,6 +322,8 @@ void cDMMapViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SNOW_CHECK, m_cSnowCheck);
 	DDX_Check(pDX, IDC_SNOW_CHECK, m_bSnowCheck);
 	DDX_Check(pDX, IDC_SEL_PARTY_CHECK, m_bShowSelectedPartyCheck);
+	DDX_Control(pDX, IDC_CENTER_BUTTON, m_cCenterButton);
+	DDX_Control(pDX, IDC_25MM_BUTTON, m_c25mmButton);
 }
 
 
@@ -392,6 +397,9 @@ BEGIN_MESSAGE_MAP(cDMMapViewDialog, CDialog)
 	ON_BN_CLICKED(IDC_SNOW_CHECK, &cDMMapViewDialog::OnBnClickedSnowCheck)
 	ON_WM_MOVE()
 	ON_BN_CLICKED(IDC_PARTY_CHARACTERS_BUTTON, &cDMMapViewDialog::OnBnClickedPartyCharactersButton)
+	ON_BN_CLICKED(IDC_CENTER_BUTTON, &cDMMapViewDialog::OnBnClickedCenterButton)
+	ON_BN_CLICKED(IDC_25MM_BUTTON, &cDMMapViewDialog::OnBnClicked25mmButton)
+	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, OnDirtyWindow)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -472,6 +480,8 @@ BOOL cDMMapViewDialog::OnInitDialog()
 
 	m_pFogOfWarBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_FOG_OF_WAR_BITMAP);
 	m_pSFXButtonBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_SFX_BUTTON_BITMAP);
+
+	m_cCenterButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_CENTER_BUTTON_BITMAP))));
 
 	if (m_pDNDMap->m_szMapName[0] == 0 && m_pDNDMap->m_szLoadedFilename[0] == 0)
 	{
@@ -667,6 +677,15 @@ void cDMMapViewDialog::OnPaint()
 		//m_cFlipDisplayButton.MoveWindow(rect.left+10, rect.bottom - 65, rect.left+80, 20, TRUE);
 		//m_cDetachButton.MoveWindow(rect.left+10, rect.bottom - 90, rect.left+80, 20, TRUE);
 		m_cDetachButton.MoveWindow(rect.left + 10, rect.bottom - 65, rect.left + 80, 20, TRUE);
+
+		if (m_bDetachedWindow == FALSE)
+		{
+			m_cCenterButton.MoveWindow(rect.right - 36, rect.bottom - 65, 30, 20, TRUE);
+		}
+		else
+		{
+			m_cCenterButton.MoveWindow(rect.left + 10, rect.bottom - 65, 30, 20, TRUE);
+		}
 		
 		m_cTravelButton.MoveWindow(rect.right-153, rect.top+2, 150, 35, TRUE);
 		m_cTravelMountedButton.MoveWindow(rect.right-153, rect.top+45, 150, 35, TRUE);
@@ -1617,6 +1636,12 @@ void cDMMapViewDialog::OnPaint()
 	ProcessMapModes();
 
 	m_bMapPaint = FALSE;
+
+	if (m_bCatchMe)
+	{
+		TRACE("CAUGHT ME !\n");
+		//m_bCatchMe = FALSE;
+	}
 
 	TimeSpan("END MAP PAINT", &dwStartPaintTime);
 
@@ -3443,6 +3468,12 @@ void cDMMapViewDialog::UpdateDetachedMaps()
 
 void cDMMapViewDialog::SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2, BOOL bSyncSFX)
 {
+
+	if (pMapDlg1->m_bUpdateDetachedScale)
+	{
+		pMapDlg2->m_fViewScale = pMapDlg1->m_fViewScale;
+	}
+
 	pMapDlg1->m_pDNDMap->m_nFogOfWarFlag = (pMapDlg1->m_pDNDMap->m_nFogOfWarFlag + 1) % 32000;
 
 	pMapDlg2->m_pDNDMap->m_nFogOfWarFlag = pMapDlg1->m_pDNDMap->m_nFogOfWarFlag;
@@ -6600,12 +6631,119 @@ void cDMMapViewDialog::OnBnClickedDetachButton()
 
 	m_cDetachButton.ShowWindow(SW_HIDE);
 
+	OnHideButton();
+
 	PostMessage(WM_SYSCOMMAND, SC_RESTORE, 0);
 
 	UpdateData(FALSE);
 
 }
 
+void cDMMapViewDialog::OnBnClickedCenterButton()
+{
+	float fCenterX = (m_pDNDMap->m_nPixelSizeX * m_pDNDMap->m_nColumns) / 2;
+	float fCenterY = (m_pDNDMap->m_nPixelSizeY * m_pDNDMap->m_nRows) / 2;
+
+	CRect Rect;
+	GetWindowRect(Rect);
+
+	int nSizeX = Rect.right - Rect.left;
+	int nSizeY = Rect.bottom - Rect.top;
+
+	nSizeX /= 2;
+	nSizeY /= 2;
+
+	float fX = 0.0f;
+	float fY = 0.0f;
+
+	if (m_pDNDMap->m_bMapScaleFeet)
+	{
+		//feet to pixels
+		fX = (fCenterX)  * m_fViewScale;
+		fY = (fCenterY)  * m_fViewScale;
+	}
+	else
+	{
+		//miles to pixels
+		fX = (fCenterX - m_pDNDMap->m_fParentMapOriginX) * m_fViewScale;
+		fY = (fCenterY - m_pDNDMap->m_fParentMapOriginY) * m_fViewScale;
+	}
+
+	m_nCornerX = (int)(nSizeX - fX);
+	m_nCornerY = (int)(nSizeY - fY);
+
+
+	InvalidateRect(NULL);
+}
+
+void cDMMapViewDialog::OnBnClicked25mmButton()
+{
+	HDC hdc = ::GetDC(m_hWnd);
+	float fDPIScaleX = GetDeviceCaps(hdc, LOGPIXELSX);
+	float fDPIScaleY = GetDeviceCaps(hdc, LOGPIXELSY);
+	::ReleaseDC(m_hWnd, hdc);
+
+	// 72 pixels to monitor inch =  6 feet = 72 pixels ?
+
+	float fOldScale = m_fViewScale;
+
+	CRect Rect;
+	GetWindowRect(Rect);
+
+	int nSizeX = Rect.right - Rect.left;
+	int nSizeY = Rect.bottom - Rect.top;
+
+	nSizeX /= 2;
+	nSizeY /= 2;
+
+	float fX = 0.0f;
+	float fY = 0.0f;
+
+	//BOOKMARK
+	if (m_pDNDMap->m_bMapScaleFeet)
+	{
+		float fDPMISetting = (float)m_pApp->m_Settings.m_nMonitorDPMIFactor;
+		fDPMISetting = fDPMISetting / fDPIScaleX;
+
+		m_fViewScale = 13.333f * fDPMISetting * m_pDNDMap->m_fScaleX;
+
+		//spot we are looking at before the scale changed
+		float fCX = (-m_nCornerX + nSizeX) * m_pDNDMap->m_fScaleX / fOldScale;
+		float fCY = (-m_nCornerY + nSizeY) * m_pDNDMap->m_fScaleY / fOldScale;
+
+		//feet to pixels
+		fX = fCX / m_pDNDMap->m_fScaleX * m_fViewScale;
+		fY = fCY / m_pDNDMap->m_fScaleY * m_fViewScale;
+	}
+	else
+	{
+		m_fViewScale = 512.0f * m_pDNDMap->m_fScaleX;  // 512.0f is a complete WAG
+
+		//spot we are looking at before the scale changed
+		//float fCX = (-m_nCornerX - m_pDNDMap->m_fParentMapOriginX + nSizeX) * m_pDNDMap->m_fScaleX / fOldScale;
+		//float fCY = (-m_nCornerY - m_pDNDMap->m_fParentMapOriginY + nSizeY) * m_pDNDMap->m_fScaleY / fOldScale;
+
+		//pixels to miles
+		float fCX = (-m_nCornerX + nSizeX) * m_pDNDMap->m_fScaleX / fOldScale;
+		fCX += m_pDNDMap->m_fParentMapOriginX;
+
+		//pixels to miles
+		float fCY = (-m_nCornerY + nSizeY) * m_pDNDMap->m_fScaleY / fOldScale;
+		fCY += m_pDNDMap->m_fParentMapOriginY;
+
+		//miles to pixels
+		fX = (fCX - m_pDNDMap->m_fParentMapOriginX) / m_pDNDMap->m_fScaleX * m_fViewScale;
+		fY = (fCY - m_pDNDMap->m_fParentMapOriginY) / m_pDNDMap->m_fScaleY * m_fViewScale;
+	}
+
+	m_nCornerX = (int)(nSizeX - fX);
+	m_nCornerY = (int)(nSizeY - fY);
+
+	m_bUpdateDetachedScale = TRUE;
+	UpdateDetachedMaps();
+	m_bUpdateDetachedScale = FALSE;
+
+}
 
 BOOL cDMMapViewDialog::GetMonitorInfo(int nDeviceIndex, LPSTR lpszMonitorInfo)
 {
@@ -7048,6 +7186,30 @@ void cDMMapViewDialog::OnMove(int x, int y)
 	PositionWeatherWindow();
 }
 
+LRESULT cDMMapViewDialog::OnDirtyWindow(UINT wParam, LONG lParam)
+{
+	//fixup light sources
+	for (int i = 0; i < m_nMapCharacters; ++i)
+	{
+		if (m_CharacterHotSpots[i].m_dwCharacterID)
+		{
+			PDNDCHARVIEWDLG pCharDlg = NULL;
+			if (m_pApp->m_CharacterViewMap.Lookup(m_CharacterHotSpots[i].m_dwCharacterID, pCharDlg) && pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+			{
+				m_CharacterHotSpots[i].m_nLightRange = pCharDlg->m_pCharacter->m_nLightSourceRange / m_pDNDMap->m_fScaleX * m_fViewScale * 2.0f;
+			}
+		}
+	}
+	
+	InvalidateRect(NULL);
+
+	//m_bDetachedWindow;
+	//m_pApp->PlaySoundFX("FART");
+
+	return 0;
+}
+
+
 BOOL cDMMapViewDialog::MapHasDetachedChildren()
 {
 	for (POSITION pos = m_pApp->m_DetachedMapViewMap.GetStartPosition(); pos != NULL;)
@@ -7064,6 +7226,10 @@ BOOL cDMMapViewDialog::MapHasDetachedChildren()
 
 	return FALSE;
 }
+
+
+
+
 
 
 

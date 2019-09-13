@@ -207,6 +207,9 @@ public:
 	afx_msg void OnDmlibraryFromfile();
 	afx_msg void OnCustomizationsCustomclasseditor();
 	afx_msg void OnHelpCheckforadd();
+	CString m_szMonitorDPMIEdit;
+	afx_msg void OnEnChangeMonitorDpmiEdit();
+	afx_msg void OnRandomsRandomnamegenerator();
 };
 
 //{{AFX_INSERT_LOCATION}}
