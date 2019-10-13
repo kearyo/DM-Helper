@@ -22,6 +22,9 @@ cDMMapSFXDialog::cDMMapSFXDialog(CWnd* pParent, int nSFXIndex, int nX, int nY, f
 	, m_szSFXName(_T(""))
 	, m_szSFXGFXFileName(_T(""))
 	, m_bCycleGIF(FALSE)
+	, m_bColorKeyed(FALSE)
+	, m_bTranslucent(FALSE)
+	, m_szAlpha(_T("0.70"))
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();
 
@@ -49,6 +52,13 @@ void cDMMapSFXDialog::DoDataExchange(CDataExchange* pDX)
 	DDV_MaxChars(pDX, m_szSFXGFXFileName, 255);
 	DDX_Control(pDX, IDC_SOUND_FX_COMBO, m_cSFXList);
 	DDX_Check(pDX, IDC_SFX_CYCLE_CHECK, m_bCycleGIF);
+	DDX_Control(pDX, ID_UP, m_cUpButton);
+	DDX_Control(pDX, ID_DOWN, m_cDownButton);
+	DDX_Control(pDX, ID_LEFT, m_cLeftButton);
+	DDX_Control(pDX, ID_RIGHT, m_cRightButton);
+	DDX_Check(pDX, IDC_SFX_COLOR_KEYED_CHECK, m_bColorKeyed);
+	DDX_Check(pDX, IDC_SFX_TRANSLUCENT_CHECK, m_bTranslucent);
+	DDX_Text(pDX, IDC_ALPHA_EDIT, m_szAlpha);
 }
 
 
@@ -69,6 +79,9 @@ BEGIN_MESSAGE_MAP(cDMMapSFXDialog, CDialog)
 	ON_BN_CLICKED(ID_SCALE_DOWN, &cDMMapSFXDialog::OnBnClickedScaleDown)
 	ON_BN_CLICKED(ID_SCALE_UP, &cDMMapSFXDialog::OnBnClickedScaleUp)
 	ON_BN_CLICKED(IDC_SFX_CYCLE_CHECK, &cDMMapSFXDialog::OnBnClickedSfxCycleCheck)
+	ON_BN_CLICKED(IDC_SFX_COLOR_KEYED_CHECK, &cDMMapSFXDialog::OnBnClickedSfxColorKeyedCheck)
+	ON_BN_CLICKED(IDC_SFX_TRANSLUCENT_CHECK, &cDMMapSFXDialog::OnBnClickedSfxTranslucentCheck)
+	ON_EN_CHANGE(IDC_ALPHA_EDIT, &cDMMapSFXDialog::OnEnChangeAlphaEdit)
 END_MESSAGE_MAP()
 
 
@@ -78,6 +91,11 @@ END_MESSAGE_MAP()
 BOOL cDMMapSFXDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+
+	m_cUpButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_EXPAND_UP_BITMAP))));
+	m_cDownButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_EXPAND_DOWN_BITMAP))));
+	m_cLeftButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_LEFT_ICON_BITMAP))));
+	m_cRightButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_RIGHT_ICON_BITMAP))));
 
 	if (m_nSFXIndex == -1)
 	{
@@ -126,6 +144,15 @@ BOOL cDMMapSFXDialog::OnInitDialog()
 	}
 
 	m_bCycleGIF = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bCycle;
+	m_bColorKeyed = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bColorKeyed;
+	m_bTranslucent = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bTranslucent;
+	m_szAlpha.Format("%0.2f", m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha);
+
+	if (m_szAlpha == "0.0")
+	{
+		m_szAlpha = "0.7";
+		m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha = 0.7f;
+	}
 
 	UpdateData(FALSE);
 
@@ -258,7 +285,7 @@ void cDMMapSFXDialog::OnBnClickedOk()
 		m_pDNDMap->m_MapSFX[nIndex].m_nMapX = m_nMouseX;
 		m_pDNDMap->m_MapSFX[nIndex].m_nMapY = m_nMouseY;
 
-		m_pDNDMap->m_MapSFX[nIndex].m_fScale = m_fScale;
+		m_pDNDMap->m_MapSFX[nIndex].m_fSpriteScale = m_fScale;
 	}
 
 	m_pMapViewDialog->UpdateDetachedMaps();
@@ -315,14 +342,14 @@ void cDMMapSFXDialog::OnBnClickedRight()
 
 void cDMMapSFXDialog::OnBnClickedScaleDown()
 {
-	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fScale *= 1.1f;
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fSpriteScale /= 1.1f;
 	m_pMapViewDialog->InvalidateRect(NULL);
 }
 
 
 void cDMMapSFXDialog::OnBnClickedScaleUp()
 {
-	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fScale /= 1.1f;
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fSpriteScale *= 1.1f;
 	m_pMapViewDialog->InvalidateRect(NULL);
 }
 
@@ -332,4 +359,28 @@ void cDMMapSFXDialog::OnBnClickedSfxCycleCheck()
 	UpdateData(TRUE);
 
 	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bCycle = m_bCycleGIF;
+}
+
+
+void cDMMapSFXDialog::OnBnClickedSfxColorKeyedCheck()
+{
+	UpdateData(TRUE);
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bColorKeyed = m_bColorKeyed;
+}
+
+
+void cDMMapSFXDialog::OnBnClickedSfxTranslucentCheck()
+{
+	UpdateData(TRUE);
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bTranslucent = m_bTranslucent;
+}
+
+
+void cDMMapSFXDialog::OnEnChangeAlphaEdit()
+{
+	UpdateData(TRUE);
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha = atof(m_szAlpha.GetBuffer(0));
 }

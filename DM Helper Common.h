@@ -18,7 +18,8 @@
 #define CUSTOM_CLASSES	TRUE
 #define MAX_CUSTOM_CLASSES	12
 
-#define KEARY_BUILD	FALSE
+#define KEARY_BUILD	FALSE	
+#define GAMETABLE_BUILD TRUE
 
 #define USE_DX_SOUND	TRUE
 
@@ -242,6 +243,9 @@
 - 1.0.038	-/--/19
 	* Occasional crasher bug with party "Kill for XP" button
 	* Random name generator added to main menu under "Randoms"
+
+	* DM Update.exe updated for Mac compatibilty - MUST INCLUDE IN NEXT RELEASE !!!!  
+	* DMMacOSDaemon.exe updated for Mac compatibilty - MUST INCLUDE IN NEXT RELEASE !!!!
 
 */
 
@@ -2891,11 +2895,16 @@ public:
 	int m_nMapX;
 	int m_nMapY;
 
-	float m_fScale;
+	float m_fSpriteScale;
 
 	LPVOID m_pDataPtr;
+	BOOL m_bColorKeyed;
+	BOOL m_bTranslucent;
+	BOOL m_bInMotion;
+	int m_nCycles;
+	float m_fAlpha;
 
-	int m_nReserved[32];
+	int m_nReserved[27];
 
 	cDNDMapSFX()
 	{
@@ -2915,11 +2924,16 @@ public:
 		m_nMapX = 0;
 		m_nMapY = 0;
 
-		m_fScale = 1.0f;
+		m_fSpriteScale = 1.0f;
 
 		m_pDataPtr = NULL;
+		m_bColorKeyed = FALSE;
+		m_bTranslucent = FALSE;
+		m_bInMotion = FALSE;
+		m_nCycles = 0;
+		m_fAlpha = 0.7f;
 
-		memset(m_nReserved, 0, 32 * sizeof(int));
+		memset(m_nReserved, 0, 27 * sizeof(int));
 	}
 
 	~cDNDMapSFX()
@@ -2927,7 +2941,150 @@ public:
 	}
 };
 
+class cDNDMapSFXMotionTracker
+{
+public:
+
+	float m_fPosX;
+	float m_fPosY;
+
+	float m_fOffsetPosX;
+	float m_fOffsetPosY;
+
+	float m_fMoveX;
+	float m_fMoveY;
+
+	float m_fTargetPosX;
+	float m_fTargetPosY;
+
+	float m_fSpriteOffsetX;
+	float m_fSpriteOffsetY;
+
+	float m_fDistance;
+	float m_fLastDistance;
+
+	float m_fSpeed;
+
+	int m_nFrames;
+
+	int m_nSprites;
+	int m_nMaxSprites;
+
+	DWORD m_dwFlightTime;
+
+	BOOL m_bTargetHit;
+	
+	cDNDMapSFXMotionTracker()
+	{
+		Clear();
+	}
+	~cDNDMapSFXMotionTracker()
+	{
+	}
+	void Clear()
+	{
+		m_fPosX = 0.0f;
+		m_fPosY = 0.0f;
+
+		m_fOffsetPosX = 0.0f;
+		m_fOffsetPosY = 0.0f;
+		
+		m_fMoveX = 0.0f;
+		m_fMoveY = 0.0f;
+		
+		m_fTargetPosX = 0.0f;
+		m_fTargetPosY = 0.0f;
+
+		m_fSpriteOffsetX = 0.0f;
+		m_fSpriteOffsetY = 0.0f;
+
+		m_fSpeed = 1.0f;
+
+		m_fDistance = 0;
+
+		m_nFrames = 0;
+
+		m_nSprites = 1;
+		m_nMaxSprites = 1;
+
+		m_bTargetHit = FALSE;
+	}
+
+	void Init(float fStartPosX, float fStartPosY, float fTargetPosX, float fTargetPosY, float fSpeed, int nSprites);
+	float GetTargetDistance();
+	BOOL Move(float fMapScale);
+	BOOL CheckTimer();
+
+};
+
+class cDMMapViewDialog;
+
+class cDNDInstantMapSFXPlacer
+{
+
+public:
+
+	CString m_szCharacterName;
+	DWORD m_dwCharacterID;
+	PSPELL m_pSpell;
+	BOOL m_bCastFromDevice;
+	int m_nRepeats;
+
+	cDMMapViewDialog *m_pDMMapViewDialog;
+	cDNDMapSFX *m_pDNDMapSFX;
+
+	BOOL m_bMapClicked;
+	int m_nMapX;
+	int m_nMapY;
+	float m_fMapScale;
+	float m_fScale;
+
+	BOOL m_bSFXGFXCompleted;
+
+	cDNDInstantMapSFXPlacer()
+	{
+		Init();
+	};
+
+	cDNDInstantMapSFXPlacer(CString szCharacterName, DWORD dwCharacterID, PSPELL pSpell, BOOL bCastFromDevice, int nRepeats)
+	{
+		Init();
+		m_szCharacterName = szCharacterName;
+		m_dwCharacterID = dwCharacterID;
+		m_pSpell = pSpell;
+		m_bCastFromDevice = bCastFromDevice;
+		m_nRepeats = nRepeats;
+	};
+
+	~cDNDInstantMapSFXPlacer()
+	{
+		m_pDMMapViewDialog = NULL;
+	};
+
+	void Init()
+	{
+		m_szCharacterName = _T("");
+		m_dwCharacterID = 0;
+		m_pSpell = NULL;
+		m_bCastFromDevice = FALSE;
+		m_nRepeats = 0;
+
+		m_pDMMapViewDialog = NULL;
+		m_pDNDMapSFX = NULL;
+		m_bMapClicked = FALSE;
+		m_nMapX = 0;
+		m_nMapY = 0;
+
+		m_fMapScale = 1.0f;
+		m_fScale = 1.0f;
+
+		m_bSFXGFXCompleted = TRUE;
+	};
+};
+
+
 #define MAX_MAP_CELLS	128
+
 
 class cDNDMapCell
 {

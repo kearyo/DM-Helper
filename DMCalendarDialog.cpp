@@ -93,6 +93,22 @@ BOOL CDMCalendarDialog::OnInitDialog()
 
 	m_nPickers = 0;
 
+	#if GAMETABLE_BUILD
+	for (int i = 0; i < 20; ++i)
+	{
+		m_szRealMonthNumber[i] = "-";
+	}
+	int nRealMonth = 1;
+	for (int i = 0; i < m_pCalendar->m_nMonthsInYear; ++i)
+	{
+		if (m_pCalendar->m_nDaysInMonth[i] < 28)
+			continue;
+
+		m_szRealMonthNumber[i].Format("%02d", nRealMonth);
+		++nRealMonth;
+	}
+	#endif
+
 	ShowWindow(SW_SHOW);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -227,10 +243,14 @@ void CDMCalendarDialog::OnPaint()
 //#ifdef _DEBUG
 //	szTemp.Format("%s, %d (%d)", m_pCalendar->m_szMonthNames[m_nCurrentMonth], m_nCurrentYear, nRows);
 //#else
-	szTemp.Format("%s of %d", m_pCalendar->m_szMonthNames[m_nCurrentMonth], m_nCurrentYear);
-//#endif
-
+#if GAMETABLE_BUILD
+	szTemp.Format("%s of %d (%s/%d)", m_pCalendar->m_szMonthNames[m_nCurrentMonth], m_nCurrentYear, m_szRealMonthNumber[m_nCurrentMonth], m_nCurrentYear);
 	int nLabelSize = (20 * szTemp.GetLength()) / 2;
+#else
+	szTemp.Format("%s of %d", m_pCalendar->m_szMonthNames[m_nCurrentMonth], m_nCurrentYear);
+	int nLabelSize = (20 * szTemp.GetLength()) / 2;
+#endif
+//#endif
 
 	//DrawCalendarText(szTemp.GetBuffer(0), 40, 15, &dc);
 	DrawCalendarText(szTemp.GetBuffer(0), abs(nCenterX - nLabelSize), 15, &dc);
@@ -507,7 +527,7 @@ void CDMCalendarDialog::DrawCalendarText(char * szData, int x, int y, CDC *memdc
 	
 	rect.left = x;
 	rect.top = y;
-	rect.right = rect.left + 500;
+	rect.right = rect.left + 700;
 	rect.bottom = rect.top + 500;
 
 	rect.left = x;

@@ -80,7 +80,7 @@ BEGIN
     CTEXT           "DM Helper Version 1.0",IDC_VERSION_STATIC,7,16,221,8,SS_NOPREFIX
     ICON            IDR_MAINFRAME,IDC_STATIC,11,11,20,20
     LTEXT           "Advanced Dungeons and Dragons Campaign Manager",IDC_STATIC,36,38,174,8
-    LTEXT           "Copyright (C) 2015",IDC_STATIC,88,95,59,8
+    LTEXT           "Copyright (C) 2019",IDC_STATIC,88,95,59,8
     DEFPUSHBUTTON   "OK",IDOK,183,97,50,14,NOT WS_VISIBLE | WS_DISABLED | WS_GROUP
     LTEXT           "Greyhawk maps by Anna B. Meyer - www.ghmaps.net",IDC_STATIC,31,62,174,8
     LTEXT           "Used by permission",IDC_STATIC,87,72,62,8
@@ -107,7 +107,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,242,162,120,10
     CONTROL         "Re-Roll Hit Points < 1/2 on hitdie",IDC_HIT_POINTS_REROLL_HALF_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,242,173,118,10
-    LTEXT           "(c) 2015 CT Software LLC",IDC_CW_STATIC,87,322,77,8
+    LTEXT           "(c) 2019 CT Software LLC",IDC_CW_STATIC,87,322,77,8
     CONTROL         "Tab1",IDC_MAIN_TAB,"SysTabControl32",TCS_OWNERDRAWFIXED,0,0,365,13
     EDITTEXT        IDC_ENC_FACTOR_EDIT,242,224,21,13,ES_AUTOHSCROLL
     LTEXT           "g.p. = 1 l.b. encumberence",IDC_GP_STATIC,266,228,98,8
@@ -1167,7 +1167,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,149,122,50,14
-    LTEXT           "(c) 2015 CT Software",IDC_STATIC,64,113,70,8
+    LTEXT           "(c) 2019 CT Software",IDC_STATIC,64,113,70,8
     LTEXT           "Dungeon Maestro This Dialog is Unused",IDC_STATIC,47,11,126,8
     LTEXT           "Version 1.0.000",IDC_VERSION_STATIC,73,95,57,8
     LTEXT           "Greyhawk maps by Anna B. Meyer - www.ghmaps.net",IDC_STATIC,13,56,174,8
@@ -1872,7 +1872,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,253,156,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,6,156,50,14
     EDITTEXT        IDC_EFFECT_NAME_EDIT,8,16,81,13,ES_AUTOHSCROLL
-    CONTROL         "Cycle (GIF only)",IDC_SFX_CYCLE_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,90,107,11
+    CONTROL         "Cycle (GIF only)",IDC_SFX_CYCLE_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,90,66,11
     LTEXT           "Effect Name:",IDC_STATIC,9,7,61,8
     EDITTEXT        IDC_EFFECT_GFX_EDIT,8,43,263,13,ES_AUTOHSCROLL
     LTEXT           "Effect GFX:",IDC_STATIC,10,33,61,8
@@ -1880,14 +1880,19 @@ BEGIN
     PUSHBUTTON      "Delete",IDDELETE,129,156,50,14
     PUSHBUTTON      "Reposition",IDREPOSITION,169,15,50,14,NOT WS_VISIBLE
     PUSHBUTTON      "Preview",IDPREVIEW,108,15,50,14,NOT WS_VISIBLE
-    PUSHBUTTON      "UP",ID_UP,142,97,26,14
-    PUSHBUTTON      "DN",ID_DOWN,142,127,26,14
-    PUSHBUTTON      "LFT",ID_LEFT,113,113,26,14
-    PUSHBUTTON      "RGT",ID_RIGHT,169,113,26,14
+    PUSHBUTTON      "UP",ID_UP,142,97,26,14,BS_BITMAP
+    PUSHBUTTON      "DN",ID_DOWN,142,127,26,14,BS_BITMAP
+    PUSHBUTTON      "LFT",ID_LEFT,113,113,26,14,BS_BITMAP
+    PUSHBUTTON      "RGT",ID_RIGHT,169,113,26,14,BS_BITMAP
     COMBOBOX        IDC_SOUND_FX_COMBO,8,70,190,253,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Effect Sound FX:",IDC_STATIC,9,60,61,8
     PUSHBUTTON      "Scale +",ID_SCALE_UP,226,119,34,14
     PUSHBUTTON      "Scale -",ID_SCALE_DOWN,226,100,34,14
+    CONTROL         "Color Keyed (GIF only)",IDC_SFX_COLOR_KEYED_CHECK,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,103,93,11
+    CONTROL         "Translucent",IDC_SFX_TRANSLUCENT_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,117,93,11
+    EDITTEXT        IDC_ALPHA_EDIT,35,131,39,11,ES_AUTOHSCROLL
+    RTEXT           "Alpha:",IDC_STATIC,4,132,27,8
 END
 
 IDD_WEATHER_DIALOG DIALOGEX 0, 0, 320, 176
@@ -2726,6 +2731,11 @@ BEGIN
         MENUITEM "Close Map",                   ID_CLOSE_MAP
         MENUITEM SEPARATOR
         MENUITEM "New Map",                     ID_NEW_MAP
+        POPUP "Spell FX on Maps"
+        BEGIN
+            MENUITEM "Enabled",                     ID_SPELLFXONMAPS_ENABLED, CHECKED
+            MENUITEM "Enabled for Magic Missile",   ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, CHECKED
+        END
     END
     POPUP "&Parties"
     BEGIN
@@ -2741,6 +2751,7 @@ BEGIN
             MENUITEM "&Sort SubParties Alphabetically", ID_SUBPARTIES_SORTSUBPARTIES
             MENUITEM "Sort SubParties &Numerically", ID_SUBPARTIES_SORTSUBPARTIESNUMERICALLY
         END
+        MENUITEM "&Auto Save Parties",          ID_PARTIES_AUTOSAVEPARTIES, CHECKED
     END
     POPUP "&Characters"
     BEGIN

@@ -85,6 +85,10 @@ public:
 	int m_nPickers;
 	CDMCalendarDayPicker m_Picker[200];
 
+	#if GAMETABLE_BUILD
+	CString m_szRealMonthNumber[20];
+	#endif
+
 // Dialog Data
 	enum { IDD = IDD_CALENDAR_DIALOG };
 

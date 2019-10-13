@@ -93,6 +93,8 @@ public:
 
 	int m_nX;
 	int m_nY;
+	float m_fMapLocationX;
+	float m_fMapLocationY;
 
 	DWORD m_dwCharacterID;
 	int m_nLightRange;
@@ -102,6 +104,9 @@ public:
 	{
 		m_nX = 0;
 		m_nY = 0;
+
+		m_fMapLocationX = 0.0f;
+		m_fMapLocationY = 0.0f;
 
 		m_dwCharacterID = 0L;
 		m_nLightRange = 0;
@@ -168,6 +173,8 @@ public:
 
 	PDATAPICKERMAP	m_MonsterNameIndexer;
 
+	CRect m_CurrentScreenRect;
+
 	CFont m_ListFont;
 
 	BOOL m_bMapPaint;
@@ -221,6 +228,7 @@ public:
 	void AddTile(int nTX, int nTY,  int nTile, int nRoomNumber, int nFlag);
 	void RemoveTile(int nTX, int nTY);
 	void ValidateTiles();
+	CDMCharacterHotSpot* GetCharacterHotSpotFromID(DWORD dwID);
 	void UpdateCharacterHotspots();
 	void DrawChildMap(Graphics *graphics, cDNDMap *pDNDChildMap, int nX, int nY);
 	BOOL IsOnScreen(int nTX, int nTY, int nRange = 0);
@@ -239,12 +247,14 @@ public:
 	void DrawMonsterIcon(Graphics *pGraphics, int nX, int nY, cDNDNonPlayerCharacter *pNPC, BOOL bReversed);
 	void DrawTransparentBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha);
 	void DrawTransparentAlphaBitmap(Graphics* g, Bitmap *pBitmap, int nX, int nY, int nCellX, int nCellY, int nSizeX, int nSizeY, int nBitmapSizeX, int nBitmapSizeY, float fAlpha, BOOL bTransparent);
-	void UpdateDetachedMaps();
-	void SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2, BOOL bSyncSFX);
+	void UpdateDetachedMaps(BOOL bIgnoreDetached = FALSE);
+	void SyncDetachedMaps(PDNDMAPVIEWDLG pMapDlg1, PDNDMAPVIEWDLG pMapDlg2, BOOL bForceSyncSFX);
 
 	void CleanUp();
 	void CleanupMapSFX();
 	void DrawMapSFX(Graphics* g);
+
+	RECT *GetSaneScreenRect(RECT *pRect);
 
 	//void CreateWeatherWindow();
 	void PositionWeatherWindow();
@@ -310,6 +320,7 @@ public:
 	int m_nMousePointY;
 
 	int m_nWindowTimer;
+	int m_nWindowTimerID;
 
 	int m_nMapCharacters;
 	int m_nMapParties;
@@ -332,7 +343,9 @@ public:
 	HWND	m_WeatherWindowHWnd;
 
 	BOOL m_bWeatherThreadRunning;
-	
+
+	cDNDMapSFXMotionTracker m_SFXMotionTracker;
+
 	
 // Dialog Data
 	//{{AFX_DATA(cDMMapViewDialog)

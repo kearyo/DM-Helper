@@ -23,6 +23,18 @@ namespace DMHelper_tests_0
 			Assert::AreNotEqual(1,2);
 		}
 
+		TEST_METHOD(ReleaseBuildValidTest)
+		{
+			#if KEARY_BUILD
+			Assert::AreEqual(1, 2);
+			#endif
+
+			#if GAMETABLE_BUILD
+			Assert::AreEqual(1, 2);
+			#endif
+			
+		}
+
 		TEST_METHOD(cDNDCharacterTest)
 		{
 			CDMHelperApp *pApp = (CDMHelperApp *)malloc(sizeof(CDMHelperApp));

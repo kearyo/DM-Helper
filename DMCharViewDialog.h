@@ -71,6 +71,7 @@ public:
 
 	BOOL m_bHasBreathWeapon;
 
+	DWORD m_dwLastSelectedAmmoID;
 	DWORD m_dwLastThrownObjectID;
 
 	CDMBaseCharViewDialog(DND_CHAR_VIEW_TYPES _ViewType, UINT nIDTemplate, CWnd* pParentWnd)
@@ -113,6 +114,7 @@ public:
 		m_bHasBreathWeapon = FALSE;
 
 		m_dwLastThrownObjectID = 0;
+		m_dwLastSelectedAmmoID = 0;
 
 		CDialog::CDialog(nIDTemplate, pParentWnd);
 	}

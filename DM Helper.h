@@ -36,6 +36,8 @@ To enable/disable Edit and Continue
 
 #include "resource.h"		// main symbols
 
+extern BOOL g_bGlobalShutDownFlag;
+
 #define WORK_TESTING	FALSE
 
 #define NEW_FILE_MANAGEMENT_WINDOW	TRUE
@@ -54,6 +56,8 @@ void ClearSelectedListBoxItems(CListBox *plctrl);
 void SetSelectedListBoxItems(CListBox *plctrl, int *nArray);
 int GetSelectedListBoxItemsCount(CListBox *plctrl);
 void CleanMemorizedSpellListBox(CListBox *plctrl);
+
+UINT DMInstantMapSFXThreadProc(LPVOID pData);
 
 typedef enum
 {
@@ -631,6 +635,15 @@ public:
 
 	#endif
 
+	BOOL m_bWaitOnDungeonMaster;
+	cDNDInstantMapSFXPlacer *m_pInstantMapSFXPlacer;
+
+	CMutex m_GameMapMutex;
+	CSingleLock *m_pGameMapSingleLock;
+
+	BOOL m_bSpellFXOnMaps;
+	BOOL m_bSpellFXOnMapsMagicMissile;
+
 	BOOL PlayDXSFX(CString szWAVPath);
 
 	BOOL LoadUpdateParams(char *path);
@@ -699,6 +712,7 @@ public:
 	void SaveSettings();
 	void CheckForSoundBoardUpdates();
 
+	BOOL StopSound();
 	BOOL PlayLicensedSound(CString szFile, BOOL bAsync);
 	BOOL PlaySoundFXFromFile(CString szFile, BOOL bAsync = TRUE);
 	BOOL PlaySoundFX(CString szDesc, BOOL bAsync = TRUE);
@@ -721,6 +735,10 @@ public:
 
 	int GetCastingTime(cDNDSpell* pSpell);
 
+	BOOL SpellIsHealingSpell(cDNDSpell* pSpell);
+	BOOL HealCharacter(DWORD dwCharacterID);
+	void RefreshAllMapViews();
+
 	cDNDRandomEncounterTable *FindEncounterTableByName(CString szTableName);
 	CString GenerateRandomParty(CString szTableName, cDNDParty *pParentParty, cDNDParty *pParty, DWORD dwSubPartyID, int nTerrain, int nLevel, int nOverrideDieRoll, RECT *rRoomWalls, PDATAPICKERMAP *pMonsterNameIndexer, PDNDMONSTERMANUALENTRY *pMonsterManualEntry);
 	int GetClassOrderingScore(DND_CHARACTER_CLASSES nClass);
@@ -741,6 +759,14 @@ public:
 
 	BOOL EncryptRandomSounds(CString szFileName, int *pnNumEncrypts);
 	BOOL EncryptWAVFile(CString szFileName);
+
+	#ifdef _DEBUG
+	#if KEARY_BUILD
+	#if 0
+	void WriteMaterialComponentsTable();
+	#endif
+	#endif
+	#endif
 
 // Overrides
 	// ClassWizard generated virtual function overrides

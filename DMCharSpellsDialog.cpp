@@ -10,6 +10,7 @@
 #include "DMCharSheetDialog.h"
 #include "DMPartyDialog.h"
 #include "DMSpellDescDialog.h"
+#include "DMCharacterSelectorDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1057,6 +1058,18 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 				{
 					cDNDSpellSlot *pSelectedSpellSlot = (cDNDSpellSlot *)m_cSpellsMemorizedList.GetItemData(i);
 					m_pCharacter->CastSpell(pSelectedSpellSlot);
+
+					if (m_pApp->SpellIsHealingSpell(pSelectedSpellSlot->m_pSpell))
+					{
+						DWORD dwCharacterID = 0;
+						DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
+						pDlg->DoModal();
+
+						if (dwCharacterID)
+						{
+							m_pApp->HealCharacter(dwCharacterID);
+						}
+					}
 
 					m_pApp->PlayPCSoundFX("* PC Cast Spell", m_pSiblingWindow->m_szCharacterFirstName, "NADA", FALSE);
 

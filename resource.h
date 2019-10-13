@@ -640,7 +640,6 @@
 #define IDC_PLOT_PARTY_EXTEND_ROUTE_BUTTON 1163
 #define IDC_PICK_LOCK_BUTTON            1163
 #define IDC_PARTIES_CHECK               1164
-#define IDC_RECOVER_AMMO__BUTTON        1164
 #define IDC_RECOVER_AMMO_BUTTON         1164
 #define IDC_ROUTES_CHECK                1165
 #define IDC_CHILD_MAPS_CHECK            1166
@@ -1000,12 +999,14 @@
 #define IDC_PREREQ_ATTRIB_CHECK_1       1441
 #define IDC_X2_CHECK                    1441
 #define IDC_FEMALE_CHECK                1441
+#define IDC_SFX_COLOR_KEYED_CHECK       1441
 #define IDC_GP_BUTTON                   1442
 #define IDC_PARTY_NAME_STATIC           1442
 #define IDC_SPEECH_CHECK                1442
 #define IDC_SWORD_CHECK                 1442
 #define IDC_PREREQ_ATTRIB_CHECK_2       1442
 #define IDC_X3_CHECK                    1442
+#define IDC_SFX_TRANSLUCENT_CHECK       1442
 #define IDC_EP_BUTTON                   1443
 #define IDC_ENCOUNTER_LIST              1443
 #define IDC_TELEPATH_CHECK              1443
@@ -1247,6 +1248,7 @@
 #define IDC_EXPLAIN_TEXT                1640
 #define IDC_HUMAN_BUTTON                1643
 #define IDC_ELVEN_BUTTON                1644
+#define IDC_ALPHA_EDIT                  1644
 #define IDC_DWARVEN_BUTTON              1645
 #define IDC_HALFLING_BUTTON             1646
 #define IDC_GNOME_BUTTON                1647
@@ -1293,14 +1295,18 @@
 #define ID_HELP_CHECKFORADD             32804
 #define ID_RANDOMS_RANDOMNAMEGENERATOR  32805
 #define ID_RANDOMS_RANDOMNAMEGENERATOR32806 32806
+#define ID_PARTIES_AUTOSAVEPARTIES      32807
+#define ID_MAPS_SPELLFXONMAPS           32808
+#define ID_SPELLFXONMAPS_ENABLED        32809
+#define ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE 32810
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        294
-#define _APS_NEXT_COMMAND_VALUE         32807
-#define _APS_NEXT_CONTROL_VALUE         1644
+#define _APS_NEXT_COMMAND_VALUE         32811
+#define _APS_NEXT_CONTROL_VALUE         1645
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

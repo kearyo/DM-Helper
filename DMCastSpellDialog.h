@@ -58,6 +58,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CButton m_cCastButton;
+	afx_msg void OnLbnDblclkSpellList();
 };
 
 //{{AFX_INSERT_LOCATION}}

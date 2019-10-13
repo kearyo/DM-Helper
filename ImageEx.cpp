@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "ImageEx.h"
 #include <process.h>
+#include "DM Helper.h"
 
 
 #ifdef _DEBUG
@@ -115,17 +116,24 @@ ImageEx::~ImageEx()
 // N T ALMOND       29012002	1.0			Origin
 // 
 ////////////////////////////////////////////////////////////////////////////////
-bool ImageEx::InitAnimation(HWND hWnd, CPoint pt, float fScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag)
+bool ImageEx::InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, float fAlpha)
 {
 
 	m_hWnd = hWnd;
 	m_pt = pt;
 
-	m_fOriginalScale = fScale;
+	m_fScreenScale = fScreenScale;
+	m_fSpriteScale = fSpriteScale;
 
 	m_bCycleAnimation = bCycleAnimation;
 
 	m_pbRenderingFlag = pbRenderingFlag;
+
+	m_nCycles = nCycles;
+
+	m_bColorKeyed = bColorKeyed;
+	m_bTranslucent = bTranslucent;
+	m_fAlpha = fAlpha;
 
 	if (!m_bIsInitialized)
 	{
@@ -403,6 +411,8 @@ void ImageEx::Initialize()
 	m_hThread = NULL;
 	m_bIsInitialized = false;
 	m_pPropertyItem = NULL;
+	m_bColorKeyed = FALSE;
+	m_bTranslucent = FALSE;
 	
 #ifdef INDIGO_CTRL_PROJECT
 	m_hInst = _Module.GetResourceInstance();
@@ -421,21 +431,21 @@ void ImageEx::Initialize()
 
 	m_pBackGroundBitmap = NULL;
 
-	m_fOriginalScale = 1.0f;
+	m_fSpriteScale = 1.0f;
 
-	m_fAnimScale = 1.0f;
+	m_fScreenScale = 1.0f;
 
 }
 
 
-void ImageEx::Position(int nX, int nY, float fScale, float fOriginalScale)
+void ImageEx::Position(int nX, int nY, float fScreenScale, float fSpriteScale)
 {
 	m_pt.x = nX;
 	m_pt.y = nY;
 
-	m_fAnimScale = fScale;
+	m_fScreenScale = fScreenScale;
 
-	m_fOriginalScale = fOriginalScale;
+	m_fSpriteScale = fSpriteScale;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -486,7 +496,14 @@ void ImageEx::ThreadAnimation()
 	bool bExit = false;
 	while (bExit == false)
 	{
-		bExit = DrawFrameGIF();
+		bExit = (DrawFrameGIF() || g_bGlobalShutDownFlag);
+
+		#ifdef _DEBUG
+		if (bExit)
+		{
+			TRACE("OUT!\n");
+		}
+		#endif
 	}
 }
 
@@ -516,10 +533,10 @@ bool ImageEx::DrawFrameGIF()
 	long hmWidth = GetWidth();
 	long hmHeight = GetHeight();
 
-	float fScale = m_fOriginalScale / m_fAnimScale;
+	float fScale = m_fSpriteScale * m_fScreenScale;
 
-	hmWidth /= fScale;
-	hmHeight /= fScale;
+	hmWidth *= fScale;
+	hmHeight *= fScale;
 
 	POINT _pt = m_pt;
 
@@ -572,10 +589,48 @@ bool ImageEx::DrawFrameGIF()
 
 			if (m_bCycleAnimation == TRUE || m_bCycled == FALSE)
 			{
-				graphics.DrawImage(this, _pt.x, _pt.y, hmWidth, hmHeight);
-				//graphics.DrawImage(this, _pt.x + hmWidth, _pt.y, hmWidth, hmHeight);
-				//graphics.DrawImage(this, _pt.x , _pt.y + hmHeight, hmWidth, hmHeight);
-				//graphics.DrawImage(this, _pt.x + hmWidth, _pt.y + hmHeight, hmWidth, hmHeight);
+				if (m_bTranslucent)
+				{
+					ColorMatrix ClrMatrix = {
+						1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+						0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+						0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+						0.0f, 0.0f, 0.0f, m_fAlpha, 0.0f,
+						0.0f, 0.0f, 0.0f, 0.0f, 1.0f
+					};
+
+					ImageAttributes ImgAttr;
+
+					ImgAttr.SetColorMatrix(&ClrMatrix, ColorMatrixFlagsDefault,
+						ColorAdjustTypeBitmap);
+
+					ImgAttr.SetColorKey(Color(0, 0, 0, 0), Color(0, 128, 128, 128), ColorAdjustTypeBitmap);
+					
+					RectF dst;
+
+					dst.X = (Gdiplus::REAL) _pt.x;
+					dst.Y = (Gdiplus::REAL) _pt.y;
+					dst.Width = (Gdiplus::REAL)hmWidth;
+					dst.Height = (Gdiplus::REAL)hmHeight;
+					graphics.DrawImage(this, dst, 0, 0, GetWidth(), GetHeight(), Gdiplus::UnitPixel, &ImgAttr);
+				}
+				else if (m_bColorKeyed)
+				{
+					ImageAttributes ImgAttr;
+					ImgAttr.SetColorKey(Color(0, 0, 0, 0), Color(0, 128, 128, 128), ColorAdjustTypeBitmap);
+					RectF dst;
+
+					dst.X = (Gdiplus::REAL) _pt.x;
+					dst.Y = (Gdiplus::REAL) _pt.y;
+					dst.Width = (Gdiplus::REAL)hmWidth;
+					dst.Height = (Gdiplus::REAL)hmHeight;
+					graphics.DrawImage(this, dst, 0, 0, GetWidth(), GetHeight(), Gdiplus::UnitPixel, &ImgAttr);
+				}
+				else
+				{
+					graphics.DrawImage(this, _pt.x, _pt.y, hmWidth, hmHeight);
+				}
+				
 			}
 		}
 
@@ -598,7 +653,15 @@ bool ImageEx::DrawFrameGIF()
 		}
 
 		m_nFramePosition = 0;
-		m_bCycled = TRUE;
+
+		if (m_nCycles <= 0)
+		{
+			m_bCycled = TRUE;
+		}
+		else
+		{
+			--m_nCycles;
+		}
 	}
 
 
@@ -674,11 +737,22 @@ void ImageEx::Destroy()
 		WaitForSingleObject(m_hThread, INFINITE);
 	}
 
-	CloseHandle(m_hThread);
-	CloseHandle(m_hExitEvent);
-	CloseHandle(m_hPause);
-
-	free(m_pPropertyItem);
+	if (m_hThread != NULL)
+	{
+		CloseHandle(m_hThread);
+	}
+	if (m_hExitEvent != NULL)
+	{
+		CloseHandle(m_hExitEvent);
+	}
+	if(m_hPause != NULL)
+	{
+		CloseHandle(m_hPause);
+	}
+	if (m_pPropertyItem != NULL)
+	{
+		free(m_pPropertyItem);
+	}
 
 	m_pPropertyItem = NULL;
 	m_hThread = NULL;
@@ -692,6 +766,9 @@ void ImageEx::Destroy()
 	}
 
 	if (m_pStream)
+	{
 		m_pStream->Release();
+		m_pStream = NULL;
+	}
 
 }

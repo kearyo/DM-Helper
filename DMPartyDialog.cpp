@@ -97,6 +97,8 @@ DMPartyDialog::DMPartyDialog(CDMHelperDlg* pMainDialog, cDNDParty *pParty, CWnd*
 		m_szPartyName = m_pParty->m_szPartyName;
 	}
 
+	m_szPartySaveFilePath = _T("");
+
 	m_pPartyLog = NULL;
 
 	m_dwParentPartyID = 0;
@@ -1391,7 +1393,6 @@ void DMPartyDialog::Initialize()
 
 	}
 
-
 	m_cPartyList2.DeleteAllItems();
 
 	Refresh();
@@ -1399,36 +1400,36 @@ void DMPartyDialog::Initialize()
 
 void DMPartyDialog::RefreshTime()
 {
-	if(m_pApp->m_pSelectedCalendar == NULL)
+	if (m_pApp->m_pSelectedCalendar != NULL)
 	{
-		return;
+		if (m_pParty->m_nYear == 0)
+		{
+			m_pParty->m_nYear = m_pApp->m_pSelectedCalendar->m_nBaseYear;
+		}
+
+		/*
+		m_pParty->m_nDayofWeek = 0;
+		m_pParty->m_nDayofMonth = 0;
+		m_pParty->m_nMonth = 0;
+		m_pParty->m_nYear = 0;
+		*/
+
+		int nMinutes = m_pParty->m_nTurn * 10 + m_pParty->m_nRound;
+		int nSeconds = m_pParty->m_nSegment * 6 + m_pApp->m_nCalendarSecond;
+
+		m_szPartyLegend.Format("%02d:%02d:%02d %s, the %d%s day of %s in the year %d", m_pParty->m_nHour, nMinutes, nSeconds,
+			m_pApp->m_pSelectedCalendar->m_szDayNames[m_pParty->m_nDayofWeek],
+			m_pParty->m_nDayofMonth + 1,
+			GetNumberSuffix(m_pParty->m_nDayofMonth + 1),
+			m_pApp->m_pSelectedCalendar->m_szMonthNames[m_pParty->m_nMonth],
+			m_pParty->m_nYear);
+
+
+		m_szRoundEdit.Format("%d", m_pParty->m_nRound);
+		m_szSegmentEdit.Format("%d", m_pParty->m_nSegment);
+
+		
 	}
-
-	if(m_pParty->m_nYear == 0)
-	{
-		m_pParty->m_nYear = m_pApp->m_pSelectedCalendar->m_nBaseYear;
-	}
-
-	/*
-	m_pParty->m_nDayofWeek = 0;
-	m_pParty->m_nDayofMonth = 0;
-	m_pParty->m_nMonth = 0;
-	m_pParty->m_nYear = 0;
-	*/
-
-	int nMinutes = m_pParty->m_nTurn * 10 + m_pParty->m_nRound;
-	int nSeconds = m_pParty->m_nSegment * 6 + m_pApp->m_nCalendarSecond;
-
-	m_szPartyLegend.Format("%02d:%02d:%02d %s, the %d%s day of %s in the year %d", m_pParty->m_nHour, nMinutes, nSeconds, 
-		m_pApp->m_pSelectedCalendar->m_szDayNames[m_pParty->m_nDayofWeek], 
-		m_pParty->m_nDayofMonth+1, 
-		GetNumberSuffix(m_pParty->m_nDayofMonth+1),
-		m_pApp->m_pSelectedCalendar->m_szMonthNames[m_pParty->m_nMonth], 
-		m_pParty->m_nYear);
-
-
-	m_szRoundEdit.Format("%d", m_pParty->m_nRound);
-	m_szSegmentEdit.Format("%d", m_pParty->m_nSegment);
 
 }
 
@@ -2286,6 +2287,7 @@ void DMPartyDialog::OnLoadPartyButton()
 	if(FileDesc.m_bSuccess)
 	{
 		LoadPartyFromFile(FileDesc.m_szReturnedPath.GetBuffer(0));
+		m_szPartySaveFilePath = FileDesc.m_szReturnedPath;
 
 		//see if this party exists already
 		DMPartyDialog *pTestPartyDlg = NULL;
@@ -3718,11 +3720,17 @@ void DMPartyDialog::InitiativeMissileAttack(CDMCharViewDialog *pAttackingCharact
 	int nDamage = 0;
 	int nMaxDamage = 0;
 
+	CString szMagicWeaponname = _T("");
+
 	if (pAttackingCharacterDialog != NULL)
 	{
-		pAttackingCharacterDialog->FireAmmo(FALSE);
-
 		nWeapon = pAttackingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
+		if (pAttackingCharacterDialog->m_pCharacter->m_SelectedAmmo.m_nMagicAdj)
+		{
+			szMagicWeaponname = pAttackingCharacterDialog->m_pCharacter->m_SelectedAmmo.m_szType;
+		}
+
+		pAttackingCharacterDialog->FireAmmo(FALSE);
 
 		pAttackingCharacterDialog->ProcessCharStats();
 		pAttackingCharacterDialog->Refresh();
@@ -3783,7 +3791,7 @@ void DMPartyDialog::InitiativeMissileAttack(CDMCharViewDialog *pAttackingCharact
 		}
 	}
 
-	m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_MISSILE_HIT, "", FALSE);
+	m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_MISSILE_HIT, szMagicWeaponname, FALSE);
 
 	InitiativeWound(nDamage, pTargetCharacterDialog, pTargetNPCDialog, bGrantXP);
 }
@@ -4084,8 +4092,6 @@ void DMPartyDialog::OnMissileHitButton()
 
 	if(m_pSelectedCharacterDialog != NULL)
 	{
-		m_pSelectedCharacterDialog->FireAmmo(FALSE);
-
 		int nWeapon = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
 
 		if(m_pInitiativeDialog != NULL)
@@ -4094,7 +4100,14 @@ void DMPartyDialog::OnMissileHitButton()
 			m_pInitiativeDialog->Refresh();
 		}
 
-		m_pApp->PlayWeaponSFX(nWeapon, 2);
+		CString szMagicWeaponname = _T("");
+		if (m_pSelectedCharacterDialog->m_pCharacter->m_SelectedAmmo.m_nMagicAdj)
+		{
+			szMagicWeaponname = m_pSelectedCharacterDialog->m_pCharacter->m_SelectedAmmo.m_szType;
+		}
+		m_pApp->PlayWeaponSFX(nWeapon, 2, szMagicWeaponname);
+
+		m_pSelectedCharacterDialog->FireAmmo(FALSE);
 
 		m_pSelectedCharacterDialog->ProcessCharStats();
 		m_pSelectedCharacterDialog->Refresh();
@@ -4364,7 +4377,6 @@ void DMPartyDialog::OnAttackHitButton2()
 		//m_pOpposingCharacterDialog->FireAmmo(TRUE);  NO NOT HERE
 
 		int nWeapon = m_pOpposingCharacterDialog->m_pCharacter->m_SelectedWeapons[0].m_wTypeId;
-		//snicker
 
 		int nMagicAdj = 0;
 		CString szMagicWeaponName = _T("");
@@ -4560,7 +4572,12 @@ void DMPartyDialog::OnMissileHitButton2()
 			m_pInitiativeDialog->Refresh();
 		}
 
-		m_pApp->PlayWeaponSFX(nWeapon, 2);
+		CString szMagicWeaponname = _T("");
+		if (m_pOpposingCharacterDialog->m_pCharacter->m_SelectedAmmo.m_nMagicAdj)
+		{
+			szMagicWeaponname = m_pOpposingCharacterDialog->m_pCharacter->m_SelectedAmmo.m_szType;
+		}
+		m_pApp->PlayWeaponSFX(nWeapon, 2, szMagicWeaponname);
 
 		m_pOpposingCharacterDialog->ProcessCharStats();
 		m_pOpposingCharacterDialog->Refresh();

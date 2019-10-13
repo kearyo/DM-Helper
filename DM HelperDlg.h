@@ -69,8 +69,14 @@ public:
 
 	int m_nOrientation;
 
+	BOOL m_bAutoSaveParties;
+	DWORD m_dwAutoSavePartiesTimer;
+
+	void SetAppTitle(CString szMessage = _T(""));
+
 	void CloseParty(DWORD dwPartyID) ;
 	void CloseParty(DMPartyDialog *pDlg, BOOL bQuiet);
+	void AutoSaveParties();
 
 	void SortTabs();
 	void AddTab(CWnd* pWindow, DND_TAB_TYPES nTabType, BOOL bSetPick);
@@ -91,6 +97,7 @@ public:
 	BOOL DoCreateProcess(const char *pcszProcName, const char *pcszArgs);
 
 	void PositionMapViews();
+	void ResetAllMapViews();
 
 	BOOL FileExists(CString szPath);
 	void OpenPDFDocument(CString szFileName, int nPage);
@@ -210,6 +217,10 @@ public:
 	CString m_szMonitorDPMIEdit;
 	afx_msg void OnEnChangeMonitorDpmiEdit();
 	afx_msg void OnRandomsRandomnamegenerator();
+	afx_msg void OnPartiesAutosaveparties();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnSpellfxonmapsEnabled();
+	afx_msg void OnSpellfxonmapsEnabledformagicmissile();
 };
 
 //{{AFX_INSERT_LOCATION}}

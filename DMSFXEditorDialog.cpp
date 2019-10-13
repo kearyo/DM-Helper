@@ -162,7 +162,7 @@ void DMSFXEditorDialog::Refresh()
 			CString szWeapon = m_szDesc.Mid(0, nFindEquip);
 			szText1.Format("This sound is triggered by the event '%s' for weapons called '%s'\n", "EQUIP", szWeapon);
 		}
-		int nFindHit = szDesc.Find(" HIT");
+		int nFindHit = szDesc.Find(" MAGIC HIT");
 		if (nFindHit > 0 && szDesc.Find("DEFAULT") == -1)
 		{
 			CString szWeapon = m_szDesc.Mid(0, nFindHit);

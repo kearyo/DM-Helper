@@ -177,6 +177,9 @@ CDMHelperDlg::CDMHelperDlg(CWnd* pParent /*=NULL*/)
 	m_bInitialMaximize = FALSE;
 
 	m_nOrientation = DMDO_DEFAULT;
+
+	m_bAutoSaveParties = FALSE;
+	m_dwAutoSavePartiesTimer = 0;
 }
 
 void CDMHelperDlg::DoDataExchange(CDataExchange* pDX)
@@ -279,6 +282,10 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_HELP_CHECKFORADD, &CDMHelperDlg::OnHelpCheckforadd)
 	ON_EN_CHANGE(IDC_MONITOR_DPMI_EDIT, &CDMHelperDlg::OnEnChangeMonitorDpmiEdit)
 	ON_COMMAND(ID_RANDOMS_RANDOMNAMEGENERATOR, &CDMHelperDlg::OnRandomsRandomnamegenerator)
+	ON_COMMAND(ID_PARTIES_AUTOSAVEPARTIES, &CDMHelperDlg::OnPartiesAutosaveparties)
+	ON_COMMAND(ID_SPELLFXONMAPS_ENABLED, &CDMHelperDlg::OnSpellfxonmapsEnabled)
+	ON_COMMAND(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, &CDMHelperDlg::OnSpellfxonmapsEnabledformagicmissile)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -288,14 +295,13 @@ BOOL CDMHelperDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	#if KEARY_BUILD
-	SetWindowText("Dungeon Maestro (AD&D First Edition) - Keary's Build");
-	#else
-	SetWindowText("Dungeon Maestro (AD&D First Edition)");
-	#endif
+	SetAppTitle();
 
 	RegisterHotKey(m_hWnd, 100, MOD_CONTROL, 'R');	// dice roller hotkey
-	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, VK_F12);	// flip secondary screen hotkey
+	#if GAMETABLE_BUILD
+	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, VK_UP);	// flip secondary screen hotkey
+	RegisterHotKey(m_hWnd, 200, MOD_CONTROL, VK_DOWN);	// flip secondary screen hotkey
+	#endif
 	RegisterHotKey(m_hWnd, 300, MOD_CONTROL, VK_ADD);		// add XP to selected character
 	RegisterHotKey(m_hWnd, 301, MOD_CONTROL, VK_SUBTRACT);	// remove XP from selected character
 
@@ -318,6 +324,24 @@ BOOL CDMHelperDlg::OnInitDialog()
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
+
+	pMenu->CheckMenuItem(ID_PARTIES_AUTOSAVEPARTIES, MF_UNCHECKED | MF_BYCOMMAND);
+
+	#if GAMETABLE_BUILD
+	pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLED, MF_CHECKED | MF_BYCOMMAND);
+	pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_CHECKED | MF_BYCOMMAND);
+	#else
+	BOOL b = pMenu->DeleteMenu(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_BYCOMMAND);
+	b = pMenu->DeleteMenu(ID_SPELLFXONMAPS_ENABLED, MF_BYCOMMAND);
+
+	CMenu *pSubMenu = pMenu->GetSubMenu(0);
+
+	if (pSubMenu != NULL)
+	{
+		BOOL bbb = pSubMenu->DeleteMenu(4, MF_BYPOSITION);
+		TRACE("!");
+	}
+	#endif
 
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
@@ -378,8 +402,30 @@ BOOL CDMHelperDlg::OnInitDialog()
 	m_cMainTab.SetWindowPos(NULL, 0, 0, 0, 0, SWP_NOSIZE | SWP_HIDEWINDOW);
 
 	AddTab(this, DND_TAB_TYPE_CAMPAIGN, TRUE);
+
+	SetTimer(81602, 1000, NULL);
 	
 	return TRUE;  // return TRUE  unless you set the focus to a control
+}
+
+void CDMHelperDlg::SetAppTitle(CString szMessage)
+{
+	CString szText = "Dungeon Maestro (AD&D First Edition)";
+
+#if KEARY_BUILD
+	szText += " - Keary's Build";
+#endif
+#if GAMETABLE_BUILD
+	szText += " - Gametable Build";
+#endif
+
+#ifdef _DEBUG
+	szText += " - DEBUG Build";
+#endif
+	
+	szText += szMessage;
+
+	SetWindowText(szText);
 }
 
 void CDMHelperDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -912,7 +958,10 @@ void CDMHelperDlg::SortTabs()
 			continue;
 
 		cDMMapViewDialog *pMapViewDialog = (cDMMapViewDialog*)pTab->m_pWindow;
-		pMapViewDialog->Reset();
+
+		// why did we do this ? //TODO:  investigate
+		//pMapViewDialog->Reset();
+		//
 
 		DWORD dwMapID = pMapViewDialog->m_pDNDMap->m_dwMapID;
 
@@ -2270,7 +2319,10 @@ void CDMHelperDlg::OnClose()
 
 void CDMHelperDlg::OnCloseCharacter() 
 {
+	ResetAllMapViews();
+
 	DeleteTab();
+
 }
 
 void CDMHelperDlg::OnCloseMap() 
@@ -2293,6 +2345,62 @@ void CDMHelperDlg::OnNewParty()
 	}
 	
 }
+
+void CDMHelperDlg::OnPartiesAutosaveparties()
+{
+	CMenu *pMenu = GetMenu();
+	if (pMenu != NULL)
+	{
+		m_bAutoSaveParties = !m_bAutoSaveParties;
+		if (m_bAutoSaveParties)
+		{
+			m_dwAutoSavePartiesTimer = GetUniversalTime();
+			pMenu->CheckMenuItem(ID_PARTIES_AUTOSAVEPARTIES, MF_CHECKED | MF_BYCOMMAND);
+		}
+		else
+		{
+			pMenu->CheckMenuItem(ID_PARTIES_AUTOSAVEPARTIES, MF_UNCHECKED | MF_BYCOMMAND);
+		}
+	}
+}
+
+void CDMHelperDlg::OnSpellfxonmapsEnabled()
+{
+	CMenu *pMenu = GetMenu();
+	if (pMenu != NULL)
+	{
+		m_pApp->m_bSpellFXOnMaps = !m_pApp->m_bSpellFXOnMaps;
+		if (m_pApp->m_bSpellFXOnMaps)
+		{
+			pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLED, MF_CHECKED | MF_BYCOMMAND);
+			pMenu->EnableMenuItem(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_ENABLED);
+		}
+		else
+		{
+			pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLED, MF_UNCHECKED | MF_BYCOMMAND);
+			pMenu->EnableMenuItem(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_GRAYED);
+		}
+	}
+}
+
+void CDMHelperDlg::OnSpellfxonmapsEnabledformagicmissile()
+{
+	CMenu *pMenu = GetMenu();
+	if (pMenu != NULL)
+	{
+		m_pApp->m_bSpellFXOnMapsMagicMissile = !m_pApp->m_bSpellFXOnMapsMagicMissile;
+		if (m_pApp->m_bSpellFXOnMapsMagicMissile)
+		{
+			pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_CHECKED | MF_BYCOMMAND);
+		}
+		else
+		{
+			pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_UNCHECKED | MF_BYCOMMAND);
+		}
+	}
+}
+
+
 
 void CDMHelperDlg::OnOpenParty() 
 {
@@ -2398,6 +2506,8 @@ void CDMHelperDlg::OnCloseParty()
 	if(m_pCurrentOpenPartyWindow == NULL)
 		return;
 
+	ResetAllMapViews();
+
 	DMPartyDialog *pDlg = (DMPartyDialog *)m_pCurrentOpenPartyWindow;
 
 	if(pDlg->m_pParty->IsChanged() && pDlg->m_dwSubPartyID == 0)
@@ -2419,7 +2529,6 @@ void CDMHelperDlg::OnCloseParty()
 	}
 }
 
-
 void CDMHelperDlg::OnOpenSoundboard() 
 {
 	DMSoundboardDialog *pDlg =  new DMSoundboardDialog(&m_cMainTab);
@@ -2440,6 +2549,38 @@ void CDMHelperDlg::OnCloseSoundboard()
 	DeleteTab();
 }
 
+void CDMHelperDlg::ResetAllMapViews()
+{
+
+	if (m_pApp->m_pGameMapSingleLock->Lock(2000))    // Wait 2000 ms...
+	{
+		for (POSITION pos = m_pApp->m_MapViewMap.GetStartPosition(); pos != NULL;)
+		{
+			WORD wID;
+			PDNDMAPVIEWDLG pMapDlg = NULL;
+			m_pApp->m_MapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+			if (pMapDlg != NULL)
+			{
+				pMapDlg->Reset();
+			}
+		}
+
+		for (POSITION pos = m_pApp->m_DetachedMapViewMap.GetStartPosition(); pos != NULL;)
+		{
+			WORD wID;
+			PDNDMAPVIEWDLG pMapDlg = NULL;
+			m_pApp->m_DetachedMapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+			if (pMapDlg != NULL)
+			{
+				pMapDlg->Reset();
+			}
+		}
+
+		m_pApp->m_pGameMapSingleLock->Unlock();
+	}
+}
 
 void CDMHelperDlg::PositionMapViews()
 {
@@ -3294,3 +3435,67 @@ void CDMHelperDlg::OnRandomsRandomnamegenerator()
 	pDlg->DoModal();
 	delete pDlg;
 }
+
+
+/*
+
+*/
+
+void CDMHelperDlg::AutoSaveParties()
+{
+	CWaitCursor myWaitCursor;
+
+	for (POSITION pos = m_pApp->m_PartyViewMap.GetStartPosition(); pos != NULL; )
+	{
+		WORD wID;
+		PDNDPARTYVIEWDLG pPartyDlg = NULL;
+		m_pApp->m_PartyViewMap.GetNextAssoc(pos,wID,pPartyDlg);
+
+		if (pPartyDlg != NULL && pPartyDlg->m_pParty != NULL && pPartyDlg->m_szPartySaveFilePath != _T(""))
+		{
+			BOOL bSavedCharacters = FALSE;
+			for (POSITION pos2 = m_pApp->m_CharacterViewMap.GetStartPosition(); pos2 != NULL;)
+			{
+				PDNDCHARVIEWDLG pCharDlg = NULL;
+				m_pApp->m_CharacterViewMap.GetNextAssoc(pos2, wID, pCharDlg);
+
+				if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL && pCharDlg->m_pCharacter->m_dwCharacterID  && pCharDlg->m_pCharacter->m_bPocketPC == FALSE)
+				{
+					if (pPartyDlg->m_pParty->CharacterIsPartyMember(pCharDlg->m_pCharacter))
+					{
+						bSavedCharacters = TRUE;
+						if (pCharDlg->m_pCharacter->IsChanged())
+						{
+							pCharDlg->SaveExternal();
+						}
+					}
+				}
+			}
+
+			if (bSavedCharacters)
+			{
+				pPartyDlg->SavePartyToFile(pPartyDlg->m_szPartySaveFilePath.GetBuffer(0));
+			}
+		}
+	}
+	
+}
+
+void CDMHelperDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == 81602)
+	{
+		if (m_bAutoSaveParties)
+		{
+			if ((GetUniversalTime() - m_dwAutoSavePartiesTimer) > 60 * 15) // every 15 minutes
+			{
+				m_dwAutoSavePartiesTimer = GetUniversalTime();
+				AutoSaveParties();
+			}
+		}
+	}
+
+	CDialog::OnTimer(nIDEvent);
+}
+
+

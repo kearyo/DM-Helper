@@ -2856,8 +2856,16 @@ int RollD12()
 	return nDie;
 }
 
+std::string fooBar()
+{
+	std::string something = "avalue";
+	return something;
+}
+
 int RollD20()
 {
+	std::string result = fooBar();
+
 	int nDie = (rand()%20)+1;
 
 	return nDie;
@@ -11535,6 +11543,97 @@ int GetNumDefinedCustomClasses()
 	#endif
 }
 
+void cDNDMapSFXMotionTracker::Init(float fStartPosX, float fStartPosY, float fTargetPosX, float fTargetPosY, float fSpeed, int nSprites)
+{
+	Clear();
+
+	m_fPosX = fStartPosX;
+	m_fPosY = fStartPosY;
+
+	m_fTargetPosX = fTargetPosX;
+	m_fTargetPosY = fTargetPosY;
+
+	m_fDistance = GetTargetDistance();
+	m_fLastDistance = 999999.99f;
+
+	m_fMoveX = (m_fTargetPosX - m_fPosX) / m_fDistance / 10.0f;
+	m_fMoveY = (m_fTargetPosY - m_fPosY) / m_fDistance / 10.0f;
+
+	m_fSpeed = fSpeed;
+
+	m_nMaxSprites = nSprites;
+
+	m_dwFlightTime = GetUniversalTime();
+}
+
+float cDNDMapSFXMotionTracker::GetTargetDistance()
+{
+	return GetDistance(m_fPosX, m_fPosY, m_fTargetPosX, m_fTargetPosY);
+}
+
+BOOL cDNDMapSFXMotionTracker::Move(float fMapScale)
+{
+	if (m_bTargetHit)
+	{
+		return FALSE;
+	}
+
+	++m_nFrames;
+
+	if (m_nFrames % 5 == 0)
+	{
+		++m_nSprites;
+		if (m_nSprites > m_nMaxSprites)
+		{
+			m_nSprites = m_nMaxSprites;
+		}
+	}
+
+	float fSpeed = m_fSpeed / fMapScale;
+
+	m_fPosX += m_fMoveX * fSpeed;
+	m_fPosY += m_fMoveY * fSpeed;
+
+	m_fOffsetPosX += m_fMoveX * m_fSpeed;
+	m_fOffsetPosY += m_fMoveY * m_fSpeed;
+
+	m_fSpriteOffsetX = m_fMoveX * fSpeed;
+	m_fSpriteOffsetY = m_fMoveY * fSpeed;
+
+	m_fDistance = GetTargetDistance();
+
+	if (m_fLastDistance < m_fDistance)
+	{
+		m_fSpeed = 0.0f;
+		m_bTargetHit = TRUE;
+	}
+	else if (m_nFrames > 5000)
+	{
+		m_fSpeed = 0.0f;
+		m_bTargetHit = TRUE;
+	}
+
+	m_fLastDistance = m_fDistance;
+
+	if (m_bTargetHit)
+	{
+		DWORD dwFlightTime = GetUniversalTime() - m_dwFlightTime;
+
+		TRACE("FLIGHT TIME %ld\n", m_dwFlightTime);
+	}
+
+	return TRUE;
+}
+
+BOOL cDNDMapSFXMotionTracker::CheckTimer()
+{
+	if (GetUniversalTime() - m_dwFlightTime > 5)
+	{
+		return TRUE;
+	}
+
+	return FALSE;
+}
 
 
 

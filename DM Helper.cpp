@@ -16,6 +16,7 @@
 #include "cDMWeatherDialog.h"
 #include "cDMMapViewDialog.h"
 #include "cDMPDFViewDialog.h"
+#include "DMModifyValueDialog.h"
 
 
 #ifdef _DEBUG
@@ -23,6 +24,9 @@
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+
+BOOL g_bGlobalShutDownFlag = FALSE;
 
 int GetSelectedListCtrlItem(CListCtrl *plctrl)
 {
@@ -585,6 +589,8 @@ BOOL CDMHelperApp::InitInstance()
 	m_pDXSound = NULL;
 	#endif
 
+	m_bWaitOnDungeonMaster = FALSE;
+	m_pInstantMapSFXPlacer = NULL;
 
 	m_bSaveAllParties = FALSE;
 	m_bSaveAllMaps = FALSE;
@@ -606,7 +612,12 @@ BOOL CDMHelperApp::InitInstance()
 	m_nInitiativeCurrentAttackNumber = 0;
 	m_dwInitiativeCurrentAttackerID = 0;
 
+	m_bSpellFXOnMaps = TRUE;
+	m_bSpellFXOnMapsMagicMissile = TRUE;
+
 	curl_global_init(CURL_GLOBAL_ALL);
+
+	m_pGameMapSingleLock = new CSingleLock(&m_GameMapMutex);
 
 	CDMHelperDlg dlg;
 	m_pMainWnd = &dlg;
@@ -632,6 +643,8 @@ BOOL CDMHelperApp::InitInstance()
 
 int CDMHelperApp::ExitInstance() 
 {
+	g_bGlobalShutDownFlag = TRUE;
+
 	POSITION pos;
 	WORD wID;
 
@@ -824,11 +837,16 @@ int CDMHelperApp::ExitInstance()
 		m_pEncryptedSoundBuffer = NULL;
 	}
 
+	StopSound();
 	#if USE_DX_SOUND
 	ShutDownDXSoundFX();
 	#endif
 
+	delete m_pGameMapSingleLock;
+
 	SaveSettings();
+
+	Sleep(1000);
 
 	Gdiplus::GdiplusShutdown(m_gdiplusToken);
 
@@ -4426,6 +4444,14 @@ void CDMHelperApp::InitializeSpells()
 	LoadCustomSpells(szTemp.GetBuffer(0));
 
 	m_dwMasterSpellListHash = GetUniversalTime();
+
+	#ifdef _DEBUG
+	#if KEARY_BUILD
+	#if 0
+	WriteMaterialComponentsTable();
+	#endif
+	#endif
+	#endif
 }
 
 cDNDSpellBook *CDMHelperApp::LoadSpellBook(DND_CHARACTER_CLASSES nClassBook, char *path)
@@ -5124,6 +5150,12 @@ BOOL CDMHelperApp::PlayLicensedSound(CString szFile, BOOL bAsync)
 	return(bRetVal);
 }
 
+BOOL CDMHelperApp::StopSound()
+{
+	BOOL bRetVal = PlaySound(NULL, AfxGetInstanceHandle(), 0);
+	return bRetVal;
+}
+
 BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync)
 {
 	CString szPath = szFile;
@@ -5316,7 +5348,7 @@ void CDMHelperApp::PlayWeaponSFX(int nWeaponID, int nSoundType, CString szMagicW
 
 	if (szMagicWeaponName != _T(""))
 	{
-		szMagicWeaponName += " HIT";
+		szMagicWeaponName += " MAGIC HIT";
 
 		for (i = 0; i < MAX_SOUNDBOARD_PAGES; ++i)
 		{
@@ -5610,6 +5642,101 @@ int CDMHelperApp::GetCastingTime(cDNDSpell* pSpell) // in segments
 	}
 
 	return nSegments;
+}
+
+BOOL CDMHelperApp::SpellIsHealingSpell(cDNDSpell* pSpell)
+{
+	CString szCheck = pSpell->m_szSpellName;
+	szCheck.MakeUpper();
+
+	if (szCheck.Find("CURE") >= 0 && szCheck.Find("WOUND") >= 0)
+	{
+		return TRUE;
+	}
+	else if (szCheck.Find("HEAL") >= 0)
+	{
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+BOOL CDMHelperApp::HealCharacter(DWORD dwCharacterID)
+{
+	BOOL bRetVal = FALSE;
+	PDNDCHARVIEWDLG pCharDlg = NULL;
+	m_CharacterViewMap.Lookup(dwCharacterID, pCharDlg);
+
+	PDNDNPCVIEWDLG pNPCDlg = NULL;
+	m_NPCViewMap.Lookup(dwCharacterID, pNPCDlg);
+
+	if (NULL != pCharDlg || NULL != pNPCDlg)
+	{
+		int nValue = 0;
+		ModifyValue((int *)&nValue, "Heal Damage:", FALSE);
+
+		if (NULL != pCharDlg && NULL != pCharDlg->m_pCharacter)
+		{
+			pCharDlg->m_pCharacter->m_nCurrentDamage -= nValue;
+
+			if (pCharDlg->m_pCharacter->m_nCurrentDamage < 0)
+				pCharDlg->m_pCharacter->m_nCurrentDamage = 0;
+
+			pCharDlg->ProcessCharStats();
+
+			pCharDlg->Refresh();
+
+			bRetVal = TRUE;
+		}
+		else if (NULL != pNPCDlg && NULL != pNPCDlg->m_pNPC)
+		{
+			pNPCDlg->m_pNPC->m_nCurrentDamage -= nValue;
+
+			if (pNPCDlg->m_pNPC->m_nCurrentDamage < 0)
+				pNPCDlg->m_pNPC->m_nCurrentDamage = 0;
+
+			pNPCDlg->ProcessCharStats();
+
+			pNPCDlg->Refresh();
+
+			bRetVal = TRUE;
+		}
+	}
+
+	if (bRetVal)
+	{
+		RefreshAllMapViews();
+	}
+
+
+	return bRetVal;
+}
+
+void CDMHelperApp::RefreshAllMapViews()
+{
+	for (POSITION pos = m_MapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_MapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL)
+		{
+			pMapDlg->InvalidateRect(NULL);
+		}
+	}
+
+	for (POSITION pos = m_DetachedMapViewMap.GetStartPosition(); pos != NULL;)
+	{
+		WORD wID;
+		PDNDMAPVIEWDLG pMapDlg = NULL;
+		m_DetachedMapViewMap.GetNextAssoc(pos, wID, pMapDlg);
+
+		if (pMapDlg != NULL)
+		{
+			pMapDlg->InvalidateRect(NULL);
+		}
+	}
 }
 
 cDNDRandomEncounterTable *CDMHelperApp::FindEncounterTableByName(CString szTableName)
@@ -7017,3 +7144,772 @@ BOOL CDMHelperApp::EncryptWAVFile(CString szFileName)
 
 	return(FALSE);
 }
+
+#ifdef _DEBUG
+#if KEARY_BUILD
+#if 0
+void CDMHelperApp::WriteMaterialComponentsTable()
+{
+	CString szFileName;
+	szFileName.Format("%sData/tables/DRAFT_spell_material_components.csv", m_szEXEPath.GetBuffer(0));
+
+	CString szExcludeText[] =
+	{
+		"the use of the",
+		"as its ",
+		" the use of a piece of ",
+		" at least a ",
+		" to create, or a pinch of dust to destroy, water",
+		" of this spell is an ",
+		" of this spell is a ",
+		" of this spell are the",
+		" of this spell",
+		", with the cleric holding it before him or her",
+		"of this spell are the cleric's",
+		"of this spell are a ",
+		"of this spell are the ",
+		"of this spell is either a", 
+		" to complete the spell",
+		"for this spell are ",
+		" as the",
+		"for augury is ",
+		"are a",
+		"of the divination",
+		" of the spell",
+		"(or unholy, in the case of evil clerics, with respect to object and water)",
+		" - the exact size and metal type dictating to",
+		"the cleric's",
+		"cleric's",
+		"if it exceeds 50 square feet",
+		", or a similar device",
+		"set of divination counters of the sort favoured by the cleric - ",
+		", or whatever",
+		"to trace outline of closure",
+		"use of any sort of",
+		"the caster must have a",
+		"ALLDONE"
+	};
+
+	FILE *pOutFile = fopen(szFileName, "wt");
+
+	if (pOutFile == NULL)
+		return;
+
+	for (int nSpell = 0; nSpell < m_MasterSpellArray.GetSize(); ++nSpell)
+	{
+		PSPELL pSpell = (PSPELL)m_MasterSpellArray.GetAt(nSpell);
+
+		if (pSpell != NULL)
+		{
+			CString szTemp = "";
+
+			CString szMaterialComponent = pSpell->m_szSpellComponents;
+			szMaterialComponent.MakeUpper();
+
+			if (szMaterialComponent.Find("M") == -1)
+				continue;
+
+			CString szLine = GetClassName(pSpell->m_ClassBook);
+			szLine += "|";
+
+			CString szSpellName = pSpell->m_szSpellName;
+			szLine += szSpellName;
+			szLine += "|";
+
+			CString szMaterialComponentDesc = pSpell->m_szSpellDesc;
+			szMaterialComponentDesc.MakeLower();
+
+			if (szSpellName .Find("Chariot Of Sustarre") >= 0)
+			{
+				TRACE("STOP!\n");
+			}
+			if (szSpellName == "Control Weather" || szSpellName == "Cure Minor Wounds") //special case
+			{
+				szMaterialComponentDesc = "holy symbol.";
+			}
+			else if (szSpellName == "Symbol") //special case
+			{
+				szMaterialComponentDesc = "material component mercury and phosphorus.";
+			}
+			else if (szSpellName == "Candle") //special case
+			{
+				szMaterialComponentDesc = "material component candle.";
+			}
+			else if (szSpellName == "Repel Insects") //special case
+			{
+				szMaterialComponentDesc = "material component mistletoe and crushed marigold flowers, whole crushed leek, 7 crushed stinging nettle leaves or small lump of resin from camphor tree.";
+			}
+			else if (szSpellName == "Find Familiar") //special case
+			{
+				szMaterialComponentDesc = "material components brass brazier with charcoal, 100 g.p.worth of incense, herbs basil, herbs savoury and herbs catnip and fat.";
+			}
+			else if (szSpellName == "Fools Gold") //special case
+			{
+				szMaterialComponentDesc = "material components 50 g.p. citrine or 100 g.p. amber stone or 500 g.p. topaz or 1000 g.p.oriental(corundum) topaz.";
+			}
+			else if (szSpellName == "Locate Object") //special case
+			{
+				szMaterialComponentDesc = "material component lodestone.";
+			}
+			else if (szSpellName == "Strength") //special case
+			{
+				szMaterialComponentDesc = "material component hairs from a particularly strong animal or pinch of dung from a particularly strong animal.";
+			}
+			else if (szSpellName == "Invisibility, 10' Radius") //special case
+			{
+				szMaterialComponentDesc = "material component eyelash and bit of gum arabic.";
+			}
+			else if (szSpellName == "Leomund's Secret Chest") //special case
+			{
+				szMaterialComponentDesc = "material component well-crafted and expensive chest.";
+			}
+			else if (szSpellName.Find("Monster Summoning") >= 0) //special case
+			{
+				szMaterialComponentDesc = "material component tiny bag and a small candle.";
+			}
+			else if (szSpellName.Find("Cacodemon") >= 0) //special case
+			{
+				szMaterialComponentDesc = "material component circle of protection.";
+			}
+			else if (szSpellName.Find("Incendiary Cloud") >= 0) //special case
+			{
+				szMaterialComponentDesc = "material component fire source, scrapings from beneath a dung pile, and a pinch of dust.";
+			}
+		
+			
+
+			szMaterialComponentDesc.Replace("g.p.", "g*p*");
+			szMaterialComponentDesc.Replace("religious object", "holy symbol");
+			szMaterialComponentDesc.Replace("prayer device", "holy symbol");
+			szMaterialComponentDesc.Replace("holy (or unholy) symbol", "holy symbol");
+			szMaterialComponentDesc.Replace("holy/unholy symbol", "holy symbol");
+			szMaterialComponentDesc.Replace("holy object", "holy symbol");
+			szMaterialComponentDesc.Replace("the cleric's holy/unholy", "holy symbol");
+			szMaterialComponentDesc.Replace("the holy symbol of the cleric", "holy symbol");
+			szMaterialComponentDesc.Replace("religious symbol", "holy symbol");
+			szMaterialComponentDesc.Replace("holy/unholy water", "holy water");
+			szMaterialComponentDesc.Replace("a pinch of sulphur is necessary to complete this spell", "material component pinch of sulphur");
+			szMaterialComponentDesc.Replace(" necessary to a commune spell are ", "");
+			szMaterialComponentDesc.Replace("prayer beads or wheel or book", "prayer beads or prayer wheel or prayer book");
+			szMaterialComponentDesc.Replace("the cleric must use incense to trace this spell, and then sprinkle the area with powdered diamond (at least 2,000 g*p* worth)", "material component incense and powdered diamond (2000 g*p*)");
+			
+
+			CString szOriginalMaterialComponentDesc = szMaterialComponentDesc;
+
+			if (szSpellName == "Continual Darkness")
+			{
+				TRACE("STOP");
+			}
+
+			BOOL bError = FALSE;
+			int nFindStart = -1;
+			
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("in addition to mistletoe");
+				if (nFindStart != -1)
+				{
+					szMaterialComponentDesc.Replace("in addition to mistletoe", "material components mistletoe");
+					nFindStart = -1;
+				}
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("to prepare this spell");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("the magic-user must prepare an");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("the spell is cast with");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("must trace the outline of the closure with a bit of");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("the components for this spell are");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("the cleric needs a");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("caster needs");
+			}
+			if (nFindStart == -1)
+			{
+				if (szMaterialComponentDesc.Find("as its material component") > -1)
+				{
+					nFindStart = szMaterialComponentDesc.Find("requires");
+				}
+			}
+			if (nFindStart == -1)
+			{
+				szMaterialComponentDesc.Find("material components");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("material component");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("requires");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("while holding a ");
+			}
+			if (nFindStart == -1)
+			{
+				nFindStart = szMaterialComponentDesc.Find("the spell caster must have at least a ");
+			}
+			
+			
+
+			if (nFindStart > -1)
+			{
+				szMaterialComponentDesc.Replace("the cleric needs a", "");
+				szMaterialComponentDesc.Replace("caster needs", "");
+				szMaterialComponentDesc.Replace("material components", "");
+				szMaterialComponentDesc.Replace("material component", "");
+				szMaterialComponentDesc.Replace("requires", "");
+				szMaterialComponentDesc.Replace("the components for this spell are", "");
+				szMaterialComponentDesc.Replace("must trace the outline of the closure with a bit of", "");
+				szMaterialComponentDesc.Replace("the spell is cast with", "");
+				szMaterialComponentDesc.Replace("the magic-user must prepare an", "");
+				szMaterialComponentDesc.Replace("the magic-user must prepare an", "");
+				szMaterialComponentDesc.Replace("to prepare this spell", "");
+				szMaterialComponentDesc.Replace("while holding a ", "");
+				szMaterialComponentDesc.Replace("the spell caster must have at least a ", "");
+
+				szTemp = szMaterialComponentDesc.Mid(nFindStart, szMaterialComponentDesc.GetLength());
+				szMaterialComponentDesc = szTemp;
+
+				int nFindEnd = -1;
+				
+				
+				if (nFindEnd == -1)
+				{
+					nFindEnd = szMaterialComponentDesc.Find("in order to cast this spell");
+				}
+				if (nFindEnd == -1)
+				{
+					nFindEnd = szMaterialComponentDesc.Find(", the spell will locate");
+				}
+				if (nFindEnd == -1)
+				{
+					nFindEnd = szMaterialComponentDesc.Find("which");
+				}
+				if (nFindEnd == -1)
+				{
+					nFindEnd = szMaterialComponentDesc.Find(".");
+				}
+				if (szMaterialComponentDesc.Find(" or") == -1 && szMaterialComponentDesc.Find(" and") == -1 && szMaterialComponentDesc.Find(" a ") == -1)
+				{
+					int nFindComma = szMaterialComponentDesc.Find(",");
+					if (nFindComma > -1)
+					{
+						nFindEnd = nFindComma;
+					}
+				}
+					
+
+				if (nFindEnd > -1)
+				{
+					szTemp = szMaterialComponentDesc.Left(nFindEnd);
+					szMaterialComponentDesc = szTemp;
+				}
+				else
+				{
+					szMaterialComponentDesc = "ERROR 1";
+					bError = TRUE;
+				}
+			}
+			else
+			{
+				if (szMaterialComponentDesc.Find("is the same as the") >= 0 || szMaterialComponentDesc.Find("this is the same as an") >= 0 || 
+					szMaterialComponentDesc.Find("are the same as the ") >= 0 || szMaterialComponentDesc.Find("it is otherwise similar to the") >= 0)
+				{
+					szMaterialComponentDesc = "REFER OTHER SPELL";
+				}
+				else if (pSpell->m_ClassBook == DND_CHARACTER_CLASS_DRUID)
+				{
+					szMaterialComponentDesc = "mistletoe";
+				}
+				else
+				{
+					szMaterialComponentDesc = "ERROR 2";
+					bError = TRUE;
+				}
+			}
+
+			if (bError)
+			{
+				if (szOriginalMaterialComponentDesc.Find("holy") > -1 && szOriginalMaterialComponentDesc.Find("symbol") > -1)
+				{
+					szMaterialComponentDesc = "holy symbol";
+					bError = FALSE;
+				}
+				else if (szOriginalMaterialComponentDesc.Find("holy") > -1 && szOriginalMaterialComponentDesc.Find("water") > -1)
+				{
+					szMaterialComponentDesc = "holy water";
+					bError = FALSE;
+				}
+			}
+
+			int nExcludes = 0;
+			do
+			{
+				szMaterialComponentDesc.Replace(szExcludeText[nExcludes], "");
+				++nExcludes;
+			} while (szExcludeText[nExcludes] != "ALLDONE");
+
+	
+
+			szMaterialComponentDesc.Replace("of repel insects mistletoe and one of following : ", "mistletoe and");
+			szMaterialComponentDesc.Replace("is holy", "holy");
+			szMaterialComponentDesc.Replace(" an ", " ");
+			szMaterialComponentDesc.Replace(" a ", " ");
+			szMaterialComponentDesc.Replace(" the ", " ");
+			szMaterialComponentDesc.Replace(" few ", " ");
+			szMaterialComponentDesc.Replace(" some ", " ");
+			szMaterialComponentDesc.Replace("spell are ", " ");
+			szMaterialComponentDesc.Replace("spell is ", " ");
+			szMaterialComponentDesc.Replace("spell ", " ");
+			szMaterialComponentDesc.Replace(" is ", " ");
+			szMaterialComponentDesc.Replace(" are ", " ");
+			szMaterialComponentDesc.Replace(" Oath,", " ");
+			szMaterialComponentDesc.Replace(" rubbed over individual", " ");
+			szMaterialComponentDesc.Replace("leaf of mistletoe (", "mistletoe");
+			szMaterialComponentDesc.Replace("(in addition to mistletoe, of course)", "and mistletoe");
+			szMaterialComponentDesc.Replace("that typically druidic (", "");
+			
+
+			szMaterialComponentDesc.Replace("   ", " ");
+			szMaterialComponentDesc.Replace("  ", " ");
+
+			szMaterialComponentDesc.Replace("isholy", "holy");
+
+			szMaterialComponentDesc.TrimLeft();
+			szMaterialComponentDesc.TrimRight();
+
+			
+			if (szMaterialComponentDesc == "")
+			{
+				if (pSpell->m_ClassBook == DND_CHARACTER_CLASS_DRUID)
+				{
+					szMaterialComponentDesc = "mistletoe";
+				}
+				else
+				{
+					if (szOriginalMaterialComponentDesc.Find("are the same as the ") >= 0)
+					{
+						szMaterialComponentDesc = "REFER OTHER SPELL";
+					}
+					else
+					{
+						szMaterialComponentDesc = "ERROR BLANK";
+					}
+				}
+			}
+
+			//szMaterialComponentDesc.Replace(",", "|");
+			//szMaterialComponentDesc.Replace(" and ", " && ");
+			//szMaterialComponentDesc.Replace(" or ", " || ");
+			//szMaterialComponentDesc.Replace(",", " && ");
+			//szMaterialComponentDesc.Replace("&& &&", "&&");
+			szMaterialComponentDesc.Replace("  ", " ");
+			szMaterialComponentDesc.Replace("g*p*", "g.p.");
+
+			szLine += szMaterialComponentDesc;
+			fprintf(pOutFile, "%s\n", szLine);
+
+		}
+	}
+
+	fclose(pOutFile);
+}
+#endif
+#endif
+#endif
+
+
+UINT DMInstantMapSFXThreadProc(LPVOID pData)
+{
+	CDMHelperApp *pApp = (CDMHelperApp *)pData;
+	CDMHelperDlg *pMainDlg = (CDMHelperDlg *)pApp->m_pMainWindow;
+	cDNDInstantMapSFXPlacer *pInstantMapSFXPlacer = pApp->m_pInstantMapSFXPlacer;
+
+	CString szSFXGFXName(_T(""));
+	cDNDMapSFX *pDNDMapSFX = NULL;
+	int nRangeCircle = 0;
+	int nDelayTenths = 0;
+	float fParentMapInchScale = 1.0f;
+	float fMissileSpeed = 1.0f;
+	BOOL bPermanentSFX = FALSE;
+	BOOL bOldLabelsCheck = FALSE;
+
+	switch (pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier)
+	{
+		case 6:		// cleric light
+		case 188:	// magic-user light
+		case 443:	// illusionist light
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\LIGHT_CIRCLE.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.2f;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 8.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			break;
+		}
+		case 19:	//cleric silence 15' radius spell
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\SILENCE_CIRCLE.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.2f;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 6.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			break;
+		}
+		case 23:	// cleric spritual hammer
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\MJOLNIR.GIF";
+			pDNDMapSFX->m_bColorKeyed = FALSE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.9f;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 3.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			bPermanentSFX = TRUE;
+			break;
+		}
+		case 25:	// cleric continual light
+		case 459:	// illusionist continual light
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\LIGHT_CIRCLE.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.2f;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 24.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			break;
+		}
+		case 206: // magic-user darkness
+		case 438: // illusionist darkness
+		case 458: // illusionist continual darkness
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\DARKNESS_CIRCLE.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 3.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			break;
+		}
+		#if 1
+		case 189: // magic-user magic missile
+		{
+			if (pApp->m_bSpellFXOnMapsMagicMissile)
+			{
+				pApp->m_bWaitOnDungeonMaster = TRUE;
+				pDNDMapSFX = new cDNDMapSFX();
+				szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\MAGIC_MISSILE.PNG";
+				pDNDMapSFX->m_bAnimated = FALSE;
+				pDNDMapSFX->m_bTranslucent = TRUE;
+				pDNDMapSFX->m_bColorKeyed = TRUE;
+				pDNDMapSFX->m_bInMotion = TRUE;
+				pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+				pInstantMapSFXPlacer->m_fScale = 2.0f;
+				fMissileSpeed = 150.0f;
+				strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+				nDelayTenths = 1;
+			}
+			break;
+		}
+		#endif
+		case 226: // magic-user web
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\SPIDER_WEB.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 2.5f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			break;
+		}
+		case 234:	// magic-user fireball
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			//szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\EXPLODE.GIF";
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\RED_EXPLOSION.GIF";
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			//pDNDMapSFX->m_bTranslucent = TRUE;
+			//pDNDMapSFX->m_fAlpha = 0.8f;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 13.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 40; // 40 feet across, 20 foot radius
+			nDelayTenths = 30;
+			break;
+		}
+		case 243:	// magic-user lightning bolt
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			//szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\LIGHTNING_1.GIF";
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\LIGHTNING_BOLT.GIF";
+			//szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\PLASMA.GIF";
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_nCycles = 10;
+			pInstantMapSFXPlacer->m_fScale = 7.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 15;
+			break;
+		}
+		case 178:	// magic-user dancing lights
+		case 437:	// illusionist dancing lights
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\DANCING_LIGHTS.GIF";
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.7f;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 6.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			bPermanentSFX = TRUE;
+			break;
+		}
+		case 444:	// illusionist phantasmal force
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\WORMHOLE.GIF";
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 4.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			bPermanentSFX = TRUE;
+			break;
+		}
+	}
+
+	
+	int nWaitCount = 0;
+	int nOddOrEven = 0;
+	if (pApp->m_bWaitOnDungeonMaster)
+	{
+		do
+		{
+			if (nWaitCount % 20 == 0)
+			{
+				if (nOddOrEven == 0)
+				{
+					pMainDlg->SetAppTitle("  * WAITING ON DUNGEON MASTER *");
+				}
+				else
+				{
+					pMainDlg->SetAppTitle();
+				}
+
+				nOddOrEven = 1 - nOddOrEven;
+			}
+
+			Sleep(50);
+			++nWaitCount;
+		} while (pInstantMapSFXPlacer->m_bMapClicked == FALSE && nWaitCount < 400); // should timeout after 10 seconds
+
+	}
+	pMainDlg->SetAppTitle();
+
+	pApp->m_bWaitOnDungeonMaster = FALSE;
+	
+	if (pInstantMapSFXPlacer->m_bCastFromDevice == FALSE)
+	{
+		pApp->PlayPCSoundFX("* PC Cast Spell", pInstantMapSFXPlacer->m_szCharacterName, "NADA", FALSE);
+	}
+
+	pApp->PlaySpellSFX(pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier, pInstantMapSFXPlacer->m_nRepeats);
+
+	if (pInstantMapSFXPlacer->m_pDMMapViewDialog == NULL || pDNDMapSFX == NULL || pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_bMapScaleFeet == FALSE) // timed out, so abort
+	{
+		if (pDNDMapSFX != NULL)
+		{
+			delete pDNDMapSFX;
+		}
+
+		pApp->m_pInstantMapSFXPlacer = NULL;
+		delete pInstantMapSFXPlacer;
+
+		return 0;
+	}
+
+	bOldLabelsCheck = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck;
+	pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = FALSE;
+
+	fParentMapInchScale = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_fScaleX;
+
+	pDNDMapSFX->m_nMapX = pInstantMapSFXPlacer->m_nMapX;
+	pDNDMapSFX->m_nMapY = pInstantMapSFXPlacer->m_nMapY;
+	pDNDMapSFX->m_fSpriteScale = (pInstantMapSFXPlacer->m_fScale / 100.0f) / fParentMapInchScale;
+
+	do
+	{
+		Sleep(100);
+		--nDelayTenths;
+	} while (nDelayTenths > 0 && g_bGlobalShutDownFlag == FALSE);
+
+	if (g_bGlobalShutDownFlag)
+	{
+		return 0;
+	}
+
+	if (pInstantMapSFXPlacer->m_pDMMapViewDialog != NULL)
+	{
+		if (pDNDMapSFX->m_bInMotion) // this is a missile
+		{
+			CDMCharacterHotSpot* pCharacterHotSpot = pInstantMapSFXPlacer->m_pDMMapViewDialog->GetCharacterHotSpotFromID(pInstantMapSFXPlacer->m_dwCharacterID);
+
+			if (pCharacterHotSpot != NULL)
+			{
+				pInstantMapSFXPlacer->m_pDMMapViewDialog->m_SFXMotionTracker.Init(pCharacterHotSpot->m_fMapLocationX, pCharacterHotSpot->m_fMapLocationY, (float)pDNDMapSFX->m_nMapX, (float)pDNDMapSFX->m_nMapY, fMissileSpeed, pInstantMapSFXPlacer->m_nRepeats);
+
+				pDNDMapSFX->m_nMapX = (int)pCharacterHotSpot->m_fMapLocationX;
+				pDNDMapSFX->m_nMapY = (int)pCharacterHotSpot->m_fMapLocationY;
+			}
+		}
+
+		pDNDMapSFX->m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+
+		if ((pDNDMapSFX->m_bAnimated == FALSE || bPermanentSFX == TRUE) && pDNDMapSFX->m_bInMotion == FALSE)
+		{
+			for (int i = 0; i < MAX_MAP_SFX; ++i)
+			{
+				if (pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i].m_SFXState == DND_SFX_STATE_UNDEF)
+				{
+					memcpy(&pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i], pDNDMapSFX, sizeof(cDNDMapSFX));
+					break;
+				}
+			}
+
+			pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = FALSE;
+			pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+		}
+		else
+		{
+			pInstantMapSFXPlacer->m_pDNDMapSFX = pDNDMapSFX;
+			pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+
+			nWaitCount = 0;
+			do
+			{
+				BOOL bTimedOut = FALSE;
+				if (pDNDMapSFX->m_bInMotion) // this is a missile
+				{
+					bTimedOut = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_SFXMotionTracker.CheckTimer();
+				}
+
+				Sleep(50);
+				++nWaitCount;
+			} while (pDNDMapSFX->m_SFXState != DND_SFX_STATE_READY && nWaitCount < 400);
+
+			Sleep(2000);
+
+			pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+		}
+
+	}
+
+#if 1
+	if (pDNDMapSFX != NULL && pDNDMapSFX->m_bAnimated)
+	{
+		if (pDNDMapSFX->m_pDataPtr != NULL)
+		{
+			ImageEx* _GIFImage = (ImageEx*)pDNDMapSFX->m_pDataPtr;
+			_GIFImage->SetPause(TRUE);
+			Sleep(1000);
+			_GIFImage->Destroy();
+		}
+
+		pDNDMapSFX->m_pDataPtr = NULL;
+		delete pDNDMapSFX;
+	}
+#endif
+
+	if (nRangeCircle != 0)
+	{
+		for (int i = 0; i < MAX_MAP_SFX; ++i)
+		{
+			if (pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i].m_SFXState == DND_SFX_STATE_UNDEF)
+			{
+				cDNDMapSFX *pDNDMapSFX = &pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i];
+				CString szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\RANGE_CIRCLE.PNG";
+				strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+				pDNDMapSFX->m_bAnimated = FALSE;
+				pDNDMapSFX->m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+				pDNDMapSFX->m_nMapX = pInstantMapSFXPlacer->m_nMapX;
+				pDNDMapSFX->m_nMapY = pInstantMapSFXPlacer->m_nMapY;
+
+				float fRangeCircle = ((float)nRangeCircle)/fParentMapInchScale / 509.25f;
+				pDNDMapSFX->m_fSpriteScale = fRangeCircle;
+
+				bOldLabelsCheck = FALSE;
+
+				break;
+			}
+		}
+
+		
+		pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+	}
+
+	pInstantMapSFXPlacer->m_pDMMapViewDialog->UpdateDetachedMaps(TRUE);
+
+	pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = bOldLabelsCheck;
+	
+	pApp->m_pInstantMapSFXPlacer = NULL;
+	delete pInstantMapSFXPlacer;
+
+	return 0;
+}
+

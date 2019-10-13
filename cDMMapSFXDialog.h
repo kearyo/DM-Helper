@@ -50,4 +50,14 @@ public:
 	afx_msg void OnBnClickedScaleUp();
 	afx_msg void OnBnClickedSfxCycleCheck();
 	BOOL m_bCycleGIF;
+	CButton m_cUpButton;
+	CButton m_cDownButton;
+	CButton m_cLeftButton;
+	CButton m_cRightButton;
+	BOOL m_bColorKeyed;
+	afx_msg void OnBnClickedSfxColorKeyedCheck();
+	BOOL m_bTranslucent;
+	afx_msg void OnBnClickedSfxTranslucentCheck();
+	CString m_szAlpha;
+	afx_msg void OnEnChangeAlphaEdit();
 };

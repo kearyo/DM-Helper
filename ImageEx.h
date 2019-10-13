@@ -26,8 +26,8 @@ public:
 	bool	IsAnimatedGIF() { return m_nFrameCount > 1; }
 	void	SetPause(bool bPause);
 	bool	IsPaused() { return m_bPause; }
-	bool	InitAnimation(HWND hWnd, CPoint pt, float fScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag);
-	void	Position(int nX, int nY, float fScale, float fOriginalScale);
+	bool	InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, float fAlpha);
+	void	Position(int nX, int nY, float fScreenScale, float fSpriteScale);
 	void	ResetBackground();
 	void	Destroy();
 
@@ -62,8 +62,12 @@ protected:
 	CPoint			m_pt;
 
 	BOOL			m_bFirstDraw;
-	float			m_fOriginalScale;
-	float			m_fAnimScale;
+	float			m_fSpriteScale;
+	float			m_fScreenScale;
+	int				m_nCycles;
+	BOOL			m_bColorKeyed;
+	BOOL			m_bTranslucent;
+	float			m_fAlpha;
 
 	Gdiplus::Bitmap			*m_pBackGroundBitmap;
 

@@ -10,6 +10,7 @@
 #include "DMPartyDialog.h"
 #include "DMSpellDescDialog.h"
 #include "DMInitiativeDialog.h"
+#include "DMCharacterSelectorDialog.h"
 #include "DMCastSpellDialog.h"
 
 #ifdef _DEBUG
@@ -54,6 +55,7 @@ BEGIN_MESSAGE_MAP(DMCastSpellDialog, CDialog)
 	ON_WM_LBUTTONDBLCLK()
 	ON_BN_CLICKED(IDC_SPELL_INFO, OnSpellInfo)
 	//}}AFX_MSG_MAP
+	ON_LBN_DBLCLK(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnDblclkSpellList)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -313,14 +315,43 @@ void DMCastSpellDialog::OnOK()
 
 				CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
 
-				if (pSpellSlot->m_bCastFromDevice == FALSE)
+				if (pApp->SpellIsHealingSpell(pSpellSlot->m_pSpell))
 				{
-					pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
+					DWORD dwCharacterID = 0;
+					DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
+					pDlg->DoModal();
+
+					if (dwCharacterID)
+					{
+						m_pApp->HealCharacter(dwCharacterID);
+					}
 				}
 
-				//flatulence
-				int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
-				pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
+				// delayed blast
+				BOOL bPlaySounds = TRUE;
+				#if GAMETABLE_BUILD
+				if (pApp->m_pInstantMapSFXPlacer == NULL)
+				{
+					if (pApp->m_bSpellFXOnMaps)
+					{
+						int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
+						pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->m_szCharacterFirstName, m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_bCastFromDevice, nSoundRepeats);
+						AfxBeginThread(DMInstantMapSFXThreadProc, (LPVOID)pApp);
+						bPlaySounds = FALSE;
+					}
+				}
+				#endif
+
+				if (bPlaySounds)
+				{
+					if (pSpellSlot->m_bCastFromDevice == FALSE)
+					{
+						pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
+					}
+
+					int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
+					pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
+				}
 
 				DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
 				if(pPartyDlg != NULL)
@@ -400,3 +431,9 @@ void DMCastSpellDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 	CDialog::OnLButtonDblClk(nFlags, point);
 }
 
+
+
+void DMCastSpellDialog::OnLbnDblclkSpellList()
+{
+	OnOK();
+}

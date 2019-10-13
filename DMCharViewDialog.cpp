@@ -3191,6 +3191,8 @@ void CDMCharViewDialog::ExternalRollPCStats() // unit test support
 
 void CDMCharViewDialog::OnRollStats()  //also grant earned XP
 {
+	CWaitCursor myWaitCursor;
+
 	if(m_pCharacter->m_dwCharacterID == 0L)
 	{
 		/*
@@ -4474,6 +4476,9 @@ void CDMCharViewDialog::OnSelchangeWeaponCombo1()
 			{
 				if(m_pCharacter->m_Inventory[i].m_ObjectType == DND_OBJECT_TYPE_AMMO && IsValidAmmoForWeapon(&m_pCharacter->m_SelectedWeapons[0] ,&m_pCharacter->m_Inventory[i]))
 				{
+					if (m_dwLastSelectedAmmoID && m_pCharacter->m_Inventory[i].m_dwObjectID != m_dwLastSelectedAmmoID)
+						continue;  // so we don't use our magic arrows unless we selected them
+
 					pWeapon = m_pApp->m_AmmunitionIndexedTypeArray.GetAt(m_pCharacter->m_Inventory[i].m_wTypeId);
 
 					if(pWeapon != NULL)
@@ -4482,13 +4487,11 @@ void CDMCharViewDialog::OnSelchangeWeaponCombo1()
 						m_pCharacter->m_SelectedAmmo.m_dwObjectID = m_pCharacter->m_Inventory[i].m_dwObjectID;
 						m_pCharacter->m_SelectedAmmo.m_nMagicAdj = m_pCharacter->m_Inventory[i].m_nMagicAdj;
 						m_pCharacter->m_SelectedAmmo.m_lAmount = m_pCharacter->m_Inventory[i].m_lAmount;
-						m_cAmmunitionCombo.SetCurSel(1); //dont't know why this works, but it does
+						m_cAmmunitionCombo.SetCurSel(i);
+						//m_cAmmunitionCombo.SetCurSel(1); //dont't know why this works, but it does
 					}
 				}
 			}
-
-			//m_cAmmunitionCombo.SetCurSel(1); //dont't know why this works, but it does
-
 		}
 
 		m_pCharacter->MarkChanged();
@@ -4626,6 +4629,8 @@ void CDMCharViewDialog::OnSelchangeAmmoCombo()
 				pInvItem->m_lAmount = 1;
 
 			m_pCharacter->m_SelectedAmmo.m_lAmount = pInvItem->m_lAmount;
+
+			m_dwLastSelectedAmmoID = pInvItem->m_dwObjectID;
 		}
 
 		m_pCharacter->MarkChanged();
@@ -4929,7 +4934,8 @@ void CDMCharViewDialog::FireAmmo(BOOL bCheckThrow)
 
 			if(m_pCharacter->m_Inventory[i].m_lAmount <= 0)
 			{
-				//gob ammo
+				m_dwLastSelectedAmmoID = 0;
+
 				if (IsThrowableWeapon(m_pCharacter->m_Inventory[i].m_nFlags))
 				{
 					m_dwLastThrownObjectID = m_pCharacter->m_Inventory[i].m_dwObjectID;
@@ -5042,9 +5048,16 @@ void CDMCharViewDialog::CollapseRecoveryInventory()
 
 void CDMCharViewDialog::ExternalRecoverAmmo()
 {
-	m_cRecoverAmmoCombo.SetCurSel(0);
-	UpdateData(TRUE);
-	OnRecoverAmmo();
+	for (int i = 0; i < m_cRecoverAmmoCombo.GetCount(); ++i)
+	{
+		if (m_cRecoverAmmoCombo.GetItemData(i))
+		{
+			m_cRecoverAmmoCombo.SetCurSel(i);
+			UpdateData(TRUE);
+			OnRecoverAmmo();
+			break;
+		}
+	}
 }
 
 void CDMCharViewDialog::OnRecoverAmmo() 

@@ -34,6 +34,7 @@ public:
 
 	cDNDParty *m_pParty;
 	cDNDPartyLog *m_pPartyLog;
+	CString m_szPartySaveFilePath;
 
 	cDNDSubParty *m_pSubParty;
 	DWORD m_dwParentPartyID;

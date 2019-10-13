@@ -144,6 +144,7 @@ void CDMDiceRollerDialog::RollDice(int nDieType)
 
 void CDMDiceRollerDialog::OnBnClickedD20Button()
 {
+	int nPoo = RollD20();
 	RollDice(20);
 }
 
