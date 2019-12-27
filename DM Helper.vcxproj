@@ -164,6 +164,7 @@
     <ClCompile Include="cDMMapSFXDialog.cpp" />
     <ClCompile Include="cDMMapSizingDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
+    <ClCompile Include="cDMMaterialComponentsDialog.cpp" />
     <ClCompile Include="cDMOpenLockDialog.cpp" />
     <ClCompile Include="cDMPDFViewDialog.cpp" />
     <ClCompile Include="cDMRandomNameGeneratorDialog.cpp" />
@@ -210,6 +211,7 @@
     <ClCompile Include="DMPartyLogDialog.cpp" />
     <ClCompile Include="DMPCDetailsDialog.cpp" />
     <ClCompile Include="DMRandomEncounterDialog.cpp" />
+    <ClCompile Include="DMReminderSFXDialog.cpp" />
     <ClCompile Include="DMSaveConfirmDialog.cpp" />
     <ClCompile Include="DMScrollDetailsDialog.cpp" />
     <ClCompile Include="DMSFXEditorDialog.cpp" />
@@ -246,6 +248,7 @@
     <ClInclude Include="cDMMapSFXDialog.h" />
     <ClInclude Include="cDMMapSizingDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
+    <ClInclude Include="cDMMaterialComponentsDialog.h" />
     <ClInclude Include="cDMOpenLockDialog.h" />
     <ClInclude Include="cDMPDFViewDialog.h" />
     <ClInclude Include="cDMRandomNameGeneratorDialog.h" />
@@ -292,6 +295,7 @@
     <ClInclude Include="DMPartyLogDialog.h" />
     <ClInclude Include="DMPCDetailsDialog.h" />
     <ClInclude Include="DMRandomEncounterDialog.h" />
+    <ClInclude Include="DMReminderSFXDialog.h" />
     <ClInclude Include="DMSaveConfirmDialog.h" />
     <ClInclude Include="DMScrollDetailsDialog.h" />
     <ClInclude Include="DMSFXEditorDialog.h" />

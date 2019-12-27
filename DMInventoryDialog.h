@@ -228,6 +228,9 @@ public:
 	CButton m_cInLairCheck;
 	BOOL m_bInLairCheck;
 	afx_msg void OnBnClickedInLairCheck();
+	BOOL m_bMaterialComponentCheck;
+	afx_msg void OnBnClickedMagicComponentsCheck();
+	CString m_szItemDesc;
 };
 
 //{{AFX_INSERT_LOCATION}}

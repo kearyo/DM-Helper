@@ -65,6 +65,8 @@ DMInventoryDialog::DMInventoryDialog(CDMHelperDlg* pMainDialog, cDNDCharacter *_
 	, m_bDoubleSpecialized(FALSE)
 	, m_bSpecialized(FALSE)
 	, m_bInLairCheck(FALSE)
+	, m_bMaterialComponentCheck(FALSE)
+	, m_szItemDesc(_T(""))
 {
 	//{{AFX_DATA_INIT(DMInventoryDialog)
 	m_szEncumbrance = _T("");
@@ -196,6 +198,8 @@ void DMInventoryDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_GEN_TREASURE_BUTTON, m_cGenerateTreasureButton);
 	DDX_Control(pDX, IDC_IN_LAIR_CHECK, m_cInLairCheck);
 	DDX_Check(pDX, IDC_IN_LAIR_CHECK, m_bInLairCheck);
+	DDX_Check(pDX, IDC_MAGIC_COMPONENTS_CHECK, m_bMaterialComponentCheck);
+	DDX_Text(pDX, IDC_ITEM_DESC, m_szItemDesc);
 }
 
 
@@ -269,6 +273,7 @@ BEGIN_MESSAGE_MAP(DMInventoryDialog, CDialog)
 	ON_LBN_DBLCLK(IDC_INVENTORY_LIST, &DMInventoryDialog::OnLbnDblclkInventoryList)
 	ON_BN_CLICKED(IDC_GEN_TREASURE_BUTTON, &DMInventoryDialog::OnBnClickedGenTreasureButton)
 	ON_BN_CLICKED(IDC_IN_LAIR_CHECK, &DMInventoryDialog::OnBnClickedInLairCheck)
+	ON_BN_CLICKED(IDC_MAGIC_COMPONENTS_CHECK, &DMInventoryDialog::OnBnClickedMagicComponentsCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -306,6 +311,7 @@ BOOL DMInventoryDialog::OnInitDialog()
 	m_bArmorCheck = TRUE;
 	m_bShieldsCheck = TRUE;
 	m_bEquipCheck = TRUE;
+	m_bMaterialComponentCheck = FALSE;
 
 	m_bRingsCheck = FALSE;
 	m_bMiscWeaponsCheck = FALSE;
@@ -404,6 +410,7 @@ void DMInventoryDialog::SelectMagicItems(BOOL bSelect)
 		m_bArmorCheck = FALSE;
 		m_bShieldsCheck = FALSE;
 		m_bEquipCheck = FALSE;
+		m_bMaterialComponentCheck = FALSE;
 	}
 	else
 	{
@@ -420,6 +427,7 @@ void DMInventoryDialog::SelectMagicItems(BOOL bSelect)
 		m_bMagicalArmorCheck = FALSE;
 		m_bMagicalSwordsCheck = FALSE;
 		m_bMiscWeaponsCheck = FALSE;
+		m_bMaterialComponentCheck = FALSE;
 	}
 
 }
@@ -526,8 +534,8 @@ void DMInventoryDialog::InitDisplay()
 				if(!m_bArmorCheck && (pObj->m_ObjectType == DND_OBJECT_TYPE_ARMOR || pObj->m_ObjectType == DND_OBJECT_TYPE_HELMET))
 					continue;
 
-				//if(!m_bRingsCheck && pObj->m_ObjectType == DND_OBJECT_TYPE_RING)
-				//	continue;
+				if(!m_bMaterialComponentCheck && pObj->m_ObjectType == DND_OBJECT_TYPE_MATERIAL_COMPONENT)
+					continue;
 
 
 				if(!m_bEquipCheck && (pObj->m_ObjectType == DND_OBJECT_TYPE_EQUIPMENT || pObj->m_ObjectType == DND_OBJECT_TYPE_RING))
@@ -1246,6 +1254,8 @@ void DMInventoryDialog::CheckItemSelect()
 
 	m_cItemInfoButton.EnableWindow(FALSE);
 
+	m_szItemDesc = _T("");
+
 	CString szItemName = _T("");
 
 	int nCursor = m_cStoreList.GetCurSel();
@@ -1257,10 +1267,16 @@ void DMInventoryDialog::CheckItemSelect()
 			PMAGICTABLEITEM pMagicItem = (PMAGICTABLEITEM)m_cStoreList.GetItemData(nCursor);
 
 			szItemName.Format("%s", pMagicItem->m_szDesc);
+			m_szItemDesc.Format("DESC: %s", pMagicItem->m_szDesc);
 		}
 		else
 		{
 			POBJECTTYPE pObj = (POBJECTTYPE)m_cStoreList.GetItemData(nCursor);
+
+			if (pObj->m_szExtendedName[0])
+			{
+				m_szItemDesc.Format("DESC: %s", pObj->m_szExtendedName);
+			}
 		}
 
 		if (szItemName != _T(""))
@@ -1363,6 +1379,8 @@ void DMInventoryDialog::OnBuyButton()
 			MarkCacheChanged(NULL);
 
 			RefreshAll();
+
+			m_pApp->PlaySoundFX("Purchase");
 		}
 	}
 	
@@ -2439,6 +2457,26 @@ void DMInventoryDialog::OnEquipCheck()
 }
 
 
+void DMInventoryDialog::OnBnClickedMagicComponentsCheck()
+{
+	UpdateData(TRUE);
+
+	if (m_bMaterialComponentCheck)
+	{
+		SelectMagicItems(FALSE);
+		
+		m_bWeaponsCheck = FALSE;
+		m_bArmorCheck = FALSE;
+		m_bShieldsCheck = FALSE;
+		m_bEquipCheck = FALSE;
+		m_bMaterialComponentCheck = TRUE;
+	}
+
+	InitDisplay();
+
+	Refresh();
+}
+
 
 void DMInventoryDialog::OnRingsCheck() 
 {
@@ -3233,3 +3271,5 @@ void DMInventoryDialog::OnBnClickedInLairCheck()
 {
 	UpdateData(TRUE);
 }
+
+

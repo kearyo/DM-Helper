@@ -11,6 +11,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // CDMCharViewDialog dialog
 
+
 typedef enum
 {
 	DND_CHAR_VIEW_TYPE_UNDEF = 0,
@@ -74,6 +75,8 @@ public:
 	DWORD m_dwLastSelectedAmmoID;
 	DWORD m_dwLastThrownObjectID;
 
+	std::vector<POBJECTINDEXER> m_SpellMaterialComponentsRequiredVector[MAX_SPELL_COMPONENT_AND_COLUMNS];
+
 	CDMBaseCharViewDialog(DND_CHAR_VIEW_TYPES _ViewType, UINT nIDTemplate, CWnd* pParentWnd)
 	{
 		m_pApp = (CDMHelperApp *)AfxGetApp();
@@ -120,6 +123,8 @@ public:
 	}
 
 	~CDMBaseCharViewDialog();
+
+	DND_SPELL_MATERIAL_RETURN_CODES CharacterCanCastSpell(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bCheckComponents, BOOL bGetInfo);
 
 	DND_CHAR_VIEW_TYPES	GetType()
 	{

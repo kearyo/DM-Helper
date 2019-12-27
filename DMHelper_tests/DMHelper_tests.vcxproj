@@ -102,6 +102,7 @@
     <ClCompile Include="..\cDMMapSFXDialog.cpp" />
     <ClCompile Include="..\cDMMapSizingDialog.cpp" />
     <ClCompile Include="..\cDMMapViewDialog.cpp" />
+    <ClCompile Include="..\cDMMaterialComponentsDialog.cpp" />
     <ClCompile Include="..\cDMOpenLockDialog.cpp" />
     <ClCompile Include="..\cDMPDFViewDialog.cpp" />
     <ClCompile Include="..\cDMRandomNameGeneratorDialog.cpp" />
@@ -148,6 +149,7 @@
     <ClCompile Include="..\DMPartyLogDialog.cpp" />
     <ClCompile Include="..\DMPCDetailsDialog.cpp" />
     <ClCompile Include="..\DMRandomEncounterDialog.cpp" />
+    <ClCompile Include="..\DMReminderSFXDialog.cpp" />
     <ClCompile Include="..\DMSaveConfirmDialog.cpp" />
     <ClCompile Include="..\DMScrollDetailsDialog.cpp" />
     <ClCompile Include="..\DMSFXEditorDialog.cpp" />

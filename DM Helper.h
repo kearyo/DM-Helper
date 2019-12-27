@@ -331,8 +331,9 @@ public:
 	int m_nVendorPriceInflationFactor;
 	int m_nMonitorDPMIFactor;
 
+	BOOL m_bUseMaterialComponents;
 
-	int m_nReserved[127];
+	int m_nReserved[126];
 
 	ULONG m_lReserved[128];
 	float m_fReserved[128];
@@ -373,7 +374,7 @@ public:
 		
 		memset(m_bReserved, 0, 118*sizeof(BOOL));
 
-		memset(m_nReserved, 0, 127*sizeof(int));
+		memset(m_nReserved, 0, 126*sizeof(int));
 
 		memset(m_lReserved, 0, 128*sizeof(ULONG));
 		memset(m_fReserved, 0, 128*sizeof(float));
@@ -480,6 +481,7 @@ class CDMBaseCharViewDialog;
 class cDMBaseNPCViewDialog;
 class cDMMapViewDialog;
 class cDMPDFViewDialog;
+class CDMReminderSFXDialog;
 
 
 #define PDNDPARTYVIEWDLG DMPartyDialog*
@@ -497,6 +499,8 @@ typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDPDFVIEWDLG> PPDFVIEWMAP;
 
 #define PDNDMAPVIEWDLG cDMMapViewDialog*
 typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDMAPVIEWDLG> PMAPVIEWMAP;
+
+typedef CTypedPtrMap <CMapStringToString, CString, CString> PSTRINGTOSTRINGMAP;
 
 class CDMHelperApp : public CWinApp
 {
@@ -546,9 +550,14 @@ public:
 	POBJECTTYPEARRAY m_LightSourceOrderedTypeArray;
 	POBJECTTYPEARRAY m_LightSourceIndexedTypeArray;
 
+	POBJECTTYPEARRAY m_MaterialComponentOrderedTypeArray;
+	POBJECTTYPEARRAY m_MaterialComponentIndexedTypeArray;
+
 	PSPELLARRAY		m_MasterSpellArray;
 	PSPELLARRAY		m_CustomSpellArray;
 	PSPELLBOOKARRAY	m_SpellBooks;
+
+	PSPELLTOMATERIALCOMPONENTSMAP m_SpellToMaterialComponentsMap;
 
 	PCSTRINGMAP	m_SpellTypeMap;
 	
@@ -586,6 +595,7 @@ public:
 
 	POBJECTTYPEARRAY m_ObjectsOrderedTypeArray;
 	POBJECTTYPEARRAY m_ObjectsIndexedTypeArray;
+	PSTRINGOBJECTMAP m_NamedObjectLookupMap;
 
 	POBJECTTYPEARRAY m_CustomObjectsOrderedTypeArray;
 	// POBJECTTYPEARRAY m_CustomObjectsIndexedTypeArray; //unnecessary and unused
@@ -626,6 +636,8 @@ public:
 
 	int m_nInitiativeCurrentAttackNumber;
 	DWORD m_dwInitiativeCurrentAttackerID;
+
+	CDMReminderSFXDialog *m_pDMReminderSFXDialog;
 
 	#if USE_DX_SOUND
 	SoundClass *m_pDXSound;
@@ -703,6 +715,10 @@ public:
 
 	void InitializeSpells();
 
+	void InitializeSpellMaterialComponentsTable();
+	void InitializeSpellMaterialComponents(CString szPath, BOOL bCustomComponents);
+	void CreateSpellMaterialComponentsList();
+
 	cDNDSpellBook *LoadSpellBook(DND_CHARACTER_CLASSES nClassBook, char *path);
 	void LoadCustomSpells(char *path);
 	void AddSpellTypeToMap(char *szInitialType);
@@ -714,9 +730,9 @@ public:
 
 	BOOL StopSound();
 	BOOL PlayLicensedSound(CString szFile, BOOL bAsync);
-	BOOL PlaySoundFXFromFile(CString szFile, BOOL bAsync = TRUE);
-	BOOL PlaySoundFX(CString szDesc, BOOL bAsync = TRUE);
-	BOOL PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync = TRUE);
+	BOOL PlaySoundFXFromFile(CString szFile, BOOL bAsync = TRUE, int nOverrideNum = 0);
+	BOOL PlaySoundFX(CString szDesc, BOOL bAsync = TRUE, int nOverrideNum = 0);
+	BOOL PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync = TRUE, int nOverrideNum = 0);
 	BOOL PlayEquipItemSFX(CString szDesc, CString szAlternate, BOOL bAsync = TRUE);
 	void PlayWeaponSFX(int nWeaponID, int nIndex, CString szMagicWeaponName = _T(""), BOOL bAsync = TRUE);
 	void PlaySpellSFX(int nSpellID, int nRepeats);

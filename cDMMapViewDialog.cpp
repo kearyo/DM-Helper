@@ -555,8 +555,8 @@ void cDMMapViewDialog::Refresh()
 	int nRow = 0;
 	m_cPartyCombo.ResetContent();
 
-	m_cPartyCombo.InsertString(nRow, "");
-	m_cPartyCombo.SetItemData(nRow++, (ULONG)NULL);
+	//m_cPartyCombo.InsertString(nRow, "");
+	//m_cPartyCombo.SetItemData(nRow++, (ULONG)NULL);
 
 	int nFoundParty = -1;
 	for (POSITION pos = m_pApp->m_PartyViewMap.GetStartPosition(); pos != NULL; )
@@ -622,6 +622,9 @@ void cDMMapViewDialog::Refresh()
 			m_pSelectedCache = NULL;
 		}
 	}
+
+	UpdateData(TRUE);
+	OnSelchangePartyCombo();
 
 	TimeSpan("END MAP REFRESH", &dwStartRefreshTime);
 }
@@ -4725,11 +4728,12 @@ void cDMMapViewDialog::ProcessMapModes()
 
 					if(m_pDNDMap->m_bMapScaleFeet)
 					{
-						szScaled.Format("Map scaling complete !\nNew scale = 1 foot = %0.5f pixels", fScale);
+						//szScaled.Format("Map scaling complete !\nNew scale = 1 foot = %0.5f pixels", fScale);
+						szScaled.Format("Map scaling complete !\nNew scale =  %0.5f pixels = 1 foot", fScale);
 					}
 					else
 					{
-						szScaled.Format("Map scaling complete !\nNew scale = 1 mile = %0.5f pixels ", fScale);
+						szScaled.Format("Map scaling complete !\nNew scale = %0.5f pixels = 1 mile", fScale);
 					}
 
 					AfxMessageBox(szScaled, MB_OK);

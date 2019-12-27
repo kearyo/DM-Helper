@@ -17,6 +17,7 @@
 #include "cDMMapViewDialog.h"
 #include "cDMPDFViewDialog.h"
 #include "DMModifyValueDialog.h"
+#include "DMReminderSFXDialog.h"
 
 
 #ifdef _DEBUG
@@ -553,6 +554,14 @@ BOOL CDMHelperApp::InitInstance()
 
 	InitializeObjectTables();
 
+	InitializeSpellMaterialComponentsTable();
+
+	szTemp.Format("%sData/tables/spell_material_components.dat", m_szEXEPath.GetBuffer(0));
+	InitializeSpellMaterialComponents(szTemp, FALSE);
+
+	szTemp.Format("%sData/tables/custom_spell_material_components.dat", m_szEXEPath.GetBuffer(0));
+	InitializeSpellMaterialComponents(szTemp, TRUE);
+
 	szTemp.Format("%sData\\tables\\MagicItemDescriptions.dat", m_szEXEPath.GetBuffer(0));
 	LoadMagicItemDescriptions(szTemp.GetBuffer(0));
 
@@ -615,6 +624,8 @@ BOOL CDMHelperApp::InitInstance()
 	m_bSpellFXOnMaps = TRUE;
 	m_bSpellFXOnMapsMagicMissile = TRUE;
 
+	m_pDMReminderSFXDialog = NULL;
+
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	m_pGameMapSingleLock = new CSingleLock(&m_GameMapMutex);
@@ -672,6 +683,19 @@ int CDMHelperApp::ExitInstance()
 			delete pCalendar;
 		}
 	}
+
+	for (pos = m_SpellToMaterialComponentsMap.GetStartPosition(); pos != NULL;)
+	{
+		PDNDSPELLCOMPONENT pComponent = NULL;
+		m_SpellToMaterialComponentsMap.GetNextAssoc(pos, wID, pComponent);
+
+		if (pComponent != NULL)
+		{
+			delete pComponent;
+		}
+	}
+
+	m_SpellToMaterialComponentsMap.RemoveAll();
 
 	for (pos = m_SpellTypeMap.GetStartPosition(); pos != NULL; )
 	{
@@ -1983,6 +2007,9 @@ void CDMHelperApp::LoadWeaponsTable(char *path)
 				
 				m_ObjectsOrderedTypeArray.InsertAt(m_nDefinedObjectCount, pWeapon->Clone());
 				m_ObjectsIndexedTypeArray.InsertAt(pWeapon->m_wTypeId, pWeapon);
+
+				m_NamedObjectLookupMap.SetAt(pWeapon->m_szType, pWeapon);
+
 				++m_nDefinedObjectCount;
 			}
 
@@ -2107,6 +2134,11 @@ void CDMHelperApp::LoadEquipmentTable(char *path)
 				continue;
 			}
 
+			if (strcmp(pObject->m_szType, "incense, stick") == 0)
+			{
+				pObject->m_nFlags = 1; // so it is consumed as a material component
+			}
+
 			pObject->m_ObjectType = DND_OBJECT_TYPE_EQUIPMENT;
 
 			m_EquipmentOrderedTypeArray.InsertAt(nObjectCount, pObject);
@@ -2118,6 +2150,8 @@ void CDMHelperApp::LoadEquipmentTable(char *path)
 				m_ObjectsOrderedTypeArray.InsertAt(m_nDefinedObjectCount, pObject->Clone());
 				m_ObjectsIndexedTypeArray.InsertAt(pObject->m_wTypeId, pObject);
 				++m_nDefinedObjectCount;
+
+				m_NamedObjectLookupMap.SetAt(pObject->m_szType, pObject);
 			}
 
 		}
@@ -2533,6 +2567,14 @@ void CDMHelperApp::LoadMagicItemTable(char *path)
 				delete pMagicItem;
 				continue;
 			}
+
+			//CString szCheck = pMagicItem->m_szDesc;
+			//if (szCheck.Find("heroism") >= 0)
+			//{
+			//	TRACE("?");
+			//}
+
+			m_NamedObjectLookupMap.SetAt(pMagicItem->m_szDesc, pMagicItem->m_pMundaneObject[0]);
 
 			m_MagicTableItemOrderedTypeArray.InsertAt(nObjectCount, pMagicItem);
 			//m_MagicTableItemIndexedTypeArray.InsertAt(pObject->m_wTypeId, pObject);
@@ -4265,6 +4307,20 @@ void CDMHelperApp::CleanUpObjectTables()
 
 	/////////////////////////////////
 
+	for (i = 0; i < m_MaterialComponentOrderedTypeArray.GetSize(); ++i)
+	{
+		cDNDObject *pObject = (cDNDObject *)m_MaterialComponentOrderedTypeArray.GetAt(i);
+
+		if (pObject != NULL)
+		{
+			delete pObject;
+		}
+	}
+	m_MaterialComponentOrderedTypeArray.RemoveAll();
+	m_MaterialComponentIndexedTypeArray.RemoveAll();
+
+	/////////////////////////////////
+
 	for (i = 0; i < m_HelmetsOrderedTypeArray.GetSize(); ++i)
 	{
 		cDNDObject *pHelmet = (cDNDObject *)m_HelmetsOrderedTypeArray.GetAt(i);
@@ -4387,24 +4443,24 @@ void CDMHelperApp::InitializeSpells()
 {
 	CString szTemp;
 
-	for (POSITION pos = m_SpellTypeMap.GetStartPosition(); pos != NULL; )
+	for (POSITION pos = m_SpellTypeMap.GetStartPosition(); pos != NULL;)
 	{
 		CString *pString = NULL;
 		WORD wID;
-		m_SpellTypeMap.GetNextAssoc(pos,wID,pString);
+		m_SpellTypeMap.GetNextAssoc(pos, wID, pString);
 
-		if(pString != NULL)
+		if (pString != NULL)
 		{
 			delete pString;
 		}
 	}
 	m_SpellTypeMap.RemoveAll();
 
-	for (int i = 0; i < m_MasterSpellArray.GetSize(); ++i )
+	for (int i = 0; i < m_MasterSpellArray.GetSize(); ++i)
 	{
 		PSPELL pSpell = (PSPELL)m_MasterSpellArray.GetAt(i);
 
-		if(pSpell != NULL)
+		if (pSpell != NULL)
 		{
 			delete pSpell;
 		}
@@ -4412,11 +4468,11 @@ void CDMHelperApp::InitializeSpells()
 
 	m_MasterSpellArray.RemoveAll();
 
-	for (i = 0; i < m_SpellBooks.GetSize(); ++i )
+	for (i = 0; i < m_SpellBooks.GetSize(); ++i)
 	{
 		PSPELLBOOK pSpellBook = (PSPELLBOOK)m_SpellBooks.GetAt(i);
 
-		if(pSpellBook != NULL)
+		if (pSpellBook != NULL)
 		{
 			delete pSpellBook;
 		}
@@ -4444,6 +4500,21 @@ void CDMHelperApp::InitializeSpells()
 	LoadCustomSpells(szTemp.GetBuffer(0));
 
 	m_dwMasterSpellListHash = GetUniversalTime();
+
+	// reset the material componets map with the new spell pointers
+	WORD wID;
+	for (POSITION pos = m_SpellToMaterialComponentsMap.GetStartPosition(); pos != NULL;)
+	{
+		PDNDSPELLCOMPONENT pComponent = NULL;
+		m_SpellToMaterialComponentsMap.GetNextAssoc(pos, wID, pComponent);
+
+		if (pComponent != NULL)
+		{
+			PSPELL pSpell = m_MasterSpellArray.GetAt(wID);
+			ASSERT(pSpell != NULL);
+			pComponent->m_pSpell = pSpell;
+		}
+	}
 
 	#ifdef _DEBUG
 	#if KEARY_BUILD
@@ -4541,6 +4612,12 @@ cDNDSpellBook *CDMHelperApp::LoadSpellBook(DND_CHARACTER_CLASSES nClassBook, cha
 						//TRACE("TOKEN 1 IS %s\n", sToken.GetBuffer(0));
 						sToken.Replace("Components:", "");
 						sToken.TrimLeft(" ");
+
+						if (strcmp(pSpell->m_szSpellName, "Fireball") == 0) // table is in error due to PHB typo
+						{
+							sToken = "V, S, M";
+						}
+
 						strcpy(pSpell->m_szSpellComponents, sToken.GetBuffer(0));
 						break;
 					}
@@ -4924,6 +5001,602 @@ void CDMHelperApp::AddSpellTypeToMap(char *szInitialType)
 	m_SpellTypeMap.SetAt(nCount, pString);	
 }
 
+
+void CDMHelperApp::InitializeSpellMaterialComponentsTable()
+{
+#ifdef _DEBUG
+	//CreateSpellMaterialComponentsList();
+#endif
+
+	CString szPath = _T("");
+	szPath.Format("%sData/tables/material_components.dat", m_szEXEPath.GetBuffer(0));
+
+	// "#id, name, cost, weight, flags, comment\n");
+
+	FILE *pInfile = fopen(szPath, "rt");
+
+	char szInLine[512];
+	int nObjectCount = 0;
+
+	if (pInfile != NULL)
+	{
+		LONG lFileVersion = 0L;
+		while (!feof(pInfile) && lFileVersion == 0L)
+		{
+			fgets(szInLine, 255, pInfile);
+			CString szTemp = szInLine;
+
+			if (szTemp.FindOneOf("#") >= 0)
+				continue;
+
+			lFileVersion = atol(szInLine);
+		}
+
+		while (!feof(pInfile))
+		{
+			fgets(szInLine, 255, pInfile);
+			CString szTemp = szInLine;
+
+			if (szTemp.FindOneOf("#") >= 0)
+				continue;
+
+			cDNDObject *pObject = new cDNDObject();
+
+			//id, type, weight
+			CString sToken = _T("");
+			int i = 0; // substring index to extract
+			while (AfxExtractSubString(sToken, szTemp, i, ','))
+			{
+				sToken.Replace("	", "");	//remove tabs
+
+				switch (i)
+				{
+					case 0: pObject->m_wTypeId = atoi(sToken.GetBuffer(0)); break;
+					case 1:
+					{
+						sToken.Replace("_", ",");
+						sToken.TrimLeft();
+						sToken.TrimRight();
+
+						strcpy(pObject->m_szType, sToken.Left(31));
+						strcpy(pObject->m_szExtendedName, sToken.Left(127));
+
+						break;
+					}
+					case 2: pObject->m_nCost = GetPriceFromString(sToken.GetBuffer(0)); break; //cost
+					case 3: pObject->m_nWeight = atoi(sToken.GetBuffer(0)); break;
+					case 4: pObject->m_nFlags = atoi(sToken.GetBuffer(0)); break;
+				}
+				i++;
+			}
+
+			if (pObject->m_wTypeId == 0 || pObject->m_szType[0] == 0) //bad data
+			{
+				delete pObject;
+				continue;
+			}
+
+			pObject->m_ObjectType = DND_OBJECT_TYPE_MATERIAL_COMPONENT;
+
+			m_MaterialComponentOrderedTypeArray.InsertAt(nObjectCount, pObject);
+			m_MaterialComponentIndexedTypeArray.InsertAt(pObject->m_wTypeId, pObject);
+			++nObjectCount;
+
+			if (pObject->m_wTypeId)
+			{
+				m_ObjectsOrderedTypeArray.InsertAt(m_nDefinedObjectCount, pObject->Clone());
+				m_ObjectsIndexedTypeArray.InsertAt(pObject->m_wTypeId, pObject);
+				++m_nDefinedObjectCount;
+
+				m_NamedObjectLookupMap.SetAt(pObject->m_szExtendedName, pObject);
+			}
+
+		}
+
+		fclose(pInfile);
+	}
+
+	//special cases
+	CString szSpecialComponents[] = 
+	{
+		"hammer",
+		"incense, stick",
+		"candle, tallow",		
+		"candle, wax",						
+		"symbol, holy, iron",		
+		"symbol, holy, silver",			
+		"symbol, holy, wooden",			
+		"water, holy",	
+		"enddata"
+	};
+
+	int nIndex = 0;
+	cDNDObject *pObject = NULL;
+	do
+	{
+		if (m_NamedObjectLookupMap.Lookup(szSpecialComponents[nIndex], pObject) && pObject != NULL)
+		{
+			cDNDObject *pNewObject = pObject->Clone();
+
+			if (pNewObject->m_szExtendedName[0] == 0)
+			{
+				strcpy(pNewObject->m_szExtendedName, pNewObject->m_szType);
+			}
+
+			m_MaterialComponentOrderedTypeArray.InsertAt(nObjectCount, pNewObject);
+			m_MaterialComponentIndexedTypeArray.InsertAt(pObject->m_wTypeId, pNewObject);
+			++nObjectCount;
+		}
+
+		++nIndex;
+
+	} while(szSpecialComponents[nIndex] != "enddata");
+
+	
+	//alphabetically sort the array
+	for (int i = 0; i < m_MaterialComponentOrderedTypeArray.GetSize()-1; ++i)
+	{
+		for (int j = i+1; j < m_MaterialComponentOrderedTypeArray.GetSize(); ++j)
+		{
+			cDNDObject *pObject1 = (cDNDObject *)m_MaterialComponentOrderedTypeArray.GetAt(i);
+			cDNDObject *pObject2 = (cDNDObject *)m_MaterialComponentOrderedTypeArray.GetAt(j);
+
+			if (pObject1 != NULL && pObject2 != NULL)
+			{
+				int nCompare = strcmp(pObject2->m_szType, pObject1->m_szType);
+				if(nCompare < 0)
+				{
+					m_MaterialComponentOrderedTypeArray[j] = pObject1;
+					m_MaterialComponentOrderedTypeArray[i] = pObject2;
+				}
+			}
+			else
+			{
+				TRACE("!");
+			}
+		}
+	
+	}
+
+	#if 0
+	szPath = _T("");
+	szPath.Format("%sData/tables/master_item_list.dat", m_szEXEPath.GetBuffer(0));
+
+	FILE *pOutFile = fopen(szPath, "wt");
+
+	if (pOutFile != NULL)
+	{
+		for (int i = 0; i < m_ObjectsIndexedTypeArray.GetSize() - 1; ++i)
+		{
+			cDNDObject *pObject = m_ObjectsIndexedTypeArray.GetAt(i);
+
+			if (pObject == NULL)
+				continue;
+
+			fprintf(pOutFile, "%05d\t%s\n", pObject->m_wTypeId, pObject->m_szType);
+
+		}
+
+		fclose(pOutFile);
+	}
+	#endif
+}
+
+void CDMHelperApp::InitializeSpellMaterialComponents(CString szPath, BOOL bCustomComponents) // syncs material components to spell books
+{
+	FILE *pInfile = fopen(szPath, "rt");
+
+	char szInLine[2048];
+
+	if (pInfile != NULL)
+	{
+		LONG lFileVersion = 0L;
+		while (!feof(pInfile) && lFileVersion == 0L)
+		{
+			fgets(szInLine, 255, pInfile);
+			CString szTemp = szInLine;
+
+			if (szTemp.FindOneOf("#") >= 0)
+				continue;
+
+			lFileVersion = atol(szInLine);
+		}
+
+		while (!feof(pInfile))
+		{
+			memset(szInLine, 0, 2048 * sizeof(char));
+
+			fgets(szInLine, 2048, pInfile);
+
+			RemoveLineFeeds(szInLine);
+
+			CString szTemp = szInLine;
+
+			if (szTemp.FindOneOf("#") >= 0)
+				continue;
+
+			cDNDSpellMaterialComponent *pComponent = NULL;
+			DND_CHARACTER_CLASSES nClassBook = DND_CHARACTER_CLASS_UNDEF;
+			PSPELL pSpell = NULL;
+
+			szTemp.Replace("        ", "*");
+			szTemp.Replace("       ", "*");
+			szTemp.Replace("      ", "*");
+			szTemp.Replace("     ", "*");
+			szTemp.Replace("    ", "*");
+			szTemp.Replace("   ", "*");
+			szTemp.Replace("  ", "*");
+
+			//id, type, weight
+			CString sToken = _T("");
+			int i = 0; // substring index to extract
+			while (AfxExtractSubString(sToken, szTemp, i, '*'))
+			{
+				sToken.Replace("	", "");	//remove tabs
+				sToken.TrimLeft(" ");
+				sToken.TrimRight(" ");
+
+				if (sToken != "")
+				{
+					switch (i)
+					{
+						case 0: // Spell Class
+						{
+							if (sToken == "Cleric")
+								nClassBook = DND_CHARACTER_CLASS_CLERIC;
+							else if (sToken == "Druid")
+								nClassBook = DND_CHARACTER_CLASS_DRUID;
+							else if (sToken == "Magic User")
+								nClassBook = DND_CHARACTER_CLASS_MAGE;
+							else if (sToken == "Illusionist")
+								nClassBook = DND_CHARACTER_CLASS_ILLUSIONIST;
+							else
+							{
+								AfxMessageBox("LOAD SPELL COMPONENT CLASS ERROR !", MB_OK);
+							}
+
+							break;
+						}
+						case 1:	// Spell name
+						{
+							sToken.Replace("_", ",");
+
+							if (sToken == "Feather Fall")
+							{
+								TRACE("!");
+							}
+
+							PSPELLBOOK pSpellBook = m_SpellBooks.GetAt(nClassBook);
+							pSpell = NULL;
+
+							if (pSpellBook == NULL)
+							{
+								AfxMessageBox("LOAD SPELL COMPONENT SPELLBOOK ERROR !", MB_OK);
+								break;
+							}
+							//cDNDSpell m_Spells[MAX_SPELL_LEVELS][MAX_SPELLS_PER_LEVEL]; 
+							BOOL bFoundSpell = FALSE;
+							for (int nLevel = 0; nLevel < MAX_SPELL_LEVELS && !bFoundSpell; ++nLevel)
+							{
+								for (int nSpell = 0; nSpell < MAX_SPELLS_PER_LEVEL && !bFoundSpell; ++nSpell)
+								{
+									if (strcmp(pSpellBook->m_Spells[nLevel][nSpell].m_szSpellName, sToken) == 0)
+									{
+										pSpell = &pSpellBook->m_Spells[nLevel][nSpell];
+										bFoundSpell = TRUE;
+										break;
+									}
+								}
+							}
+							if (pSpell == NULL)
+							{
+								AfxMessageBox("LOAD SPELL COMPONENT SPELL ERROR !", MB_OK);
+								break;
+							}
+
+							pComponent = new cDNDSpellMaterialComponent(nClassBook, pSpell, bCustomComponents);
+
+							break;
+						}
+						case 2:  // components names
+						case 3:
+						case 4:
+						case 5:
+						case 6:
+						case 7:
+						{
+							if (pComponent == NULL)
+								break;
+
+							int nComponentRow = i - 2;
+
+							CString sSubToken = _T("");
+							int j = 0; // substring index to extract
+							while (AfxExtractSubString(sSubToken, sToken, j, '||'))
+							{
+								//if (sSubToken.Find("jade circlet") >= 0)
+								//{
+								//	TRACE("!");
+								//}
+
+								if (sSubToken != "")
+								{
+									sSubToken.Replace("_", ",");
+									sSubToken.TrimLeft(" ");
+									sSubToken.TrimRight(" ");
+
+									int nAmount = GetAmountFromString(&sSubToken);
+
+									cDNDObject *pFindObject = NULL;
+									if (m_NamedObjectLookupMap.Lookup(sSubToken, pFindObject) && pFindObject != NULL)
+									{
+										int nFlags = pFindObject->m_nFlags;
+										if (sSubToken == "water, holy") // oddball case, so holy water is consumed
+										{
+											nFlags = 1;
+										}
+
+										pComponent->m_RequiredComponents[nComponentRow].push_back(new cDNDObjectIndexer(pFindObject->m_wTypeId, sSubToken, nAmount, nFlags, pFindObject));
+									}
+									else  // sacrificial creature or other oddball
+									{
+										if (sSubToken == "(flame)")
+										{
+											sSubToken = "NOTE: fire source required";
+										}
+
+										pComponent->m_RequiredComponents[nComponentRow].push_back(new cDNDObjectIndexer(0, sSubToken, 0, 0, NULL));
+									}
+								}
+
+								++j;
+							}
+
+							break;
+						}
+						default:
+						{
+							TRACE("WTF!\n");
+							break;
+						}
+
+					};
+				}
+
+				i++;
+
+			} //end while loop
+
+			if (pComponent != NULL)
+			{
+				m_SpellToMaterialComponentsMap.SetAt(pComponent->m_pSpell->m_nSpellIdentifier, pComponent);
+			}
+
+		}
+
+		fclose(pInfile);
+	}
+
+
+
+}
+
+#if 0
+void CDMHelperApp::CreateSpellMaterialComponentsList() // this is only run  to create the table !!! - not run by end-users !
+{
+
+	CString szPath = _T("");
+	szPath.Format("%sData/tables/spell_material_components.csv", m_szEXEPath.GetBuffer(0));
+
+	FILE *pInfile = fopen(szPath, "rt");
+
+	char szInLine[2048];
+
+	PSTRINGTOSTRINGMAP _ComponentMap;
+
+	if (pInfile != NULL)
+	{
+		while (!feof(pInfile))
+		{
+			memset(szInLine, 0, 2048 * sizeof(char));
+
+			fgets(szInLine, 2048, pInfile);
+
+			RemoveLineFeeds(szInLine);
+
+			CString szTemp = szInLine;
+
+			szTemp.Replace("        ", "*");
+			szTemp.Replace("       ", "*");
+			szTemp.Replace("      ", "*");
+			szTemp.Replace("     ", "*");
+			szTemp.Replace("    ", "*");
+			szTemp.Replace("   ", "*");
+			szTemp.Replace("  ", "*");
+
+			//id, type, weight
+			CString sToken = _T("");
+			CString sSpellName = _T("");
+			int i = 0; // substring index to extract
+			while (AfxExtractSubString(sToken, szTemp, i, '*'))
+			{
+				sToken.Replace("	", "");	//remove tabs
+				sToken.TrimLeft(" ");
+				sToken.TrimRight(" ");
+
+				if (sToken != "")
+				{
+					switch (i)
+					{
+					case 0: // Spell Class
+					{
+						//TRACE("TOKEN 0 IS %s\n", sToken.GetBuffer(0));
+						break;
+					}
+					case 1:	// Spell name
+					{
+						sSpellName = sToken;
+
+						if (sSpellName == "Death Spell")
+						{
+							TRACE("!");
+						}
+
+						break;
+					}
+					case 2:  // components names
+					case 3:
+					case 4:
+					case 5:
+					case 6:
+					case 7:
+					{
+						CString sSubToken = _T("");
+						int j = 0; // substring index to extract
+						while (AfxExtractSubString(sSubToken, sToken, j, '||'))
+						{
+							//if (sSubToken.Find("jade circlet") >= 0)
+							//{
+							//	TRACE("!");
+							//}
+
+							sSubToken.TrimLeft(" ");
+							sSubToken.TrimRight(" ");
+
+							sSubToken.Replace("2 ", "");
+							sSubToken.Replace("3 ", "");
+							sSubToken.Replace("4 ", "");
+							sSubToken.Replace("5 ", "");
+							sSubToken.Replace("6 ", "");
+							sSubToken.Replace("7 ", "");
+							sSubToken.Replace("8 ", "");
+							sSubToken.Replace("9 ", "");
+							sSubToken.Replace("100 i", "i");
+
+							CString szCheck = sSubToken;
+							if (szCheck.Find("NOTE:") == -1 && szCheck.Find("(flame)") == -1 && szCheck.Find("(smoke)") == -1 && szCheck.Find("(copper piece)") == -1 && szCheck != "")
+							{
+								szCheck.Replace("_", ",");
+								//if (szCheck.Find("candle") >= 0)
+								//{
+								//	TRACE("?");
+								//}
+								if (szCheck.Find("symbol, holy") >= 0)
+								{
+									break;
+								}
+								//does it already exist ? if so skip it
+								cDNDObject *pTestObject = NULL;
+								if (m_NamedObjectLookupMap.Lookup(szCheck, pTestObject) && pTestObject != NULL)
+								{
+									break;
+								}
+
+								_ComponentMap.SetAt(sSubToken, sSpellName);
+							}
+							++j;
+						}
+
+						break;
+					}
+					default:
+					{
+						TRACE("WTF!\n");
+						break;
+					}
+
+					};
+				}
+
+				i++;
+
+			} //end while loop
+
+		}
+
+		fclose(pInfile);
+	}
+
+	CString _ComponentArray[512][2];
+
+	int nComponentCount = 0;
+
+	//sort the data
+	for (POSITION pos = _ComponentMap.GetStartPosition(); pos != NULL;)
+	{
+		CString szID;
+		CString szData;
+		_ComponentMap.GetNextAssoc(pos, szID, szData);
+
+		_ComponentArray[nComponentCount][0] = szID;
+		_ComponentArray[nComponentCount][1] = szData;
+		++nComponentCount;
+	}
+
+	for (int i = 0; i < nComponentCount - 1; ++i)
+	{
+		for (int j = i + 1; j < nComponentCount; ++j)
+		{
+			if (_ComponentArray[i][0] > _ComponentArray[j][0])
+			{
+				CString szTemp = _ComponentArray[i][0];
+				_ComponentArray[i][0] = _ComponentArray[j][0];
+				_ComponentArray[j][0] = szTemp;
+
+				szTemp = _ComponentArray[i][1];
+				_ComponentArray[i][1] = _ComponentArray[j][1];
+				_ComponentArray[j][1] = szTemp;
+			}
+		}
+	}
+
+	_ComponentMap.RemoveAll();
+
+
+	szPath.Format("%sData/tables/material_components.dat", m_szEXEPath.GetBuffer(0));
+
+	FILE *pOutFile = fopen(szPath, "wt");
+
+	if (pOutFile != NULL)
+	{
+		fprintf(pOutFile, "#id, name, cost, weight, flags, comment");
+
+		int nIndex = 0;
+		int nMaxLen = 0;
+		for (int i = 0; i < nComponentCount; ++i)
+		{
+			CString szID = _ComponentArray[i][0];
+			CString szData = _ComponentArray[i][1];
+
+			szID.TrimLeft();
+			szID.TrimRight();
+
+			int nLen = szID.GetLength();
+
+			if (szID.Find("incense") >= 0)
+			{
+				TRACE("!");
+			}
+
+			CString szPrice = GetGPPriceFromString(szID);
+
+			fprintf(pOutFile, "\n%d, %s, %s, 0, 0001, (%s)", 14000 + nIndex, szID, szPrice, szData);
+
+			if (nLen > nMaxLen)
+			{
+				nMaxLen = nLen;
+			}
+
+			++nIndex;
+		}
+
+		fclose(pOutFile);
+	}
+
+}
+#endif
+
+
 void CDMHelperApp::AlphabetizeObjectList()
 {
 	//alphabetize the ordered object list 
@@ -4990,7 +5663,8 @@ void CDMHelperApp::LoadSettings()
 		m_Settings.SanityCheck();
 
 		g_bUseUnearthedArcana = m_Settings.m_bUseUnearthedArcana;
-		g_bUseDemiHumanLevelLimits = m_Settings.m_bUseLevelLimits;			
+		g_bUseDemiHumanLevelLimits = m_Settings.m_bUseLevelLimits;	
+		g_bUseMaterialComponents = m_Settings.m_bUseMaterialComponents;
 	}
 
 	CheckForSoundBoardUpdates();
@@ -5007,6 +5681,7 @@ void CDMHelperApp::SaveSettings()
 	{
 		m_Settings.m_bUseUnearthedArcana = g_bUseUnearthedArcana;
 		m_Settings.m_bUseLevelLimits = g_bUseDemiHumanLevelLimits;	
+		m_Settings.m_bUseMaterialComponents = g_bUseMaterialComponents;
 
 		fwrite(&m_Settings, sizeof(cDNDSettings), 1, pOutFile);
 
@@ -5156,7 +5831,7 @@ BOOL CDMHelperApp::StopSound()
 	return bRetVal;
 }
 
-BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync)
+BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync, int nOverrideNum)
 {
 	CString szPath = szFile;
 	BOOL bRetVal = FALSE;
@@ -5171,14 +5846,21 @@ BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync)
 
 		int nNumFiles = atoi(szNum.GetBuffer(0));
 
-		int nFile = rand() % nNumFiles;
-
-		if (nFile == nLastFile && nNumFiles > 1)
+		int nFile = 0;
+		if (nOverrideNum)
 		{
-			do
+			nFile = nOverrideNum % nNumFiles;
+		}
+		else
+		{
+			nFile = rand() % nNumFiles;
+			if (nFile == nLastFile && nNumFiles > 1)
 			{
-				nFile = rand() % nNumFiles;
-			} while (nFile == nLastFile);
+				do
+				{
+					nFile = rand() % nNumFiles;
+				} while (nFile == nLastFile);
+			}
 		}
 
 		nLastFile = nFile;
@@ -5224,7 +5906,7 @@ BOOL CDMHelperApp::PlaySoundFXFromFile(CString szFile, BOOL bAsync)
 	return bRetVal;
 }
 
-BOOL CDMHelperApp::PlaySoundFX(CString szDesc, BOOL bAsync)
+BOOL CDMHelperApp::PlaySoundFX(CString szDesc, BOOL bAsync, int nOverrideNum)
 {
 	if (g_bUseSoundEffects == FALSE)
 		return FALSE;
@@ -5270,7 +5952,7 @@ BOOL CDMHelperApp::PlaySoundFX(CString szDesc, BOOL bAsync)
 			{
 				CString szPath = m_Settings.m_SoundFX[i][j].m_szFilePath;
 				szPath.Replace("<$DMAPATH>", m_szEXEPath);
-				return PlaySoundFXFromFile(szPath.GetBuffer(0), bAsync);
+				return PlaySoundFXFromFile(szPath.GetBuffer(0), bAsync, nOverrideNum);
 			}
 		}
 	}
@@ -5278,17 +5960,17 @@ BOOL CDMHelperApp::PlaySoundFX(CString szDesc, BOOL bAsync)
 	return FALSE;
 }
 
-BOOL CDMHelperApp::PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync)
+BOOL CDMHelperApp::PlayPCSoundFX(CString szDesc, CString szName, CString szDefault, BOOL bAsync, int nOverrideNum)
 {
 	if (g_bUseSoundEffects == FALSE)
 		return FALSE;
 
 	szDesc.Replace("*", szName);
 
-	if (FALSE == PlaySoundFX(szDesc, bAsync))
+	if (FALSE == PlaySoundFX(szDesc, bAsync, nOverrideNum))
 	{
 		szDesc.Replace(szName, szDefault);
-		return PlaySoundFX(szDesc, bAsync);
+		return PlaySoundFX(szDesc, bAsync, nOverrideNum);
 	}
 
 	return TRUE;
@@ -7762,11 +8444,16 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 	}
 	pMainDlg->SetAppTitle();
 
+	if (pApp->m_pDMReminderSFXDialog != NULL)
+	{
+		pApp->m_pDMReminderSFXDialog->PostMessage(WM_CLOSE);
+	}
+
 	pApp->m_bWaitOnDungeonMaster = FALSE;
 	
-	if (pInstantMapSFXPlacer->m_bCastFromDevice == FALSE)
+	if (pInstantMapSFXPlacer->m_bCastFromDevice == FALSE && pInstantMapSFXPlacer->m_pSpell->HasVerbalComponent())
 	{
-		pApp->PlayPCSoundFX("* PC Cast Spell", pInstantMapSFXPlacer->m_szCharacterName, "NADA", FALSE);
+		pApp->PlayPCSoundFX("* PC Cast Spell", pInstantMapSFXPlacer->m_szCharacterName, "NADA", FALSE, pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier);
 	}
 
 	pApp->PlaySpellSFX(pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier, pInstantMapSFXPlacer->m_nRepeats);

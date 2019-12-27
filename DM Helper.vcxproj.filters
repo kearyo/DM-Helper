@@ -237,6 +237,12 @@
     <ClCompile Include="cDMStrikeOrThrowDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cDMMaterialComponentsDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DMReminderSFXDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -470,6 +476,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cDMStrikeOrThrowDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMMaterialComponentsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DMReminderSFXDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

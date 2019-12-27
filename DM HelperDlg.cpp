@@ -45,6 +45,7 @@ static int _MainTabControls[] =
 	IDC_HIT_POINTS_REROLL_HALF_CHECK,
 	IDC_HIT_POINTS_MAX_FIRST_LEVEL_CHECK,
 	IDC_LEVEL_LIMITS_CHECK,
+	IDC_SPELL_COMPONENTS_CHECK,
 	IDC_D10_INITIATIVE_CHECK,
 	IDC_OPT_STATIC,
 	IDC_OPT_STATIC2,
@@ -136,6 +137,7 @@ CDMHelperDlg::CDMHelperDlg(CWnd* pParent /*=NULL*/)
 	, m_bUseWeapons_vs_AC_Chart(FALSE)
 	, m_bUseSmallFont(FALSE)
 	, m_szMonitorDPMIEdit(_T(""))
+	, m_bUseMaterialComponents(FALSE)
 {
 
 	m_pApp = (CDMHelperApp *)AfxGetApp();
@@ -208,6 +210,7 @@ void CDMHelperDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_SMALL_FONT_CHECK, m_bUseSmallFont);
 	DDX_Text(pDX, IDC_MONITOR_DPMI_EDIT, m_szMonitorDPMIEdit);
 	DDV_MaxChars(pDX, m_szMonitorDPMIEdit, 3);
+	DDX_Check(pDX, IDC_SPELL_COMPONENTS_CHECK, m_bUseMaterialComponents);
 }
 
 BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
@@ -286,6 +289,7 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_SPELLFXONMAPS_ENABLED, &CDMHelperDlg::OnSpellfxonmapsEnabled)
 	ON_COMMAND(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, &CDMHelperDlg::OnSpellfxonmapsEnabledformagicmissile)
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_SPELL_COMPONENTS_CHECK, &CDMHelperDlg::OnBnClickedSpellComponentsCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -363,6 +367,7 @@ BOOL CDMHelperDlg::OnInitDialog()
 
 	m_bUseUnearthedArcana = g_bUseUnearthedArcana;
 	m_bUseDemiHumanLevelLimits = g_bUseDemiHumanLevelLimits;
+	m_bUseMaterialComponents = g_bUseMaterialComponents;
 	g_bReRollOnesOnHitDie = m_bReRollOnesOnHitDie;
 
 	m_bMonkStrengthAdjustments = m_pApp->m_Settings.m_bMonkStrengthAdjustments;
@@ -833,8 +838,16 @@ void CDMHelperDlg::OnBnClickedUseWeaponsVsAcCheck()
 void CDMHelperDlg::OnLevelLimitsCheck() 
 {
 	UpdateData(TRUE);
-	g_bUseDemiHumanLevelLimits = m_bUseDemiHumanLevelLimits;	
+	g_bUseDemiHumanLevelLimits = m_bUseDemiHumanLevelLimits;
+	
 }
+
+void CDMHelperDlg::OnBnClickedSpellComponentsCheck()
+{
+	UpdateData(TRUE);
+	g_bUseMaterialComponents = m_bUseMaterialComponents;
+}
+
 
 void CDMHelperDlg::OnHitPointsRerollCheck() 
 {
@@ -3497,5 +3510,6 @@ void CDMHelperDlg::OnTimer(UINT_PTR nIDEvent)
 
 	CDialog::OnTimer(nIDEvent);
 }
+
 
 

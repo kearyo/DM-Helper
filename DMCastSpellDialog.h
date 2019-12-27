@@ -59,6 +59,8 @@ protected:
 public:
 	CButton m_cCastButton;
 	afx_msg void OnLbnDblclkSpellList();
+	afx_msg void OnLbnSelchangeSpellList();
+	CString m_szSpellDesc;
 };
 
 //{{AFX_INSERT_LOCATION}}

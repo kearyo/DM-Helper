@@ -1,3 +1,4 @@
+#include "afxwin.h"
 #if !defined(AFX_DMCHARSPELLSDIALOG_H__CE9AE719_BBB0_400F_8E1A_5280BC7235C2__INCLUDED_)
 #define AFX_DMCHARSPELLSDIALOG_H__CE9AE719_BBB0_400F_8E1A_5280BC7235C2__INCLUDED_
 
@@ -53,9 +54,12 @@ public:
 
 	DND_VIEW_SPELL_MODE m_ViewSpellMode;
 	cDNDSpell *m_pSelectedSpell;
+	cDNDSpell *m_pCurrentSpell;
 	cDNDSpellBook *m_pSpellBook;
 	BOOL m_bMageDisplay;
 	BOOL m_bRefreshed;
+
+	int m_nMultipleSpells;
 
 	int m_nSelectedSpellLists[3][MAX_SPELLS_PER_LEVEL];
 
@@ -121,6 +125,8 @@ public:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	CButton m_cMaterialComponentsButton;
+	afx_msg void OnBnClickedMaterialComponents();
 };
 
 //{{AFX_INSERT_LOCATION}}

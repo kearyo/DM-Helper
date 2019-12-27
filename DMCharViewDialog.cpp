@@ -17,6 +17,7 @@
 #include "DMLanguageSelectDialog.h"
 #include "cDMMapViewDialog.h"
 #include "cDMStrikeOrThrowDialog.h"
+#include "cDMMaterialComponentsDialog.h"
 
 
 #ifdef _DEBUG
@@ -101,6 +102,11 @@ CDMBaseCharViewDialog::~CDMBaseCharViewDialog()
 			}
 		}
 	}
+
+	for (int i = 0; i < MAX_SPELL_COMPONENT_AND_COLUMNS; ++i)
+	{
+		m_SpellMaterialComponentsRequiredVector[i].clear();
+	}
 	
 }
 
@@ -154,6 +160,33 @@ BOOL CDMBaseCharViewDialog::GetMonsterPortraitPath(CString szMonster)
 
 	return FALSE;
 }
+
+
+DND_SPELL_MATERIAL_RETURN_CODES CDMBaseCharViewDialog::CharacterCanCastSpell(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bCheckComponents, BOOL bGetInfo)
+{
+	if (g_bUseMaterialComponents == FALSE)
+	{
+		return DND_SPELL_MATERIAL_RETURN_CAN_CAST;
+	}
+
+	DND_SPELL_MATERIAL_RETURN_CODES nReturnCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST;
+
+	if (GetType() == DND_CHAR_VIEW_TYPE_PC)
+	{
+		CDMCharViewDialog *pCharViewDialog = (CDMCharViewDialog*)this;
+		nReturnCode = pCharViewDialog->m_pCharacter->CasterHasSpellMaterialComponents(pSpell, nMultiples, bCast, bGetInfo, m_SpellMaterialComponentsRequiredVector);
+
+		if (nReturnCode == DND_SPELL_MATERIAL_RETURN_CANNOT_CAST || nReturnCode == DND_SPELL_MATERIAL_RETURN_CAN_CAST_WITH_VERIFICATION || bGetInfo == TRUE)
+		{
+			cDMMaterialComponentsDialog *pDlg = new cDMMaterialComponentsDialog(pCharViewDialog->m_pCharacter, pSpell, nMultiples, m_SpellMaterialComponentsRequiredVector, bCheckComponents, bGetInfo, &nReturnCode);
+			pDlg->DoModal();
+			delete pDlg;
+		}
+	}
+
+	return nReturnCode;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CDMCharViewDialog dialog
 

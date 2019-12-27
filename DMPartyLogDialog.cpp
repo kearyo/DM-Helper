@@ -237,7 +237,7 @@ void CDMPartyLogDialog::OnPaint()
 		if(pEvent->m_EventType == DND_LOG_EVENT_TYPE_UNDEFINED)
 			continue;
 
-		m_nEvents[nEventCount] = i;  // here the fucker is
+		m_nEvents[nEventCount] = i;  
 
 		int nMonth = (abs(pEvent->m_nMonth)) % m_pApp->m_pSelectedCalendar->m_nMonthsInYear;
 		int nDay = pEvent->m_nDay + 1;

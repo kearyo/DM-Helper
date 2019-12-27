@@ -1987,7 +1987,6 @@ void DMCharSheetDialog::DrawSpellList(int nBitMapResource, CDC *memdc)
 						pSpell = &pSpellBook->m_Spells[nSpellLevel][nSpellCount];
 						if(pSpell && !pSpell->m_bSpellValid)
 						{
-							TRACE("FUCK CSHEET !\n");
 							m_pCharacter->m_nSpellsMemorized[nSpellClass][nSpellLevel][nSpellCount] = 0;
 							pSpell = NULL;
 						}

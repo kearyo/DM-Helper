@@ -19,7 +19,7 @@
 #define MAX_CUSTOM_CLASSES	12
 
 #define KEARY_BUILD	FALSE	
-#define GAMETABLE_BUILD TRUE
+#define GAMETABLE_BUILD FALSE
 
 #define USE_DX_SOUND	TRUE
 
@@ -240,12 +240,16 @@
 	** Add-On "Anna's Flanaess circa 598 Map" is available
 	** Add-On "Eddie's Soundboards and Sound Effects" is available
 
-- 1.0.038	-/--/19
-	* Occasional crasher bug with party "Kill for XP" button
+- 1.0.038	12/24/19
+	* Fixed occasional crasher bug with party "Kill for XP" button
 	* Random name generator added to main menu under "Randoms"
+	* Added spell material component tracking for spells, including custom spells
 
 	* DM Update.exe updated for Mac compatibilty - MUST INCLUDE IN NEXT RELEASE !!!!  
 	* DMMacOSDaemon.exe updated for Mac compatibilty - MUST INCLUDE IN NEXT RELEASE !!!!
+	* Must include file material_components.dat in next release !
+	* Must include file spell_material_components.dat in next release !
+	* Must include file equipment.dat in next release !
 
 */
 
@@ -260,6 +264,7 @@ typedef CTypedPtrMap <CMapWordToPtr, WORD, PCSTRING> PCSTRINGMAP;
 
 extern BOOL g_bUseUnearthedArcana;
 extern BOOL g_bUseDemiHumanLevelLimits;
+extern BOOL g_bUseMaterialComponents;
 extern BOOL g_bReRollOnesOnHitDie;
 extern BOOL g_bReRollLessHalfOnHitDie;
 extern BOOL g_bMaxHitPointsAtFirstLevel;
@@ -434,6 +439,25 @@ typedef enum
 
 char *GetVisionTypeName(DND_CHARACTER_VISION_TYPES nVision);
 
+typedef enum
+{
+	DND_SPELL_MATERIAL_RETURN_CANNOT_CAST = 0,
+
+	DND_SPELL_MATERIAL_RETURN_CAN_CAST_50_50_50,
+
+	DND_SPELL_MATERIAL_RETURN_CAN_CAST_75_50_75,
+
+	DND_SPELL_MATERIAL_RETURN_CAN_CAST_75_50_100,
+
+	DND_SPELL_MATERIAL_RETURN_CAN_CAST_100_75_100,
+	
+	DND_SPELL_MATERIAL_RETURN_CAN_CAST_WITH_VERIFICATION,
+
+	DND_SPELL_MATERIAL_RETURN_CAN_CAST
+
+} DND_SPELL_MATERIAL_RETURN_CODES;
+
+char *GetSpellMaterialReturnCodesDesc(DND_SPELL_MATERIAL_RETURN_CODES nCode);
 
 typedef enum
 {
@@ -859,6 +883,10 @@ typedef enum
 	DND_OBJECT_TYPE_CUSTOM,
 
 	DND_OBJECT_TYPE_LIGHTSOURCE,
+
+	DND_OBJECT_TYPE_MATERIAL_COMPONENT,
+
+	DND_OBJECT_TYPE_MATERIAL_COMPONENT_CONTAINER,
 
 	DND_OBJECT_TYPE_LAST_TYPE,
 
@@ -1453,6 +1481,8 @@ public:
 };
 typedef CTypedPtrArray <CSafeObjectTypedPtrArray, POBJECTTYPE> POBJECTTYPEARRAY;
 
+typedef CTypedPtrMap <CMapStringToPtr, CString, POBJECTTYPE> PSTRINGOBJECTMAP;
+
 
 class cDNDArmor : public cDNDObject
 {
@@ -1873,6 +1903,25 @@ public:
 typedef CTypedPtrArray <CPtrArray, PMAGICTABLEITEM> PMAGICTABLEITEMARRAY;
 
 
+class cDNDStringIndexer
+{
+public:
+	int m_nID;
+	int m_nAmount;
+	CString m_szData;
+
+	cDNDStringIndexer()
+	{
+		m_nID = 0;
+		m_nAmount = 0;
+		m_szData = _T("");
+	}
+
+	~cDNDStringIndexer()
+	{
+	}
+};
+
 class cDNDMagicItemDescription
 {
 public:
@@ -1946,6 +1995,22 @@ public:
 		memset(m_szSpellDesc, 0, MAX_SPELL_DESC_SIZE * sizeof(char));
 	}
 
+	BOOL HasVerbalComponent()
+	{
+		CString szTemp = m_szSpellComponents;
+		if (szTemp.Find("V") >= 0)
+			return TRUE;
+
+		return FALSE;
+	}
+	BOOL HasMaterialComponent()
+	{
+		CString szTemp = m_szSpellComponents;
+		if (szTemp.Find("M") >= 0)
+			return TRUE;
+
+		return FALSE;
+	}
 
 };
 
@@ -2020,6 +2085,121 @@ public:
 };
 
 #define PSPELLSLOT cDNDSpellSlot*
+
+class cDNDObjectIndexer
+{
+public:
+	WORD m_wTypeID;
+	CString m_szName;
+	int m_nAmount;
+	int m_nFlags;
+	POBJECTTYPE m_pObject;
+	
+	cDNDObjectIndexer()
+	{
+		m_wTypeID = 0;
+		m_szName = _T("");
+		m_nAmount = 0;
+		m_nFlags = 0;
+		m_pObject = NULL;
+	}
+
+	cDNDObjectIndexer(WORD _wTypeID, CString _szName, int _nAmount, int _nFlags, POBJECTTYPE _pObject)
+	{
+		m_wTypeID = _wTypeID;
+		m_szName = _szName;
+		m_nAmount = _nAmount;
+		m_nFlags = _nFlags;
+		m_pObject = _pObject;
+	}
+
+	~cDNDObjectIndexer()
+	{
+	}
+};
+
+#define POBJECTINDEXER cDNDObjectIndexer*
+
+// holder for material components required for a spell
+
+#define MAX_SPELL_COMPONENT_AND_COLUMNS	7
+
+class cDNDSpellMaterialComponent
+{
+public:
+
+	DND_CHARACTER_CLASSES m_ClassBook;
+
+	cDNDSpell *m_pSpell;
+
+	std::vector<POBJECTINDEXER> m_RequiredComponents[MAX_SPELL_COMPONENT_AND_COLUMNS];
+	
+	BOOL m_bCustomSpell;
+
+
+	cDNDSpellMaterialComponent()
+	{
+		m_ClassBook = DND_CHARACTER_CLASS_UNDEF;
+		m_pSpell = NULL;
+		m_bCustomSpell = FALSE;
+	}
+
+	cDNDSpellMaterialComponent(DND_CHARACTER_CLASSES _ClassBook, cDNDSpell *_pSpell, BOOL _bCustomSpell)
+	{
+		m_ClassBook = _ClassBook;
+		m_pSpell = _pSpell;
+		m_bCustomSpell = _bCustomSpell;
+	}
+
+	~cDNDSpellMaterialComponent()
+	{
+		Init();
+	}
+
+	void Init()
+	{
+		m_ClassBook = DND_CHARACTER_CLASS_UNDEF;
+		m_pSpell = NULL;
+		m_bCustomSpell = FALSE;
+
+		for (int i = 0; i < MAX_SPELL_COMPONENT_AND_COLUMNS; ++i)
+		{
+			std::vector<POBJECTINDEXER>::iterator iter;
+
+			for (iter = m_RequiredComponents[i].begin(); iter != m_RequiredComponents[i].end(); iter++)
+			{
+				POBJECTINDEXER pIndexer = *iter;
+				delete pIndexer;
+			}
+
+			m_RequiredComponents[i].clear();
+		}
+	}
+
+	void Copy(cDNDSpellMaterialComponent* pSource)
+	{
+		m_ClassBook = pSource->m_ClassBook;
+		m_pSpell = pSource->m_pSpell;
+		m_bCustomSpell = pSource->m_bCustomSpell;
+
+		for (int i = 0; i < MAX_SPELL_COMPONENT_AND_COLUMNS; ++i)
+		{
+			std::vector<POBJECTINDEXER>::iterator iter;
+
+			for (iter = pSource->m_RequiredComponents[i].begin(); iter != pSource->m_RequiredComponents[i].end(); iter++)
+			{
+				POBJECTINDEXER pIndexer = *iter;
+				POBJECTINDEXER pNewIndexer = new cDNDObjectIndexer(pIndexer->m_wTypeID, pIndexer->m_szName, pIndexer->m_nAmount, pIndexer->m_nFlags, pIndexer->m_pObject);
+				m_RequiredComponents[i].push_back(pNewIndexer);
+			}
+		}
+	}
+
+};
+
+#define PDNDSPELLCOMPONENT cDNDSpellMaterialComponent*
+
+typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDSPELLCOMPONENT> PSPELLTOMATERIALCOMPONENTSMAP;
 
 //////////////////////////////////////////////////////////
 
@@ -2357,6 +2537,9 @@ public:
 	BOOL AddToInventoryFull(cDNDObject *pNewObject);
 	BOOL BuyItem(int nCost);
 	cDNDObject *FindObjectInInventory(DWORD dwID);
+	cDNDObject *FindObjectTypeInInventory(WORD wID, BOOL bSkipMagical);
+	cDNDObject *FindObjectClassificationInInventory(DND_OBJECT_TYPES nType, BOOL bSkipMagical);
+	cDNDObject *FindObjectNameInInventory(char *szName, BOOL bSkipMagical);
 	BOOL ObjectIsInContainer(cDNDObject *pObj, DWORD dwParentContainerID, int nLevel);
 	int CountObjectsInContainer(cDNDObject *pObj);
 	BOOL InventorySlotIsInBagOfHolding(POBJECTTYPE pObject, int nLevel);
@@ -2372,6 +2555,9 @@ public:
 	char *GetUnarmedDamageDesc();
 	void LockAndLoad();
 
+	DND_SPELL_MATERIAL_RETURN_CODES CasterHasSpellMaterialComponents(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bGetInfo, std::vector<POBJECTINDEXER> *pSpellMaterialComponentsRequiredVector);
+	BOOL BuySpellComponents(PSPELL pSpell, int nMultiples, BOOL bNoCost, std::vector<POBJECTINDEXER> *pSpellMaterialComponentsRequiredVector);
+	BOOL BuyAllSpellComponents(BOOL bNoCost);
 	BOOL CastSpell(cDNDSpellSlot *pSpellSlot);
 	BOOL EatRations();
 
@@ -2812,6 +2998,8 @@ int GenerateCharacterAge(cDNDCharacter *pCharacter);
 
 int GetPriceFromString(char *szPrice);
 char *GetStringFromPrice(int nPrice);
+CString GetGPPriceFromString(CString szPrice);
+int GetAmountFromString(CString *pszString);
 
 int GetObjectFlag(PWEAPONTYPE pWeapon, int nFlag);
 void SetObjectFlag(PWEAPONTYPE pWeapon, int nFlag, int nValue);

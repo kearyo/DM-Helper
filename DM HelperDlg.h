@@ -221,6 +221,8 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnSpellfxonmapsEnabled();
 	afx_msg void OnSpellfxonmapsEnabledformagicmissile();
+	BOOL m_bUseMaterialComponents;
+	afx_msg void OnBnClickedSpellComponentsCheck();
 };
 
 //{{AFX_INSERT_LOCATION}}

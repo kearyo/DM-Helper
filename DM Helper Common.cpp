@@ -18,6 +18,7 @@
 
 BOOL g_bUseUnearthedArcana;
 BOOL g_bUseDemiHumanLevelLimits;
+BOOL g_bUseMaterialComponents;
 BOOL g_bReRollOnesOnHitDie;
 BOOL g_bReRollLessHalfOnHitDie;
 BOOL g_bMaxHitPointsAtFirstLevel;
@@ -1736,6 +1737,11 @@ BOOL cDNDCharacter::AddToInventory(cDNDObject *pNewObject, int *nReturnSlot)
 		{
 			_LocalObject.CopyTo(&m_Inventory[i]);
 			m_Inventory[i].m_nMagicAdj = _LocalObject.m_nMagicAdj;
+			
+			if (m_Inventory[i].m_lAmount == 0)
+			{
+				m_Inventory[i].m_lAmount = 1;
+			}
 
 			if(m_Inventory[i].m_dwObjectID == 0)
 			{
@@ -2065,6 +2071,70 @@ cDNDObject *cDNDCharacter::FindObjectInInventory(DWORD dwID)
 	return NULL;
 }
 
+cDNDObject *cDNDCharacter::FindObjectTypeInInventory(WORD wID, BOOL bSkipMagical)
+{
+	for (int i = 0; i< MAX_CHARACTER_INVENTORY; ++i)
+	{
+		if (m_Inventory[i].m_wTypeId == 0)
+		{
+			continue;
+		}
+
+		if (bSkipMagical && m_Inventory[i].m_nMagicAdj)
+		{
+			continue;
+		}
+
+		if (m_Inventory[i].m_wTypeId == wID)
+		{
+			return &m_Inventory[i];
+		}
+	}
+
+	return NULL;
+}
+
+cDNDObject *cDNDCharacter::FindObjectClassificationInInventory(DND_OBJECT_TYPES nType, BOOL bSkipMagical)
+{
+	for (int i = 0; i< MAX_CHARACTER_INVENTORY; ++i)
+	{
+		if (m_Inventory[i].m_wTypeId == 0)
+		{
+			continue;
+		}
+
+		if (bSkipMagical && m_Inventory[i].m_nMagicAdj)
+		{
+			continue;
+		}
+
+		if (m_Inventory[i].m_ObjectType == nType)
+		{
+			return &m_Inventory[i];
+		}
+	}
+
+	return NULL;
+}
+
+cDNDObject *cDNDCharacter::FindObjectNameInInventory(char *szName, BOOL bSkipMagical)
+{
+	for (int i = 0; i< MAX_CHARACTER_INVENTORY; ++i)
+	{
+		if (bSkipMagical && m_Inventory[i].m_nMagicAdj)
+		{
+			continue;
+		}
+
+		if (strcmp(m_Inventory[i].m_szType, szName) == 0)
+		{
+			return &m_Inventory[i];
+		}
+	}
+
+	return NULL;
+}
+
 BOOL cDNDCharacter::ObjectIsInContainer(cDNDObject *pObj, DWORD dwParentContainerID, int nLevel) // returns true if pObj is stored in dwParentContainerID
 {
 	if(nLevel >= MAX_CHARACTER_INVENTORY)
@@ -2359,6 +2429,353 @@ int cDNDCharacter::GetWeaponSpecializationLevel()
 
 	return 0;
 }
+
+DND_SPELL_MATERIAL_RETURN_CODES cDNDCharacter::CasterHasSpellMaterialComponents(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bGetInfo, std::vector<POBJECTINDEXER> *pSpellMaterialComponentsRequiredVector)
+{
+	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+	DND_SPELL_MATERIAL_RETURN_CODES nRetCode = DND_SPELL_MATERIAL_RETURN_CANNOT_CAST;
+	DND_SPELL_MATERIAL_RETURN_CODES nSuccessCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST;
+	DND_SPELL_MATERIAL_RETURN_CODES nVerifyCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST;
+
+
+	BOOL bValidateInventory = FALSE;
+
+	pSpellMaterialComponentsRequiredVector->clear();
+
+	int nComponentsRequired = 0;
+	int nComponentsFound = 0;
+	PDNDSPELLCOMPONENT pSpellComponents = NULL;
+	if (pApp->m_SpellToMaterialComponentsMap.Lookup(pSpell->m_nSpellIdentifier, pSpellComponents) && pSpellComponents != NULL)
+	{
+		for (int i = 0; i < MAX_SPELL_COMPONENT_AND_COLUMNS; ++i)
+		{
+			pSpellMaterialComponentsRequiredVector[i].clear();
+			if (pSpellComponents->m_RequiredComponents[i].size())
+			{
+				++nComponentsRequired;
+
+				BOOL bFoundComponent = FALSE;
+				std::vector<POBJECTINDEXER>::iterator iter;
+				for (iter = pSpellComponents->m_RequiredComponents[i].begin(); iter != pSpellComponents->m_RequiredComponents[i].end(); iter++)
+				{
+					POBJECTINDEXER pIndexer = *iter;
+
+					if (bGetInfo)
+					{
+						pSpellMaterialComponentsRequiredVector[i].push_back(pIndexer);
+						continue;
+					}
+
+					//POBJECTTYPE pObjectExists = NULL;
+					//pApp->m_ObjectsIndexedTypeArray.Lookup(pIndexer->m_wTypeID, pObjectExists);
+
+					POBJECTTYPE pObject = FindObjectTypeInInventory(pIndexer->m_wTypeID, TRUE);
+					if (pObject != NULL)
+					{
+						if (pObject->m_lAmount == 0)
+						{
+							pObject->m_lAmount = 1;
+						}
+
+						if (pObject->m_lAmount >= pIndexer->m_nAmount * nMultiples)
+						{
+							++nComponentsFound;
+							bFoundComponent = TRUE;
+
+							if (pSpell->m_ClassBook == DND_CHARACTER_CLASS_DRUID || pSpell->m_ClassBook == DND_CHARACTER_SPELL_CLASS_RANGER_DRUID)
+							{
+								DND_SPELL_MATERIAL_RETURN_CODES nTempCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST;
+
+								CString szName = pObject->m_szType;
+
+								if(szName.Find("mistletoe, lesser") >= 0)
+								{
+									nTempCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST_100_75_100;
+								}
+								else if (szName.Find("mistletoe, borrowed") >= 0)
+								{
+									nTempCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST_75_50_100;
+								}
+								else if (szName == "holly")
+								{
+									nTempCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST_75_50_75;
+								}
+								else if (szName.Find("oak leaves") >= 0)
+								{
+									nTempCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST_50_50_50;
+								}
+
+								if (nTempCode < nSuccessCode)
+								{
+									nSuccessCode = nTempCode;
+								}
+							}
+
+							pSpellMaterialComponentsRequiredVector[i].clear();
+
+							int nFlags = (pIndexer->m_nFlags % 10);
+							if (bCast && nFlags == 1)  // remove consumable components if we are casting the spell
+							{
+								pObject->m_lAmount -= pIndexer->m_nAmount;
+								if (pObject->m_lAmount <= 0)
+								{
+									cDNDObject _BlankObj;
+									_BlankObj.CopyFull(pObject);
+									bValidateInventory = TRUE;
+								}
+							}
+
+							break;
+						}
+					}
+					else if(bCast == FALSE)
+					{
+						pSpellMaterialComponentsRequiredVector[i].push_back(pIndexer);
+
+						if (pIndexer->m_wTypeID == 0)
+						{
+							if (nSuccessCode == DND_SPELL_MATERIAL_RETURN_CAN_CAST)
+							{
+								nVerifyCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST_WITH_VERIFICATION; // this is an oddball, like verifying we have a sacrificial creature
+								++nComponentsFound;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (nComponentsFound >= nComponentsRequired)
+		{
+			nRetCode = nSuccessCode;
+		}
+	}
+	else
+	{
+		nRetCode = DND_SPELL_MATERIAL_RETURN_CAN_CAST;  // no material components required
+	}
+
+	if (bValidateInventory)
+	{
+		ValidateInventory();
+		MarkChanged();
+	}
+
+	if (nVerifyCode == DND_SPELL_MATERIAL_RETURN_CAN_CAST_WITH_VERIFICATION && nRetCode == DND_SPELL_MATERIAL_RETURN_CAN_CAST)
+	{
+		nRetCode = nVerifyCode;
+	}
+
+	if (bCast == TRUE)
+	{
+		nRetCode = nSuccessCode;
+	}
+
+	return nRetCode;
+}
+
+BOOL cDNDCharacter::BuySpellComponents(PSPELL pSpell, int nMultiples, BOOL bNoCost, std::vector<POBJECTINDEXER> *pSpellMaterialComponentsRequiredVector)
+{
+	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+	BOOL bRetVal = TRUE;
+
+	// have we got a bag ??
+	POBJECTTYPE pBagObject = FindObjectClassificationInInventory(DND_OBJECT_TYPE_MATERIAL_COMPONENT_CONTAINER, FALSE);
+	DWORD dwContainerID = 0;
+
+	if (pBagObject == NULL)
+	{
+		pBagObject = pApp->m_ObjectsIndexedTypeArray.GetAt(10114);
+
+		if (pBagObject != NULL)
+		{
+			int nSlot = -1;
+			AddToInventory(pBagObject, &nSlot);
+
+			if (nSlot >= 0 && nSlot < MAX_CHARACTER_INVENTORY)
+			{
+				pBagObject = &m_Inventory[nSlot];
+				strcpy(pBagObject->m_szType, "bag, spell component");
+				pBagObject->m_ObjectType = DND_OBJECT_TYPE_MATERIAL_COMPONENT_CONTAINER;
+			}
+		}
+	}
+
+	if (pBagObject != NULL)
+	{
+		dwContainerID = pBagObject->m_dwObjectID;
+	}
+
+	for (int i = 0; i < MAX_SPELL_COMPONENT_AND_COLUMNS; ++i)
+	{
+		if (pSpellMaterialComponentsRequiredVector[i].size())
+		{
+			cDNDObject *pBuyObject = NULL;
+			int nAmountNeeded = 0;
+
+			std::vector<POBJECTINDEXER>::iterator iter;
+			for (iter = pSpellMaterialComponentsRequiredVector[i].begin(); iter != pSpellMaterialComponentsRequiredVector[i].end(); iter++)
+			{
+				POBJECTINDEXER pIndexer = *iter;
+
+				nAmountNeeded = pIndexer->m_nAmount * nMultiples;
+
+				int nFlags = (pIndexer->m_nFlags % 10);
+
+				if (nFlags == 0) // if component is not consumed by the spell, we only need one of them
+				{
+					nAmountNeeded = 1;
+				}
+
+				cDNDObject *pCheckObject = pApp->m_ObjectsIndexedTypeArray.GetAt(pIndexer->m_wTypeID);
+
+				POBJECTTYPE pOwnedObject = FindObjectTypeInInventory(pIndexer->m_wTypeID, TRUE);
+				if (pOwnedObject != NULL)
+				{
+					pOwnedObject->m_lAmount = max(pOwnedObject->m_lAmount, 1);
+
+					if (pOwnedObject->m_lAmount >= nAmountNeeded && nFlags == 0) // if this is not a consumable spell component, and we already have one, we don't need another
+					{
+						pBuyObject = NULL;
+					}
+					else
+					{
+						pBuyObject = pCheckObject;
+					}
+					//else
+					//{
+					//	nAmountNeeded -= pOwnedObject->m_lAmount;  // comment out - don't do this, we might need the same component for multiple spells
+					//}
+
+				}
+				else
+				{
+					pBuyObject = pCheckObject;
+				}
+			}
+
+			if (pBuyObject != NULL)
+			{
+				for (int i = 0; i < nAmountNeeded; ++i)
+				{
+					int nCost = pBuyObject->m_nCost;
+
+					if (bNoCost)
+					{
+						nCost = 0;
+					}
+
+					if (BuyItem(nCost))
+					{
+						int nSlot = -1;
+						AddToInventory(pBuyObject, &nSlot);
+						m_Inventory[nSlot].m_dwContainerID = dwContainerID;
+					}
+					else
+					{
+						bRetVal = FALSE;
+					}
+				}
+
+			}
+
+		}
+	}
+
+	StackInventory();
+	MarkChanged();
+
+	return bRetVal;
+}
+
+BOOL cDNDCharacter::BuyAllSpellComponents(BOOL bNoCost)
+{
+	BOOL bRetVal = TRUE;
+
+	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+	std::vector<POBJECTINDEXER> _SpellMaterialComponentsRequiredVector[MAX_SPELL_COMPONENT_AND_COLUMNS];
+	cDNDSpellBook *pSpellBook;
+
+	for (int nSpellClass = 0; nSpellClass < 4; ++nSpellClass)
+	{
+		switch (m_SpellClasses[nSpellClass])
+		{
+			case DND_CHARACTER_CLASS_CLERIC:
+			case DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC:
+			{
+				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_CLERIC);
+				break;
+			}
+			case DND_CHARACTER_CLASS_DRUID:
+			case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
+			{
+				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_DRUID);
+				break;
+			}
+			case DND_CHARACTER_CLASS_MAGE:
+			case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+			{
+				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);
+				break;
+			}
+			case DND_CHARACTER_CLASS_ILLUSIONIST:
+			{
+				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_ILLUSIONIST);
+				break;
+			}
+			default:
+			{
+				pSpellBook = NULL;
+				continue;
+			}
+		}
+
+		if (pSpellBook != NULL)
+		{
+			#if USE_CANTRIPS
+			for (int nLevel = 0; nLevel <= MAX_SPELL_LEVELS; ++nLevel)
+			#else
+			for (int nLevel = 1; nLevel <= MAX_SPELL_LEVELS; ++nLevel)
+			#endif
+			{
+				for (int nSpell = 0; nSpell < MAX_SPELLS_PER_LEVEL; ++nSpell)
+				{
+					if (m_nSpellsMemorized[nSpellClass][nLevel][nSpell])
+					{
+						cDNDSpell *pSpell = &pSpellBook->m_Spells[nLevel][nSpell];
+
+						if (pSpell->m_bSpellValid == FALSE)
+							continue;
+
+						for (int i = 0; i < MAX_SPELL_COMPONENT_AND_COLUMNS; ++i)
+						{
+							_SpellMaterialComponentsRequiredVector[i].clear();
+						}
+						
+						int nMultiples = m_nSpellsMemorized[nSpellClass][nLevel][nSpell];
+						CasterHasSpellMaterialComponents(pSpell, nMultiples, FALSE, TRUE, _SpellMaterialComponentsRequiredVector);
+						if (_SpellMaterialComponentsRequiredVector[0].size())
+						{
+							if (BuySpellComponents(pSpell, nMultiples, bNoCost, _SpellMaterialComponentsRequiredVector) == FALSE)
+							{
+								bRetVal = FALSE;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	return bRetVal;
+
+}
+	
 
 BOOL cDNDCharacter::CastSpell(cDNDSpellSlot *pSpellSlot)
 {
@@ -7590,6 +8007,57 @@ char *GetStringFromPrice(int nPrice)
 	return szRetVal.GetBuffer(0);
 }
 
+CString GetGPPriceFromString(CString szPrice)
+{
+	CString szRetVal = "1c";
+
+	int nStartPara = szPrice.Find("(");
+	int nEndPara = szPrice.Find(")");
+
+	if (nStartPara >= 0 && nEndPara >= 0 && szPrice.Find("g.p.") >= 0)
+	{
+		szPrice = szPrice.Mid(nStartPara, nEndPara);
+		szPrice.Replace("(", "");
+		szPrice.Replace(")", "");
+		szPrice.Replace("g.p.", "");
+		szPrice.Replace(" ", "");
+		szPrice.Replace(",", "");
+
+		int nPrice = atoi(szPrice.GetBuffer(0));
+		szPrice.Format("%dg", nPrice);
+		szRetVal = szPrice;
+	}
+
+	return szRetVal;
+}
+
+int GetAmountFromString(CString *pszString)
+{
+	int nReturnVal = 1;
+	CString szReturnString = *pszString;
+	
+	int nFirstSpace = pszString->FindOneOf(" ");
+	
+	if (nFirstSpace > -1)
+	{
+		CString szNum = pszString->Left(nFirstSpace);
+
+		int nVal = atoi(szNum);
+
+		if (nVal)
+		{
+			nReturnVal = nVal;
+			szReturnString = pszString->Mid(nFirstSpace, pszString->GetLength());
+		}
+
+		szReturnString.Trim();
+	}
+
+
+	*pszString = szReturnString;
+	return nReturnVal;
+}
+
 BOOL IsThrowableWeapon(UINT nFlags)
 {
 	int nWeaponFlag = (nFlags / 10000) % 10;
@@ -11132,6 +11600,8 @@ void NPCharacterGenerateSpells(cDNDCharacter *pCharacter)
 				}
 
 			}
+
+			pCharacter->BuyAllSpellComponents(TRUE);
 		}
 		
 	}

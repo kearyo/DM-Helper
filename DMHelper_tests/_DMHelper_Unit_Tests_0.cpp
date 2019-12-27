@@ -8,6 +8,7 @@
 #include "../DMCharSpellsDialog.h"
 #include "../DMCharViewDialog.h"
 #include "../cDMStrikeOrThrowDialog.h"
+#include "../cDMMaterialComponentsDialog.h"
 
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

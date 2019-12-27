@@ -5478,8 +5478,16 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 		return;
 	}
 
-	pKillerDlg->m_szInitiativeAction.Format("killed %s", pKillerDlg->m_pTargetBaseDlg->m_szBaseCharName);
+	/*
+	if (pKillerDlg == NULL || pKillerDlg->m_pTargetBaseDlg == NULL)
+	{
+		AfxMessageBox("EXCEPTION: TARGET SYNC Error !", MB_OK);
+		return;
+	}
+
+	pKillerDlg->m_szInitiativeAction.Format("killed %s", pKillerDlg->m_pTargetBaseDlg->m_szBaseCharName); // CRASH HERE pKillerDlg->m_pTargetBaseDlg = NULL
 	pKillerDlg->m_pTargetBaseDlg = NULL;
+	*/
 
 	CString szVictim = _T("");
 
@@ -5492,6 +5500,8 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 		{
 			m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage = m_pOpposingCharacterDialog->m_pCharacter->m_nHitPoints;
 		}
+
+		pKillerDlg->m_szInitiativeAction.Format("killed %s", m_pOpposingCharacterDialog->m_pCharacter->m_szCharacterName);
 	}
 	else if (m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL)
 	{
@@ -5502,11 +5512,15 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 		{
 			m_pOpposingNPCDialog->m_pNPC->m_nCurrentDamage = m_pOpposingNPCDialog->m_pNPC->m_nHitPoints;
 		}
+
+		pKillerDlg->m_szInitiativeAction.Format("killed %s", m_pOpposingNPCDialog->m_szMonsterName);
 	}
 	else
 	{
 		return;
 	}
+
+	pKillerDlg->m_pTargetBaseDlg = NULL;
 
 	if(lXP == 0L)
 	{

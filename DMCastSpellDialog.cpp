@@ -6,12 +6,14 @@
 #include "DMInventoryDialog.h"
 #include "DMCharSpellsDialog.h"
 #include "DMCharViewDialog.h"
+#include "cDMMaterialComponentsDialog.h"
 #include "DMNPCViewDialog.h"
 #include "DMPartyDialog.h"
 #include "DMSpellDescDialog.h"
 #include "DMInitiativeDialog.h"
 #include "DMCharacterSelectorDialog.h"
 #include "DMCastSpellDialog.h"
+#include "DMReminderSFXDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -25,6 +27,7 @@ static char THIS_FILE[] = __FILE__;
 
 DMCastSpellDialog::DMCastSpellDialog(DMPartyDialog *_pPartyDialog, CDMBaseCharViewDialog *_pBaseCharViewDialog, cDNDCharacter	*_pCharacter, CWnd* pParent /*=NULL*/)
 	: CDialog(DMCastSpellDialog::IDD, pParent)
+	, m_szSpellDesc(_T(""))
 {
 	//{{AFX_DATA_INIT(DMCastSpellDialog)
 		// NOTE: the ClassWizard will add member initialization here
@@ -45,6 +48,7 @@ void DMCastSpellDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SPELL_LIST, m_cSpellList);
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDOK, m_cCastButton);
+	DDX_Text(pDX, IDC_SPELL_DESC, m_szSpellDesc);
 }
 
 
@@ -56,6 +60,7 @@ BEGIN_MESSAGE_MAP(DMCastSpellDialog, CDialog)
 	ON_BN_CLICKED(IDC_SPELL_INFO, OnSpellInfo)
 	//}}AFX_MSG_MAP
 	ON_LBN_DBLCLK(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnDblclkSpellList)
+	ON_LBN_SELCHANGE(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnSelchangeSpellList)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -147,6 +152,10 @@ void DMCastSpellDialog::Refresh()
 							szTemp.Format("%d x %s", m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell], pSpell->m_szSpellName);
 						else
 							szTemp = pSpell->m_szSpellName;
+
+						CString szComponents = "  ( * )";
+						szComponents.Replace("*", pSpell->m_szSpellComponents);
+						szTemp += szComponents;
 
 						m_cSpellList.InsertString(nSpellCount, szTemp);
 
@@ -265,6 +274,8 @@ void DMCastSpellDialog::Refresh()
 
 void DMCastSpellDialog::OnOK() 
 {
+	BOOL bCloseWindow = TRUE;
+
 	UpdateData(TRUE);
 
 	int nCursor = m_cSpellList.GetCurSel();
@@ -311,70 +322,88 @@ void DMCastSpellDialog::OnOK()
 			}
 			else
 			{
-				m_pCharacter->CastSpell(pSpellSlot);
+				DND_SPELL_MATERIAL_RETURN_CODES nRetCode = m_pBaseCharViewDialog->CharacterCanCastSpell(pSpellSlot->m_pSpell, 1, FALSE, FALSE, FALSE);
 
-				CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
-
-				if (pApp->SpellIsHealingSpell(pSpellSlot->m_pSpell))
+				if (nRetCode != DND_SPELL_MATERIAL_RETURN_CANNOT_CAST)
 				{
-					DWORD dwCharacterID = 0;
-					DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
-					pDlg->DoModal();
+					m_pBaseCharViewDialog->CharacterCanCastSpell(pSpellSlot->m_pSpell, 1, TRUE, FALSE, FALSE);
+					m_pCharacter->CastSpell(pSpellSlot);
 
-					if (dwCharacterID)
+					CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+					if (pApp->SpellIsHealingSpell(pSpellSlot->m_pSpell))
 					{
-						m_pApp->HealCharacter(dwCharacterID);
+						DWORD dwCharacterID = 0;
+						DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
+						pDlg->DoModal();
+
+						if (dwCharacterID)
+						{
+							m_pApp->HealCharacter(dwCharacterID);
+						}
 					}
-				}
 
-				// delayed blast
-				BOOL bPlaySounds = TRUE;
-				#if GAMETABLE_BUILD
-				if (pApp->m_pInstantMapSFXPlacer == NULL)
-				{
-					if (pApp->m_bSpellFXOnMaps)
+					// delayed blast
+					BOOL bPlaySounds = TRUE;
+					#if GAMETABLE_BUILD
+					if (pApp->m_pInstantMapSFXPlacer == NULL)
 					{
+						if (pApp->m_bSpellFXOnMaps)
+						{
+							int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
+							pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->m_szCharacterFirstName, m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_bCastFromDevice, nSoundRepeats);
+							AfxBeginThread(DMInstantMapSFXThreadProc, (LPVOID)pApp);
+							if (pApp->m_pDMReminderSFXDialog == NULL)
+							{
+								pApp->m_pDMReminderSFXDialog = new CDMReminderSFXDialog(AfxGetMainWnd());
+							}
+
+							bPlaySounds = FALSE;
+						}
+					}
+					#endif
+
+					if (bPlaySounds)
+					{
+						if (pSpellSlot->m_bCastFromDevice == FALSE && pSpellSlot->m_pSpell->HasVerbalComponent())
+						{
+							pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE, pSpellSlot->m_pSpell->m_nSpellIdentifier);
+						}
+
 						int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
-						pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->m_szCharacterFirstName, m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_bCastFromDevice, nSoundRepeats);
-						AfxBeginThread(DMInstantMapSFXThreadProc, (LPVOID)pApp);
-						bPlaySounds = FALSE;
+						pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
 					}
-				}
-				#endif
 
-				if (bPlaySounds)
-				{
-					if (pSpellSlot->m_bCastFromDevice == FALSE)
+					DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
+					if (pPartyDlg != NULL)
 					{
-						pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE);
+						pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_CAST_SPELL, m_pCharacter->m_szCharacterName, pPartyDlg->m_pParty->m_dwPartyID, 0L, pSpellSlot->m_pSpell->m_szSpellName);
 					}
 
-					int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
-					pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
-				}
+					m_pBaseCharViewDialog->m_nCastSpellCursorPos = -1;
 
-				DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
-				if(pPartyDlg != NULL)
-				{
-					pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_CAST_SPELL, m_pCharacter->m_szCharacterName, pPartyDlg->m_pParty->m_dwPartyID, 0L, pSpellSlot->m_pSpell->m_szSpellName);
-				}
+					if (m_pPartyDialog->m_pInitiativeDialog != NULL)
+					{
+						m_pPartyDialog->m_pInitiativeDialog->Refresh();
+					}
 
-				m_pBaseCharViewDialog->m_nCastSpellCursorPos = -1;
-			
-				if(m_pPartyDialog->m_pInitiativeDialog != NULL)
-				{
-					m_pPartyDialog->m_pInitiativeDialog->Refresh();
+					if (m_pBaseCharViewDialog->m_pInventoryDialog != NULL)
+					{
+						m_pBaseCharViewDialog->m_pInventoryDialog->RefreshAll();
+					}
 				}
-
-				if(m_pBaseCharViewDialog->m_pInventoryDialog != NULL)
+				else
 				{
-					m_pBaseCharViewDialog->m_pInventoryDialog->RefreshAll();
+					bCloseWindow = FALSE;
 				}
 			}
 		}
 	}
 	
-	CDialog::OnOK();
+	if (bCloseWindow)
+	{
+		CDialog::OnOK();
+	}
 }
 
 void DMCastSpellDialog::OnSpellInfo() 
@@ -436,4 +465,62 @@ void DMCastSpellDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 void DMCastSpellDialog::OnLbnDblclkSpellList()
 {
 	OnOK();
+}
+
+
+void DMCastSpellDialog::OnLbnSelchangeSpellList()
+{
+	UpdateData(TRUE);
+
+	m_szSpellDesc = _T("");
+
+	int nCursor = m_cSpellList.GetCurSel();
+
+	if (nCursor >= 0)
+	{
+		if (g_bUseMaterialComponents)
+		{
+			PSPELLSLOT pSpellSlot = (PSPELLSLOT)m_cSpellList.GetItemData(nCursor);
+			if (pSpellSlot != NULL && pSpellSlot->m_pSpell != NULL)
+			{
+				//DND_SPELL_MATERIAL_RETURN_CODES nRetCode = m_pBaseCharViewDialog->CharacterCanCastSpell(pSpellSlot->m_pSpell, 1, FALSE, FALSE, FALSE);
+				DND_SPELL_MATERIAL_RETURN_CODES nRetCode = m_pCharacter->CasterHasSpellMaterialComponents(pSpellSlot->m_pSpell, 1, FALSE, FALSE, m_pBaseCharViewDialog->m_SpellMaterialComponentsRequiredVector);
+				
+				if (nRetCode != DND_SPELL_MATERIAL_RETURN_CAN_CAST)
+				{
+					switch (nRetCode)
+					{
+						case DND_SPELL_MATERIAL_RETURN_CANNOT_CAST:
+						{
+							m_szSpellDesc = _T("INSUFFICIENT MATERIAL COMPONENTS !");
+							break;
+						}
+						case DND_SPELL_MATERIAL_RETURN_CAN_CAST_50_50_50:
+						{
+							m_szSpellDesc = " RANGE     DURATION     AREA of EFFECT\n 50%          50%               50%";
+							break;
+						}
+						case DND_SPELL_MATERIAL_RETURN_CAN_CAST_75_50_75:
+						{
+							m_szSpellDesc = " RANGE     DURATION     AREA of EFFECT\n 75%          50%               75%";
+							break;
+						}
+						case DND_SPELL_MATERIAL_RETURN_CAN_CAST_75_50_100:
+						{
+							m_szSpellDesc = " RANGE     DURATION     AREA of EFFECT\n 75%          50%               100%";
+							break;
+						}
+						case DND_SPELL_MATERIAL_RETURN_CAN_CAST_100_75_100:
+						{
+							m_szSpellDesc = " RANGE     DURATION     AREA of EFFECT\n 100%        75%               100%";
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	UpdateData(FALSE);
 }

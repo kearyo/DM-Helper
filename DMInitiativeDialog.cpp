@@ -1082,8 +1082,16 @@ void CDMInitiativeDialog::ClearSelectedCharacterTarget()
 
 		switch (pDlg->m_CharViewType)
 		{
-			case DND_CHAR_VIEW_TYPE_PC:		((CDMCharViewDialog*)pDlg)->m_pTargetBaseDlg = NULL; return;
-			case DND_CHAR_VIEW_TYPE_NPC:	((cDMBaseNPCViewDialog*)pDlg)->m_pTargetBaseDlg = NULL; return;
+			case DND_CHAR_VIEW_TYPE_PC:
+			{
+				((CDMCharViewDialog*)pDlg)->m_pTargetBaseDlg = NULL; 
+				return;
+			}
+			case DND_CHAR_VIEW_TYPE_NPC:
+			{
+				((cDMBaseNPCViewDialog*)pDlg)->m_pTargetBaseDlg = NULL; 
+				return;
+			}
 		}
 
 	}

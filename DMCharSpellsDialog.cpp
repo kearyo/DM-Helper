@@ -47,9 +47,12 @@ DMCharSpellsDialog::DMCharSpellsDialog(cDNDCharacter *_Character, CDMCharViewDia
 
 	m_ViewSpellMode = DND_VIEW_SPELL_MODE_UNDEF;
 	m_pSelectedSpell = NULL;
+	m_pCurrentSpell = NULL;
 	m_pSpellBook = NULL;
 	m_bMageDisplay = FALSE;
 	m_bRefreshed = FALSE;
+
+	m_nMultipleSpells = 1;
 
 	m_nSpellChartListTopIndex = -1;
 
@@ -82,6 +85,7 @@ void DMCharSpellsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_SPELLS_REMAINING, m_szSpellsRemaining);
 	DDX_Text(pDX, IDC_SPELLS_REMAINING_SPELLBOOK, m_szSpellsRemainingSpellbook);
 	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_MATERIAL_COMPONENTS, m_cMaterialComponentsButton);
 }
 
 
@@ -108,6 +112,7 @@ BEGIN_MESSAGE_MAP(DMCharSpellsDialog, CDialog)
 	ON_WM_UPDATEUISTATE()
 	ON_WM_CTLCOLOR()
 	ON_WM_TIMER()
+	ON_BN_CLICKED(IDC_MATERIAL_COMPONENTS, &DMCharSpellsDialog::OnBnClickedMaterialComponents)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -117,8 +122,6 @@ BOOL DMCharSpellsDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	
-	// TODO: Add extra initialization here
-
 	int nCount = 0;
 	m_cSpellChartList.InsertColumn( nCount++, "Spell", LVCFMT_LEFT, 128, -1 );
 	m_cSpellChartList.InsertColumn( nCount++, "Components", LVCFMT_LEFT, 100, -1 );
@@ -132,6 +135,15 @@ BOOL DMCharSpellsDialog::OnInitDialog()
 	ClearSelectedListCtrlItems(&m_cSpellChartList);
 
 	m_dwMasterSpellListHash = m_pApp->m_dwMasterSpellListHash;
+
+	if (g_bUseMaterialComponents == FALSE)
+	{
+		m_cMaterialComponentsButton.ShowWindow(SW_HIDE);
+	}
+	else
+	{
+		m_cMaterialComponentsButton.ShowWindow(SW_SHOW);
+	}
 
 	SetTimer(52249, 500, NULL);
 
@@ -704,6 +716,15 @@ void DMCharSpellsDialog::RefreshSpellControls()
 			break;
 		}
 	}
+
+	if (m_pCurrentSpell == NULL)
+	{
+		m_cMaterialComponentsButton.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_cMaterialComponentsButton.EnableWindow(TRUE);
+	}
 }
 
 void DMCharSpellsDialog::ClearSpellList(int * pnSpellList)
@@ -752,6 +773,7 @@ void DMCharSpellsDialog::OnSelchangeSpellsModeTab(NMHDR* pNMHDR, LRESULT* pResul
 	m_nSelectedSpellMode = m_cSpellsModeTab.GetCurSel();
 
 	m_pSelectedSpell = NULL;
+	m_pCurrentSpell = NULL;
 
 	switch(m_ViewSpellMode)
 	{
@@ -837,6 +859,8 @@ void DMCharSpellsDialog::OnClickSpellChartList(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if(nCursor >= 0)
 	{
+		m_nMultipleSpells = 1;
+
 		m_nSpellChartListTopIndex = m_cSpellChartList.GetTopIndex();
 
 		switch(m_ViewSpellMode)
@@ -850,6 +874,7 @@ void DMCharSpellsDialog::OnClickSpellChartList(NMHDR* pNMHDR, LRESULT* pResult)
 		ClearSpellList(m_nSelectedSpellLists[DND_SPELLCAST_LIST]);
 
 		m_pSelectedSpell = (cDNDSpell *)m_cSpellChartList.GetItemData(nCursor);
+		m_pCurrentSpell = m_pSelectedSpell;
 
 		if(m_pSelectedSpell != NULL)
 		{
@@ -897,6 +922,7 @@ void DMCharSpellsDialog::OnDblclkSpellChartList(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if(nCursor != -1)
 	{
+		m_nMultipleSpells = 1;
 		cDNDSpell *pSpell = (cDNDSpell *)m_cSpellChartList.GetItemData(nCursor);
 		DMSpellDescDialog *pDlg = new DMSpellDescDialog(pSpell);
 		pDlg->DoModal();
@@ -918,10 +944,12 @@ void DMCharSpellsDialog::OnSelchangeSpellBookList()
 		m_ViewSpellMode = DND_VIEW_SPELL_MODE_MEMORIZE;
 
 		cDNDSpell *pSelectedSpell = (cDNDSpell *)m_cSpellBookList.GetItemData(nCursor);
+		m_nMultipleSpells = 1;
 		
 		if(pSelectedSpell != NULL)
 		{
 			m_nSelectedSpellLists[DND_SPELLBOOK_LIST][pSelectedSpell->m_nSpellNumber] = 1 - m_nSelectedSpellLists[DND_SPELLBOOK_LIST][pSelectedSpell->m_nSpellNumber];
+			m_pCurrentSpell = pSelectedSpell;
 		}
 
 		Refresh();
@@ -933,10 +961,9 @@ void DMCharSpellsDialog::OnSelchangeSpellBookList()
 
 void DMCharSpellsDialog::OnSelchangeSpellsMemorizedList() 
 {
-	// TODO: Add your control notification handler code here
 	int nCursor = m_cSpellsMemorizedList.GetCurSel();
 
-	if(nCursor >= 0)
+	if (nCursor >= 0)
 	{
 		ClearSpellList(m_nSelectedSpellLists[DND_SPELL_LIST]);
 		ClearSpellList(m_nSelectedSpellLists[DND_SPELLBOOK_LIST]);
@@ -952,9 +979,34 @@ void DMCharSpellsDialog::OnSelchangeSpellsMemorizedList()
 			if(pSelectedSpell != NULL)
 			{
 				m_nSelectedSpellLists[DND_SPELLCAST_LIST][pSelectedSpell->m_nSpellNumber] = 1 - m_nSelectedSpellLists[DND_SPELLCAST_LIST][pSelectedSpell->m_nSpellNumber];
+
+				UpdateData(TRUE);
+
+				if (m_cSpellsMemorizedList.GetSel(nCursor))
+				{
+					m_pCurrentSpell = pSelectedSpell;
+
+					if (pSelectedSpellSlot->m_pnMemorizedSlot != NULL)
+					{
+						m_nMultipleSpells = *pSelectedSpellSlot->m_pnMemorizedSlot;
+					}
+					else
+					{
+						m_nMultipleSpells = 1;
+					}
+				}
+				else
+				{
+					m_pCurrentSpell = NULL;
+				}
 			}
 		}
 
+		Refresh();
+	}
+	else
+	{
+		m_pCurrentSpell = NULL;
 		Refresh();
 	}
 
@@ -1057,29 +1109,39 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 				if(m_cSpellsMemorizedList.GetSel(i))
 				{
 					cDNDSpellSlot *pSelectedSpellSlot = (cDNDSpellSlot *)m_cSpellsMemorizedList.GetItemData(i);
-					m_pCharacter->CastSpell(pSelectedSpellSlot);
 
-					if (m_pApp->SpellIsHealingSpell(pSelectedSpellSlot->m_pSpell))
+					DND_SPELL_MATERIAL_RETURN_CODES nRetCode = m_pSiblingWindow->CharacterCanCastSpell(pSelectedSpellSlot->m_pSpell, 1, FALSE, FALSE, FALSE);
+
+					if (nRetCode != DND_SPELL_MATERIAL_RETURN_CANNOT_CAST)
 					{
-						DWORD dwCharacterID = 0;
-						DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
-						pDlg->DoModal();
+						m_pSiblingWindow->CharacterCanCastSpell(pSelectedSpellSlot->m_pSpell, 1, TRUE, FALSE, FALSE);
+						m_pCharacter->CastSpell(pSelectedSpellSlot);
 
-						if (dwCharacterID)
+						if (m_pApp->SpellIsHealingSpell(pSelectedSpellSlot->m_pSpell))
 						{
-							m_pApp->HealCharacter(dwCharacterID);
+							DWORD dwCharacterID = 0;
+							DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
+							pDlg->DoModal();
+
+							if (dwCharacterID)
+							{
+								m_pApp->HealCharacter(dwCharacterID);
+							}
 						}
-					}
 
-					m_pApp->PlayPCSoundFX("* PC Cast Spell", m_pSiblingWindow->m_szCharacterFirstName, "NADA", FALSE);
+						if (pSelectedSpellSlot->m_pSpell->HasVerbalComponent())
+						{
+							m_pApp->PlayPCSoundFX("* PC Cast Spell", m_pSiblingWindow->m_szCharacterFirstName, "NADA", FALSE, pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier);
+						}
 
-					int nSoundRepeats = m_pApp->GetSpellRepeats(pSelectedSpellSlot);
-					m_pApp->PlaySpellSFX(pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
+						int nSoundRepeats = m_pApp->GetSpellRepeats(pSelectedSpellSlot);
+						m_pApp->PlaySpellSFX(pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
 
-					DMPartyDialog *pPartyDlg = m_pApp->FindCharacterPartyDialog(m_pCharacter);
-					if(pPartyDlg != NULL)
-					{
-						pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_CAST_SPELL, m_pCharacter->m_szCharacterName, pPartyDlg->m_pParty->m_dwPartyID, 0L, pSelectedSpellSlot->m_pSpell->m_szSpellName);
+						DMPartyDialog *pPartyDlg = m_pApp->FindCharacterPartyDialog(m_pCharacter);
+						if (pPartyDlg != NULL)
+						{
+							pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_CAST_SPELL, m_pCharacter->m_szCharacterName, pPartyDlg->m_pParty->m_dwPartyID, 0L, pSelectedSpellSlot->m_pSpell->m_szSpellName);
+						}
 					}
 				}
 			}
@@ -1131,6 +1193,8 @@ void DMCharSpellsDialog::OnForgetSpell()
 						m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] = 0;
 					}
 
+					m_nMultipleSpells = m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i];
+
 					m_pCharacter->MarkChanged();
 				}
 			}
@@ -1175,6 +1239,15 @@ void DMCharSpellsDialog::OnRestoreSpells()
 
 	m_pCharacter->MarkChanged();
 }
+
+void DMCharSpellsDialog::OnBnClickedMaterialComponents()
+{
+	if (m_pCurrentSpell != NULL)
+	{
+		m_pSiblingWindow->CharacterCanCastSpell(m_pCurrentSpell, m_nMultipleSpells, FALSE, TRUE, TRUE);
+	}
+}
+
 
 /*
 
@@ -1311,3 +1384,5 @@ void DMCharSpellsDialog::OnTimer(UINT_PTR nIDEvent)
 
 	CDialog::OnTimer(nIDEvent);
 }
+
+
