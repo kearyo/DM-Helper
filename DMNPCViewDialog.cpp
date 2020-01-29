@@ -201,6 +201,8 @@ void cDMBaseNPCViewDialog::ProcessCharStats()
 		m_pNPCViewDialog->ProcessCharStats();
 
 		m_szDamageDesc = m_pNPCViewDialog->m_szDamageDesc;
+
+		m_szMoveDesc.Format("%d", m_nCharacterMovementRate);
 	}
 	else
 	{
@@ -251,6 +253,7 @@ void cDMBaseNPCViewDialog::ProcessCharStats()
 				*/
 
 			m_nCharacterMovementRate = nMove;
+			m_szMoveDesc.Format("%d", m_nCharacterMovementRate);
 		}
 		else
 		{
@@ -513,6 +516,20 @@ void cDMBaseNPCViewDialog::FireAmmo()
 	{
 		m_pNPCViewDialog->FireAmmo();
 	}
+}
+
+CString cDMBaseNPCViewDialog::GetMonsterSFXID()
+{
+	CString szRetVal = "Monster 01";
+
+	if (m_pNPCViewDialog != NULL && m_pNPC != NULL)
+	{
+		CString szTemp;
+		szTemp.Format("%02d", (m_pNPC->m_nMonsterIndex % 11) + 1);
+		szRetVal.Replace("01", szTemp);
+	}
+
+	return szRetVal;
 }
 
 void cDMBaseNPCViewDialog::SwapWeapon()
@@ -941,8 +958,6 @@ void DMNPCViewDialog::Refresh()
 
 		m_nMonsterBook = nBook;
 		m_szMonsterBook = pMonster->m_szBook;
-
-		//hier Keary
 
 		CString szReplace = pMonster->m_szBook;
 		szReplace.Replace("MM ", "");

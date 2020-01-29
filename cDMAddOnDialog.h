@@ -124,4 +124,6 @@ public:
 	CButton m_cGOButton;
 	CString m_szFileSize;
 	CString m_szFilePerc;
+	afx_msg void OnBnClickedShowInstalledCheck();
+	BOOL m_bShowInstalled;
 };

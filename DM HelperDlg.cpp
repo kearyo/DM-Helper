@@ -2683,7 +2683,7 @@ BOOL CAboutDlg::OnInitDialog()
 	LONG lMinor = lValue / 1000L;
 	lValue -= lMinor * 1000L;
 
-	m_szVersion.Format("Version: %01d.%01d.%03d", lMajor, lMinor, lValue);
+	m_szVersion.Format("Version: %01d.%01d.%03d.%d", lMajor, lMinor, lValue, DMH_BUILD_NUMBER);
 
 	UpdateData(FALSE);
 

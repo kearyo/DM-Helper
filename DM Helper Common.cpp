@@ -151,6 +151,8 @@ char *GetLogEventName(DND_LOG_EVENT_TYPES nEventType)
 		case DND_LOG_EVENT_TYPE_PARTY_RESTED: return("Party Rested");
 		
 		case DND_LOG_EVENT_TYPE_MISC: return("Misc Event");
+
+		case DND_LOG_EVENT_TYPE_CHARACTER_FAILED_CAST_SPELL: return("Character Failed to Cast Spell");
 	}
 
 	return "Undefined";
@@ -195,6 +197,8 @@ char *GetLogEventDesc(DND_LOG_EVENT_TYPES nEventType)
 		case DND_LOG_EVENT_TYPE_PARTY_RESTED: return("The $PNAME rested");
 		
 		case DND_LOG_EVENT_TYPE_MISC: return("");
+
+		case DND_LOG_EVENT_TYPE_CHARACTER_FAILED_CAST_SPELL: return("$CNAME failed casting a spell : ");
 	}
 
 	return "Undefined";
@@ -2777,7 +2781,7 @@ BOOL cDNDCharacter::BuyAllSpellComponents(BOOL bNoCost)
 }
 	
 
-BOOL cDNDCharacter::CastSpell(cDNDSpellSlot *pSpellSlot)
+BOOL cDNDCharacter::CastSpell(cDNDSpellSlot *pSpellSlot, BOOL bFailedToCast)
 {
 	if(pSpellSlot == NULL || pSpellSlot->m_pSpell == NULL || pSpellSlot->m_pnMemorizedSlot == NULL)
 		return FALSE;
@@ -4923,14 +4927,22 @@ LONG GetExperiencePointsForLevelByClass(DND_CHARACTER_CLASSES nClass, int nLevel
 		case DND_CHARACTER_CLASS_CUSTOM_11:
 		case DND_CHARACTER_CLASS_CUSTOM_12:
 		{
-			if (nLevel < GetCustomClass(nClass)->m_nMaxChartLevel)
+			int nLevelIndex = nLevel - 1; // need index because table starts at entry 0 for MAX XP for level
+
+			if (nLevelIndex == 0)
 			{
-				lRetVal = GetCustomClass(nClass)->m_lXPLevel[nLevel];
+				lRetVal = 0;
+				break;
+			}
+
+			if (nLevelIndex < GetCustomClass(nClass)->m_nMaxChartLevel)
+			{
+				lRetVal = GetCustomClass(nClass)->m_lXPLevel[max(nLevelIndex - 1, 0)];
 			}
 			else
 			{
-				nLevel -= GetCustomClass(nClass)->m_nMaxChartLevel;
-				lRetVal = GetCustomClass(nClass)->m_lXPLevel[max(nLevel - 1, 0)] + nLevel * GetCustomClass(nClass)->m_lMaxChartLevelXP;
+				nLevelIndex -= GetCustomClass(nClass)->m_nMaxChartLevel;
+				lRetVal = GetCustomClass(nClass)->m_lXPLevel[max(nLevelIndex - 1, 0)] + nLevelIndex * GetCustomClass(nClass)->m_lMaxChartLevelXP;
 			}
 
 			break;
@@ -4939,6 +4951,228 @@ LONG GetExperiencePointsForLevelByClass(DND_CHARACTER_CLASSES nClass, int nLevel
 	}
 
 	return lRetVal;
+}
+
+char *GetClassLevelTitle(DND_CHARACTER_CLASSES nClass, int nLevel)
+{
+	switch (nClass)
+	{
+		case DND_CHARACTER_CLASS_CLERIC:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Acolyte";
+				case 2:		return "Adept";
+				case 3:		return "Priest";
+				case 4:		return "Curate";
+				case 5:		return "Perfect";
+				case 6:		return "Canon";
+				case 7:		return "Lama";
+				case 8:		return "Patriarch";
+				default:	return "High Priest";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_DRUID:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Aspirant";
+				case 2:		return "Ovate";
+				case 3:		return "Initiate of the 1st Circle";
+				case 4:		return "Initiate of the 2nd Circle";
+				case 5:		return "Initiate of the 3rd Circle";
+				case 6:		return "Initiate of the 4th Circle";
+				case 7:		return "Initiate of the 5th Circle";
+				case 8:		return "Initiate of the 6th Circle";
+				case 9:		return "Initiate of the 7th Circle";
+				case 10:	return "Initiate of the 8th Circle";
+				case 11:	return "Initiate of the 9th Circle";
+				case 12:	return "Druid";
+				case 13:	return "Arch Druid";
+				default:	return "Great Druid";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_FIGHTER:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Veteran";
+				case 2:		return "Warrior";
+				case 3:		return "Swordsman";
+				case 4:		return "Hero";
+				case 5:		return "Swashbuckler";
+				case 6:		return "Myrmidon";
+				case 7:		return "Champion";
+				case 8:		return "Superhero";
+				default:	return "Lord";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_PALADIN:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Gallant";
+				case 2:		return "Keeper"; 
+				case 3:		return "Protector"; 
+				case 4:		return "Defender"; 
+				case 5:		return "Warder"; 
+				case 6:		return "Guardian"; 
+				case 7:		return "Chevalier"; 
+				case 8:		return "Justiciar"; 
+				default:	return "Paladin"; 
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_RANGER:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Runner";
+				case 2:		return "Strider";
+				case 3:		return "Scout";
+				case 4:		return "Courser";
+				case 5:		return "Tracker";
+				case 6:		return "Guide";
+				case 7:		return "Pathfinder";
+				case 8:		return "Ranger";
+				case 9:		return "Ranger Knight";
+				default:	return "Ranger Lord";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_MAGE:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Prestidigitator";
+				case 2:		return "Evoker";
+				case 3:		return "Conjurer";
+				case 4:		return "Theurgist";
+				case 5:		return "Thaumaturgist";
+				case 6:		return "Magician";
+				case 7:		return "Warlock";
+				case 8:		return "Sorcerer";
+				case 9:		return "Necromancer";
+				default:	return "Wizard";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_ILLUSIONIST:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Prestigitator";
+				case 2:		return "Minor Trickster";
+				case 3:		return "Trickster";
+				case 4:		return "Master Trickster";
+				case 5:		return "Cabolist";
+				case 6:		return "Visionist";
+				case 7:		return "Phantasmist";
+				case 8:		return "Apparitionist";
+				case 9:		return "Spellbinder";
+				default:	return "Illusionist";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_THIEF:
+		{
+			switch (nLevel)
+			{
+				case 0:		return "";
+				case 1:		return "Rogue";
+				case 2:		return "Footpad";
+				case 3:		return "Cutpurse";
+				case 4:		return "Robber";
+				case 5:		return "Burglar";
+				case 6:		return "Filcher";
+				case 7:		return "Sharper";
+				case 8:		return "Magsman";
+				case 9:		return "Thief";
+				default:	return "Master Thief";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_ASSASSIN:
+		{
+			switch (nLevel)
+			{
+				case 0:		return	"";
+				case 1:		return	"Bravo";
+				case 2:		return	"Rutterkin";
+				case 3:		return	"Waghalter";
+				case 4:		return	"Murderer";
+				case 5:		return	"Thug";
+				case 6:		return	"Killer";
+				case 7:		return	"Cutthroat";
+				case 8:		return	"Executioner";
+				case 9:		return	"Assassin";
+				case 10:	return	"Expert Assassin";
+				case 11:	return	"Senior Assassin";
+				case 12:	return	"Chief Assassin";
+				case 13:	return	"Prime Assassin";
+				case 14:	return	"Guildmaster Assassin";
+				case 15:	return	"Grandfather of Assassins";
+			}
+
+			break;
+		}
+
+		case DND_CHARACTER_CLASS_MONK:
+		{
+			switch (nLevel)
+			{
+				case 0:		return	"";
+				case 1:		return	"Novice";
+				case 2:		return	"Initiate";
+				case 3:		return	"Brother";
+				case 4:		return	"Disciple";
+				case 5:		return	"Immaculate";
+				case 6:		return	"Master";
+				case 7:		return	"Superior Master";
+				case 8:		return	"Master of Dragons";
+				case 9:		return	"Master of the North Wind";
+				case 10:	return	"Master of the West Wind";
+				case 11:	return	"Master of the South Wind";
+				case 12:	return	"Master of the East Wind";
+				case 13:	return	"Master of Winter";
+				case 14:	return	"Master of Autumn";
+				case 15:	return	"Master of Summer";
+				case 16:	return	"Master of Spring";
+				case 17:	return	"Grand Master of Flowers";
+			}
+
+			break;
+		}
+
+	} // switch (nClass)
+
+	return "";
 }
 
 int CalculateLevelLimits(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES nClass)
@@ -5898,6 +6132,12 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 	{
 		pnSaveMatrix[i] -= nProtectionRing;
 	}
+
+	// apply custom mods
+	for (int i = 0; i < 5; ++i)
+	{
+		pnSaveMatrix[i] -= pCharacter->m_nSavingThrowModifiers[i];
+	}
 }
 
 BOOL GetTurnUndeadMatrix(cDNDCharacter *pCharacter, int *pnTurnMatrix)
@@ -5961,6 +6201,29 @@ BOOL GetTurnUndeadMatrix(cDNDCharacter *pCharacter, int *pnTurnMatrix)
 	{
 		pnTurnMatrix[i] = _TurnMatrix[i][nTurnLevel];
 	}
+
+	// apply custom mods
+	for (i = 0; i < 13; ++i)
+	{
+		if (pnTurnMatrix[i] == 99 && pCharacter->m_nClericTurnModifiers[i] != 0)
+		{
+			pnTurnMatrix[i] = 20 - pCharacter->m_nClericTurnModifiers[i];
+		}
+		else
+		{
+			pnTurnMatrix[i] -= pCharacter->m_nClericTurnModifiers[i];
+		}
+
+		if (pnTurnMatrix[i] > 99)
+		{
+			pnTurnMatrix[i] = 99;
+		}
+		if (pnTurnMatrix[i] < -2)
+		{
+			pnTurnMatrix[i] = -2;
+		}
+	}
+
 
 	return TRUE;
 
@@ -6294,6 +6557,11 @@ void GetThiefSkills(cDNDCharacter *pCharacter, float *pfThiefSkillMatrix)
 		}
 	}
 
+	// apply custom mods
+	for (i = 0; i < 8; ++i)
+	{
+		pfThiefSkillMatrix[i] += pCharacter->m_nThiefSkillModifiers[i];
+	}
 
 	//final sanity check
 	for(i = 0; i < 8; ++i)
@@ -6378,6 +6646,12 @@ int GetAssassinationTable(cDNDCharacter *pCharacter, int *pnAssassinationMatrix)
 		pnAssassinationMatrix[i] = _AssassinationMatrix[nCol][i];
 	}
 
+	// apply custom mods
+	for (i = 0; i < 10; ++i)
+	{
+		pnAssassinationMatrix[i] += pCharacter->m_nAssassinSkillModifiers[i];
+	}
+	
 	return nAssassinLevel;
 }
 

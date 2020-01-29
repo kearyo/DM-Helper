@@ -165,9 +165,13 @@
     <ClCompile Include="cDMMapSizingDialog.cpp" />
     <ClCompile Include="cDMMapViewDialog.cpp" />
     <ClCompile Include="cDMMaterialComponentsDialog.cpp" />
+    <ClCompile Include="cDMModifyAssassinSkillsDialog.cpp" />
+    <ClCompile Include="cDMModifyClericSkillsDialog.cpp" />
+    <ClCompile Include="cDMModifyThiefSkillsDialog.cpp" />
     <ClCompile Include="cDMOpenLockDialog.cpp" />
     <ClCompile Include="cDMPDFViewDialog.cpp" />
     <ClCompile Include="cDMRandomNameGeneratorDialog.cpp" />
+    <ClCompile Include="cDMSavingThrowModifierDialog.cpp" />
     <ClCompile Include="cDMStrikeOrThrowDialog.cpp" />
     <ClCompile Include="cDMWeatherDialog.cpp" />
     <ClCompile Include="ColoredListCtrl.cpp" />
@@ -249,9 +253,13 @@
     <ClInclude Include="cDMMapSizingDialog.h" />
     <ClInclude Include="cDMMapViewDialog.h" />
     <ClInclude Include="cDMMaterialComponentsDialog.h" />
+    <ClInclude Include="cDMModifyAssassinSkillsDialog.h" />
+    <ClInclude Include="cDMModifyClericSkillsDialog.h" />
+    <ClInclude Include="cDMModifyThiefSkillsDialog.h" />
     <ClInclude Include="cDMOpenLockDialog.h" />
     <ClInclude Include="cDMPDFViewDialog.h" />
     <ClInclude Include="cDMRandomNameGeneratorDialog.h" />
+    <ClInclude Include="cDMSavingThrowModifierDialog.h" />
     <ClInclude Include="cDMStrikeOrThrowDialog.h" />
     <ClInclude Include="cDMWeatherDialog.h" />
     <ClInclude Include="ColoredListCtrl.h" />

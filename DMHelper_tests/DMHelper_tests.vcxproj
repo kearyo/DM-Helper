@@ -103,9 +103,13 @@
     <ClCompile Include="..\cDMMapSizingDialog.cpp" />
     <ClCompile Include="..\cDMMapViewDialog.cpp" />
     <ClCompile Include="..\cDMMaterialComponentsDialog.cpp" />
+    <ClCompile Include="..\cDMModifyAssassinSkillsDialog.cpp" />
+    <ClCompile Include="..\cDMModifyClericSkillsDialog.cpp" />
+    <ClCompile Include="..\cDMModifyThiefSkillsDialog.cpp" />
     <ClCompile Include="..\cDMOpenLockDialog.cpp" />
     <ClCompile Include="..\cDMPDFViewDialog.cpp" />
     <ClCompile Include="..\cDMRandomNameGeneratorDialog.cpp" />
+    <ClCompile Include="..\cDMSavingThrowModifierDialog.cpp" />
     <ClCompile Include="..\cDMStrikeOrThrowDialog.cpp" />
     <ClCompile Include="..\cDMWeatherDialog.cpp" />
     <ClCompile Include="..\ColoredListCtrl.cpp" />

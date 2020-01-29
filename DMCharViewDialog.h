@@ -42,8 +42,10 @@ public:
 	int m_nSelectedSpellViewClass;
 	BOOL m_bFirstSpellViewRefresh;
 
+	CString m_szWeaponDesc;
 	CString m_szDamageDesc;
 	CString m_szToHitDesc;
+	CString m_szMoveDesc;
 
 	int m_nAttackMatrix[21];
 	CString m_szNumAttacks;
@@ -193,6 +195,8 @@ public:
 
 	//CDMHelperApp *m_pApp;
 
+	CFont m_ClassTitleFont;
+
 	BOOL m_bLoadedFromMenu;
 
 	CString m_szSaveFileName;
@@ -234,6 +238,7 @@ public:
 	void NPCRollStats();
 	void ExternalRollPCStats();
 	void ExternalRecoverAmmo();
+	void PopUpXPToolTip(int nClass);
 
 	BOOL m_bHasPainted;
 	int m_nPage;
@@ -502,6 +507,25 @@ public:
 	afx_msg void OnEnChangeSpecialMoveEdit();
 	CComboBox m_cLightSourceCombo;
 	afx_msg void OnCbnSelchangeLightSourceCombo();
+	afx_msg void OnBnClickedSavingThrowBox();
+	afx_msg void OnBnDoubleclickedSavingThrowBox();
+	afx_msg void OnBnClickedSavingThrowsModButton();
+	afx_msg void OnBnClickedLanguagesModButton();
+	afx_msg void OnBnClickedThiefSkillsModButton();
+	afx_msg void OnBnClickedAssassinSkillsModButton();
+	afx_msg void OnBnClickedClericTurnModButton();
+	CButton m_cToolTip;
+	afx_msg void OnBnClickedToolTip();
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnStnClickedXp1Label();
+	afx_msg void OnStnClickedXp2Label();
+	afx_msg void OnStnClickedXp3Label();
+	CString m_szLevelTitle1;
+	CStatic m_cLevelTitle1;
+	CStatic m_cLevelTitle2;
+	CStatic m_cLevelTitle3;
+	CString m_szLevelTitle2;
+	CString m_szLevelTitle3;
 };
 
 //{{AFX_INSERT_LOCATION}}

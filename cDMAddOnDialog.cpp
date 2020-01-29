@@ -186,6 +186,7 @@ cDMAddOnDialog::cDMAddOnDialog(CWnd* pParent /*=NULL*/)
 	, m_szDownloadingFile(_T(""))
 	, m_szFileSize(_T(""))
 	, m_szFilePerc(_T(""))
+	, m_bShowInstalled(FALSE)
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();
 	m_pCurl = NULL;
@@ -216,6 +217,7 @@ void cDMAddOnDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_GO_BUTTON, m_cGOButton);
 	DDX_Text(pDX, IDC_FILE_SIZE_STATIC, m_szFileSize);
 	DDX_Text(pDX, IDC_FILE_PERC_STATIC, m_szFilePerc);
+	DDX_Check(pDX, IDC_SHOW_INSTALLED_CHECK, m_bShowInstalled);
 }
 
 
@@ -223,6 +225,7 @@ BEGIN_MESSAGE_MAP(cDMAddOnDialog, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL, &cDMAddOnDialog::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_GO_BUTTON, &cDMAddOnDialog::OnBnClickedGoButton)
 	ON_MESSAGE(DND_WM_MESSAGE, OnDNDMessage)
+	ON_BN_CLICKED(IDC_SHOW_INSTALLED_CHECK, &cDMAddOnDialog::OnBnClickedShowInstalledCheck)
 END_MESSAGE_MAP()
 
 
@@ -420,7 +423,7 @@ void cDMAddOnDialog::LoadAddOnDescs()
 				++i;
 			}
 
-			if (bValid && m_szInstalledAddOnsHash.Find(pAddOn->m_szAddOnID) == -1)
+			if (bValid && (m_szInstalledAddOnsHash.Find(pAddOn->m_szAddOnID) == -1 || m_bShowInstalled))
 			{
 				m_AddOnMap.SetAt(nCount++, pAddOn);
 			}
@@ -603,4 +606,13 @@ FILE * cDMAddOnDialog::OpenDirectoryFile(CString szFilePath, char *szFileCommand
 
 	return pFile;
 }
- 
+
+
+void cDMAddOnDialog::OnBnClickedShowInstalledCheck()
+{
+	UpdateData(TRUE);
+
+	m_AddOnMode = DND_ADD_ON_MODES_INIT;
+
+	Update();
+}

@@ -3598,7 +3598,7 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 
 	if (NULL != pAttackingNPCDialog)
 	{
-		if (m_pApp->PlayPCSoundFX("* War Cry", pAttackingNPCDialog->m_szMonsterName, "Monster", TRUE) == FALSE)
+		if (m_pApp->PlayPCSoundFX("* War Cry", pAttackingNPCDialog->m_szMonsterName, pAttackingNPCDialog->GetMonsterSFXID(), TRUE) == FALSE)
 		{
 			//CString szTemp;
 			//szTemp.Format("Monster %02d War Cry", (pAttackingNPCDialog->m_pNPC->m_nMonsterIndex % 11) + 1);
@@ -3636,7 +3636,7 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 
 	if (NULL != pAttackingNPCDialog)
 	{
-		m_pApp->PlayPCSoundFX("* Attack", pAttackingNPCDialog->m_szMonsterName, "Monster", FALSE);
+		m_pApp->PlayPCSoundFX("* Attack", pAttackingNPCDialog->m_szMonsterName, pAttackingNPCDialog->GetMonsterSFXID(), FALSE);
 	}
 
 	CString szLogEntry = _T("");
@@ -3870,7 +3870,7 @@ BOOL DMPartyDialog::InitiativeWound(int nDamage, CDMCharViewDialog *pTargetChara
 		if (bWasAlive && !pTargetNPCDialog->m_pNPC->IsAlive())
 		{
 			//m_pApp->PlaySoundFX("Monster Die");
-			m_pApp->PlayPCSoundFX("* Die", pTargetNPCDialog->m_szMonsterName, "Monster");
+			m_pApp->PlayPCSoundFX("* Die", pTargetNPCDialog->m_szMonsterName, pTargetNPCDialog->GetMonsterSFXID());
 
 			pTargetNPCDialog->m_szInitiativeAction = _T("DEAD");
 
@@ -3888,7 +3888,7 @@ BOOL DMPartyDialog::InitiativeWound(int nDamage, CDMCharViewDialog *pTargetChara
 		}
 		else if(pTargetNPCDialog->m_pNPC->IsAlive())
 		{
-			m_pApp->PlayPCSoundFX("* Hurt", pTargetNPCDialog->m_szMonsterName, "Monster");
+			m_pApp->PlayPCSoundFX("* Hurt", pTargetNPCDialog->m_szMonsterName, pTargetNPCDialog->GetMonsterSFXID());
 		}
 	}
 
@@ -3991,10 +3991,10 @@ void DMPartyDialog::OnAttackHitButton()
 		{
 			m_pSelectedNPCDialog->m_szInitiativeAction = _T("attack hit !");
 			m_pInitiativeDialog->Refresh();
-			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedNPCDialog->m_szMonsterName, "Monster", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedNPCDialog->m_szMonsterName, m_pSelectedNPCDialog->GetMonsterSFXID(), FALSE);
 		}
 
-		m_pApp->PlayPCSoundFX("* Attack", m_pSelectedNPCDialog->m_szMonsterName, "Monster", FALSE);
+		m_pApp->PlayPCSoundFX("* Attack", m_pSelectedNPCDialog->m_szMonsterName, m_pSelectedNPCDialog->GetMonsterSFXID(), FALSE);
 
 		m_pApp->PlayWeaponSFX(nWeapon, WEAPON_SFX_HIT);
 
@@ -4076,7 +4076,7 @@ void DMPartyDialog::OnAttackMissButton()
 			m_pInitiativeDialog->Refresh();
 		}
 
-		m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedNPCDialog->m_szMonsterName, "Monster", FALSE);
+		m_pApp->PlayPCSoundFX("* War Cry", m_pSelectedNPCDialog->m_szMonsterName, m_pSelectedNPCDialog->GetMonsterSFXID(), FALSE);
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
 	}
@@ -4202,7 +4202,7 @@ void DMPartyDialog::OnCastSpellButton()
 
 	if (m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL && m_pSelectedNPCDialog->m_bHasBreathWeapon)
 	{
-		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pSelectedNPCDialog->m_szMonsterManualName, "Monster", TRUE);
+		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pSelectedNPCDialog->m_szMonsterManualName, m_pSelectedNPCDialog->GetMonsterSFXID(), TRUE);
 	}
 
 }
@@ -4278,11 +4278,11 @@ void DMPartyDialog::OnWoundButton()
 		if (bWasAlive == TRUE && m_pSelectedNPCDialog->m_pNPC->IsAlive() == FALSE)
 		{
 			//m_pApp->PlaySoundFX("Monster Die");
-			m_pApp->PlayPCSoundFX("* Die", m_pSelectedNPCDialog->m_szMonsterName, "Monster");
+			m_pApp->PlayPCSoundFX("* Die", m_pSelectedNPCDialog->m_szMonsterName, m_pSelectedNPCDialog->GetMonsterSFXID());
 		}
 		else
 		{
-			m_pApp->PlayPCSoundFX("* Hurt", m_pSelectedNPCDialog->m_szMonsterName, "Monster");
+			m_pApp->PlayPCSoundFX("* Hurt", m_pSelectedNPCDialog->m_szMonsterName, m_pSelectedNPCDialog->GetMonsterSFXID());
 		}
 
 		m_pSelectedNPCDialog->m_szInitiativeAction = _T("DEAD");
@@ -4460,10 +4460,10 @@ void DMPartyDialog::OnAttackHitButton2()
 		{
 			m_pOpposingNPCDialog->m_szInitiativeAction = _T("attack hit !");
 			m_pInitiativeDialog->Refresh();
-			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingNPCDialog->m_szMonsterName, "Monster", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingNPCDialog->m_szMonsterName, m_pOpposingNPCDialog->GetMonsterSFXID(), FALSE);
 		}
 
-		m_pApp->PlayPCSoundFX("* Attack", m_pOpposingNPCDialog->m_szMonsterName, "Monster", FALSE);
+		m_pApp->PlayPCSoundFX("* Attack", m_pOpposingNPCDialog->m_szMonsterName, m_pOpposingNPCDialog->GetMonsterSFXID(), FALSE);
 
 		m_pApp->PlayWeaponSFX(nWeapon, 0);
 
@@ -4545,7 +4545,7 @@ void DMPartyDialog::OnAttackMissButton2()
 			m_pInitiativeDialog->Refresh();
 		}
 
-		m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingNPCDialog->m_szMonsterName, "Monster", FALSE);
+		m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingNPCDialog->m_szMonsterName, m_pOpposingNPCDialog->GetMonsterSFXID(), FALSE);
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
 	}
@@ -4673,7 +4673,7 @@ void DMPartyDialog::OnCastSpellButton2()
 
 	if (m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL && m_pOpposingNPCDialog->m_bHasBreathWeapon)
 	{
-		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pOpposingNPCDialog->m_szMonsterManualName, "Monster", TRUE);
+		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pOpposingNPCDialog->m_szMonsterManualName, m_pOpposingNPCDialog->GetMonsterSFXID(), TRUE);
 	}
 	
 }
@@ -4734,7 +4734,6 @@ void DMPartyDialog::OnWoundButton2()
 	
 	if(m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL)
 	{
-
 		bWasAlive = m_pOpposingNPCDialog->m_pNPC->IsAlive();
 		
 		int nValue = 0;
@@ -4753,7 +4752,7 @@ void DMPartyDialog::OnWoundButton2()
 		if(bWasAlive && !m_pOpposingNPCDialog->m_pNPC->IsAlive())
 		{
 			//m_pApp->PlaySoundFX("Monster Die");
-			m_pApp->PlayPCSoundFX("* Die", m_pOpposingNPCDialog->m_szMonsterName, "Monster");
+			m_pApp->PlayPCSoundFX("* Die", m_pOpposingNPCDialog->m_szMonsterName, m_pOpposingNPCDialog->GetMonsterSFXID());
 
 			m_pOpposingNPCDialog->m_szInitiativeAction = _T("DEAD");
 
@@ -4762,7 +4761,7 @@ void DMPartyDialog::OnWoundButton2()
 		}
 		else
 		{
-			m_pApp->PlayPCSoundFX("* Hurt", m_pOpposingNPCDialog->m_szMonsterName, "Monster");
+			m_pApp->PlayPCSoundFX("* Hurt", m_pOpposingNPCDialog->m_szMonsterName, m_pOpposingNPCDialog->GetMonsterSFXID());
 		}
 	}
 

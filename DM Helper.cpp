@@ -516,6 +516,7 @@ BOOL CDMHelperApp::InitInstance()
 	szTemp.Format("%sdata\\fonts\\HamletOrNot.ttf", m_szEXEPath);
 	AddFontResource(szTemp); 
 
+//	int nCharacterSize = sizeof(cDNDCharacter);
 	TRACE("SIZEOF CHARACTER = %d = %d\n", sizeof(cDNDNonPlayerCharacter), sizeof(cDNDNonPlayerCharacter) * 128);
 
 	TRACE("SIZEOF MAP CELL = %d\n", sizeof(cDNDMapCell));
@@ -5970,7 +5971,11 @@ BOOL CDMHelperApp::PlayPCSoundFX(CString szDesc, CString szName, CString szDefau
 	if (FALSE == PlaySoundFX(szDesc, bAsync, nOverrideNum))
 	{
 		szDesc.Replace(szName, szDefault);
-		return PlaySoundFX(szDesc, bAsync, nOverrideNum);
+		if (FALSE == PlaySoundFX(szDesc, bAsync, nOverrideNum))
+		{
+			szDesc.Replace("Hurt", "Die");
+			return  PlaySoundFX(szDesc, bAsync, nOverrideNum);
+		}
 	}
 
 	return TRUE;

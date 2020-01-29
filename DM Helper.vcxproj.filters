@@ -243,6 +243,18 @@
     <ClCompile Include="DMReminderSFXDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cDMSavingThrowModifierDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMModifyThiefSkillsDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMModifyAssassinSkillsDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMModifyClericSkillsDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -482,6 +494,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DMReminderSFXDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMSavingThrowModifierDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMModifyThiefSkillsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMModifyAssassinSkillsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMModifyClericSkillsDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

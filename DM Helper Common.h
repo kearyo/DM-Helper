@@ -9,7 +9,8 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10038
+#define DMH_CURRENT_VERSION 10040
+#define DMH_BUILD_NUMBER	(22493)
 
 #define USE_CANTRIPS	TRUE
 
@@ -19,7 +20,7 @@
 #define MAX_CUSTOM_CLASSES	12
 
 #define KEARY_BUILD	FALSE	
-#define GAMETABLE_BUILD FALSE
+#define GAMETABLE_BUILD TRUE
 
 #define USE_DX_SOUND	TRUE
 
@@ -250,6 +251,11 @@
 	* Must include file material_components.dat in next release !
 	* Must include file spell_material_components.dat in next release !
 	* Must include file equipment.dat in next release !
+
+- 1.0.039.22492	1/22/20
+	* Added checkbox to allow reinstall of add-ons
+	* Added level titles to character view screen
+	* Clicking on "XP:" label on character view will display experience points required to reach next level 
 
 */
 
@@ -597,6 +603,8 @@ typedef enum
 	DND_LOG_EVENT_TYPE_PARTY_RESTED,
 
 	DND_LOG_EVENT_TYPE_MISC,
+
+	DND_LOG_EVENT_TYPE_CHARACTER_FAILED_CAST_SPELL,
 
 	DND_LOG_EVENT_TYPE_LAST_EVENT_TYPE,
 
@@ -2380,7 +2388,12 @@ public:
 
 	char m_szIconPath[MAX_PATH];
 
-	int m_nReserved_1[6453];  // remember to divide by 4 dummy was 6518 before IconPath
+	int m_nSavingThrowModifiers[5];
+	int m_nThiefSkillModifiers[8];
+	int m_nAssassinSkillModifiers[10];
+	int m_nClericTurnModifiers[13];
+
+	int m_nReserved_1[6417];  // remember to divide by 4 dummy was 6518 before IconPath
 
 	cDNDCharacter()
 	{
@@ -2519,7 +2532,12 @@ public:
 
 		memset(m_szIconPath, 0, MAX_PATH *sizeof(char));
 
-		memset(m_nReserved_1,0,6453*sizeof(int));
+		memset(m_nSavingThrowModifiers, 0, 5 * sizeof(int));
+		memset(m_nThiefSkillModifiers, 0, 8 * sizeof(int));
+		memset(m_nAssassinSkillModifiers, 0, 10 * sizeof(int));
+		memset(m_nClericTurnModifiers, 0, 13 * sizeof(int));
+		
+		memset(m_nReserved_1,0,6417*sizeof(int));
 
 	}
 
@@ -2558,7 +2576,7 @@ public:
 	DND_SPELL_MATERIAL_RETURN_CODES CasterHasSpellMaterialComponents(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bGetInfo, std::vector<POBJECTINDEXER> *pSpellMaterialComponentsRequiredVector);
 	BOOL BuySpellComponents(PSPELL pSpell, int nMultiples, BOOL bNoCost, std::vector<POBJECTINDEXER> *pSpellMaterialComponentsRequiredVector);
 	BOOL BuyAllSpellComponents(BOOL bNoCost);
-	BOOL CastSpell(cDNDSpellSlot *pSpellSlot);
+	BOOL CastSpell(cDNDSpellSlot *pSpellSlot, BOOL bFailedToCast = FALSE);
 	BOOL EatRations();
 
 	BOOL IsAlive();
@@ -2957,6 +2975,7 @@ void AddStatModifiersByRace(cDNDCharacter *pCharacter, int *nStatBonus);
 BOOL GrantCharacterEarnedExperience(cDNDCharacter *pCharacter);
 int GetExperienceLevelByClass(cDNDCharacter *pCharacter, int nClass);
 LONG GetExperiencePointsForLevelByClass(DND_CHARACTER_CLASSES nClass, int nLevel);
+char *GetClassLevelTitle(DND_CHARACTER_CLASSES nClass, int nLevel);
 int CalculateLevelLimits(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES nClass);
 
 int CalculateSTRAdjustments(cDNDCharacter *pCharacter, int *pnDamAdj, int *pnWeightAllow, int *pnOpenDoors, int *pnBendBars);

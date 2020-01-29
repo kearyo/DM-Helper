@@ -171,8 +171,12 @@
 #define IDD_RANDOM_NAME_GENERATOR_DIALOG 292
 #define IDD_STRIKEORTHROW_DIALOG        293
 #define IDD_SPELL_COMPONENTS_DIALOG     294
-#define IDD_DIALOG5                     295
 #define IDD_DM_REMINDER_SFX_DIALOG      295
+#define IDD_SAVING_THROW_MOD_DIALOG     296
+#define IDD_THIEF_SKILL_MODIFIER_DIALOG 297
+#define IDD_DIALOG5                     298
+#define IDD_ASSASSIN_SKILL_MODIFIER_DIALOG 298
+#define IDD_CLERIC_SKILL_MODIFIER_DIALOG 299
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -606,6 +610,7 @@
 #define IDC_ITEM_DESC                   1142
 #define IDC_DESC_1                      1143
 #define IDC_COPY_MEMBER_BUTTON          1143
+#define IDC_TOOL_TIP                    1143
 #define IDC_DESC_2                      1144
 #define IDC_CREATE_NPC_BUTTON           1144
 #define IDC_DESC_3                      1145
@@ -951,7 +956,9 @@
 #define IDC_TYPE_RADIO3                 1409
 #define IDC_WEAPON_SWAP_BUTTON          1409
 #define IDC_TYPE_RADIO4                 1410
+#define IDC_SKIP_BUTTON                 1410
 #define IDC_TYPE_RADIO5                 1411
+#define IDC_MOVE_BUTTON                 1411
 #define IDC_TYPE_RADIO6                 1412
 #define IDC_TYPE_RADIO7                 1413
 #define IDC_TYPE_RADIO8                 1414
@@ -997,6 +1004,7 @@
 #define IDC_PREREQ_ATTRIB_CHECK_0       1440
 #define IDC_X1_CHECK                    1440
 #define IDC_MALE_CHECK                  1440
+#define IDC_SHOW_INSTALLED_CHECK        1440
 #define IDC_PP_BUTTON                   1441
 #define IDC_GRID_CHECK                  1441
 #define IDC_EMPATH_CHECK                1441
@@ -1307,13 +1315,26 @@
 #define IDC_X_STATIC_1                  1662
 #define IDC_SPELL_DESC                  1662
 #define IDC_X_STATIC_2                  1663
+#define IDC_SAVING_THROW_BOX            1663
 #define IDC_X_STATIC_3                  1664
+#define IDC_SAVING_THROWS_MOD_BUTTON    1664
 #define IDC_X_STATIC_4                  1665
+#define IDC_LANGUAGES_MOD_BUTTON        1665
 #define IDC_X_STATIC_5                  1666
+#define IDC_THIEF_SKILLS_MOD_BUTTON     1666
 #define IDC_X_STATIC_6                  1667
+#define IDC_ASSASSIN_SKILLS_MOD_BUTTON  1667
 #define IDC_X_STATIC_7                  1668
+#define IDC_CLERIC_TURN_MOD_BUTTON      1668
 #define IDC_X_STATIC_8                  1669
+#define IDC_XP1_LABEL                   1669
 #define IDC_X_STATIC_9                  1670
+#define IDC_XP2_LABEL                   1670
+#define IDC_XP3_LABEL                   1671
+#define ID_FAIL_CAST                    1672
+#define IDC_LEVEL_TITLE_1               1673
+#define IDC_LEVEL_TITLE_2               1674
+#define IDC_LEVEL_TITLE_3               1675
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1359,9 +1380,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        296
+#define _APS_NEXT_RESOURCE_VALUE        300
 #define _APS_NEXT_COMMAND_VALUE         32811
-#define _APS_NEXT_CONTROL_VALUE         1663
+#define _APS_NEXT_CONTROL_VALUE         1674
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

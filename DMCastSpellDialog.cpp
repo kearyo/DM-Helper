@@ -61,6 +61,7 @@ BEGIN_MESSAGE_MAP(DMCastSpellDialog, CDialog)
 	//}}AFX_MSG_MAP
 	ON_LBN_DBLCLK(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnDblclkSpellList)
 	ON_LBN_SELCHANGE(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnSelchangeSpellList)
+	ON_BN_CLICKED(ID_FAIL_CAST, &DMCastSpellDialog::OnBnClickedFailCast)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -406,6 +407,62 @@ void DMCastSpellDialog::OnOK()
 	}
 }
 
+void DMCastSpellDialog::OnBnClickedFailCast()
+{
+	BOOL bCloseWindow = TRUE;
+
+	UpdateData(TRUE);
+
+	int nCursor = m_cSpellList.GetCurSel();
+
+	if (nCursor >= 0)
+	{
+		PSPELLSLOT pSpellSlot = (PSPELLSLOT)m_cSpellList.GetItemData(nCursor);
+		if (pSpellSlot != NULL)
+		{
+			if (m_pPartyDialog != NULL && m_pPartyDialog->m_pInitiativeDialog != NULL)
+			{
+				m_pCharacter->CastSpell(pSpellSlot);
+
+				CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+				if (pSpellSlot->m_bCastFromDevice == FALSE && pSpellSlot->m_pSpell->HasVerbalComponent())
+				{
+					pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE, pSpellSlot->m_pSpell->m_nSpellIdentifier);
+				}
+				m_pApp->PlaySoundFX("SPELL FAILURE");
+
+				m_pBaseCharViewDialog->m_szInitiativeAction.Format("failed to cast : %s", pSpellSlot->m_pSpell->m_szSpellName);
+
+				DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
+				if (pPartyDlg != NULL)
+				{
+					pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_FAILED_CAST_SPELL, m_pCharacter->m_szCharacterName, pPartyDlg->m_pParty->m_dwPartyID, 0L, pSpellSlot->m_pSpell->m_szSpellName);
+				}
+
+				m_pBaseCharViewDialog->m_nCastSpellCursorPos = -1;
+
+				if (m_pPartyDialog->m_pInitiativeDialog != NULL)
+				{
+					m_pPartyDialog->m_pInitiativeDialog->Refresh();
+				}
+
+				if (m_pBaseCharViewDialog->m_pInventoryDialog != NULL)
+				{
+					m_pBaseCharViewDialog->m_pInventoryDialog->RefreshAll();
+				}
+			}
+		}
+	}
+
+	if (bCloseWindow)
+	{
+		CDialog::OnOK();
+	}
+}
+
+
+
 void DMCastSpellDialog::OnSpellInfo() 
 {
 	// TODO: Add your control notification handler code here
@@ -524,3 +581,5 @@ void DMCastSpellDialog::OnLbnSelchangeSpellList()
 
 	UpdateData(FALSE);
 }
+
+

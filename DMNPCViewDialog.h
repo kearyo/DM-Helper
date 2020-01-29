@@ -58,6 +58,8 @@ public:
 	void FireAmmo();
 	void SwapWeapon();
 
+	CString GetMonsterSFXID();
+
 
 // Dialog Data
 	enum { IDD = IDD_BASE_NPC_DIALOG };

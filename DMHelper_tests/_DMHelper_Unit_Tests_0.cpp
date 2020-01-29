@@ -41,6 +41,10 @@ namespace DMHelper_tests_0
 			CDMHelperApp *pApp = (CDMHelperApp *)malloc(sizeof(CDMHelperApp));
 
 			CDMHelperDlg* pMainDialog = new CDMHelperDlg();
+
+			int nCharacterSize = sizeof(cDNDCharacter);
+			Assert::IsTrue(nCharacterSize == 790396);
+
 			cDNDCharacter *pCharacter = new cDNDCharacter();
 
 			Assert::AreEqual(pCharacter->m_dwCharacterID, (DWORD)0);
@@ -68,6 +72,9 @@ namespace DMHelper_tests_0
 		{
 			CDMHelperApp *pApp = (CDMHelperApp *)malloc(sizeof(CDMHelperApp));
 			memset(pApp, 0, sizeof(CDMHelperApp));
+
+			int nCharacterSize = sizeof(cDNDNonPlayerCharacter);
+			Assert::IsTrue(nCharacterSize == 794504);
 
 			cDNDNonPlayerCharacter *pNPC = new cDNDNonPlayerCharacter();
 			Assert::AreEqual(pNPC->m_dwCharacterID, (DWORD)0);
@@ -140,10 +147,12 @@ namespace DMHelper_tests_0
 
 			pPartyDialog->m_pPartyLog->DeleteEvent(1024);
 
-			// this is 1971 because a bunch of DND_LOG_EVENT_TYPE_UNDEFINED are deleted by ValidateEvents
-			Assert::AreEqual(pPartyDialog->m_pPartyLog->m_LogHeader.m_nEvents, 1971);
+			// this is 1973 because a bunch of DND_LOG_EVENT_TYPE_UNDEFINED are deleted by ValidateEvents
+			Assert::AreEqual(1973, pPartyDialog->m_pPartyLog->m_LogHeader.m_nEvents);
 
-			BOOL bSuccess = (pPartyDialog->m_pPartyLog->m_Event[1024].m_EventType == DND_LOG_EVENT_TYPE_CHARACTER_LOST_LEVEL);
+			Assert::AreEqual((int)pPartyDialog->m_pPartyLog->m_Event[1024].m_EventType, (int)DND_LOG_EVENT_TYPE_CHARACTER_FAILED_CAST_SPELL);
+
+			BOOL bSuccess = (pPartyDialog->m_pPartyLog->m_Event[1024].m_EventType == DND_LOG_EVENT_TYPE_CHARACTER_FAILED_CAST_SPELL);
 
 			Assert::IsTrue(bSuccess);
 		

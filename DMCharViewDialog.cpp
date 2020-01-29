@@ -18,6 +18,10 @@
 #include "cDMMapViewDialog.h"
 #include "cDMStrikeOrThrowDialog.h"
 #include "cDMMaterialComponentsDialog.h"
+#include "cDMSavingThrowModifierDialog.h"
+#include "cDMModifyThiefSkillsDialog.h"
+#include "cDMModifyAssassinSkillsDialog.h"
+#include "cDMModifyClericSkillsDialog.h"
 
 
 #ifdef _DEBUG
@@ -215,6 +219,9 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 	, m_szConcealedMove(_T(""))
 	, m_szClimbingMove(_T(""))
 	, m_szSpecialMove(_T(""))
+	, m_szLevelTitle1(_T(""))
+	, m_szLevelTitle2(_T(""))
+	, m_szLevelTitle3(_T(""))
 {
 	//{{AFX_DATA_INIT(CDMCharViewDialog)
 	m_szCharacterName = _T("");
@@ -320,7 +327,9 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 
 	m_szSaveFileName = _T("");
 	m_szLoadFileName = _T("");
+	m_szWeaponDesc = _T("");  //for initiative view
 	m_szDamageDesc = _T("");  //for party view
+	m_szMoveDesc = _T("");
 
 	m_nPage = 0;
 	m_nLastPage = 0;
@@ -491,6 +500,13 @@ void CDMCharViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_CLIMBING_MOVE_EDIT, m_szClimbingMove);
 	DDX_Text(pDX, IDC_SPECIAL_MOVE_EDIT, m_szSpecialMove);
 	DDX_Control(pDX, IDC_LIGHT_SOURCE_COMBO, m_cLightSourceCombo);
+	DDX_Control(pDX, IDC_TOOL_TIP, m_cToolTip);
+	DDX_Text(pDX, IDC_LEVEL_TITLE_1, m_szLevelTitle1);
+	DDX_Control(pDX, IDC_LEVEL_TITLE_1, m_cLevelTitle1);
+	DDX_Control(pDX, IDC_LEVEL_TITLE_2, m_cLevelTitle2);
+	DDX_Control(pDX, IDC_LEVEL_TITLE_3, m_cLevelTitle3);
+	DDX_Text(pDX, IDC_LEVEL_TITLE_2, m_szLevelTitle2);
+	DDX_Text(pDX, IDC_LEVEL_TITLE_3, m_szLevelTitle3);
 }
 
 
@@ -579,6 +595,18 @@ BEGIN_MESSAGE_MAP(CDMCharViewDialog, CDialog)
 	ON_EN_CHANGE(IDC_CLIMBING_MOVE_EDIT, &CDMCharViewDialog::OnEnChangeClimbingMoveEdit)
 	ON_EN_CHANGE(IDC_SPECIAL_MOVE_EDIT, &CDMCharViewDialog::OnEnChangeSpecialMoveEdit)
 	ON_CBN_SELCHANGE(IDC_LIGHT_SOURCE_COMBO, &CDMCharViewDialog::OnCbnSelchangeLightSourceCombo)
+	ON_BN_CLICKED(IDC_SAVING_THROW_BOX, &CDMCharViewDialog::OnBnClickedSavingThrowBox)
+	ON_BN_DOUBLECLICKED(IDC_SAVING_THROW_BOX, &CDMCharViewDialog::OnBnDoubleclickedSavingThrowBox)
+	ON_BN_CLICKED(IDC_SAVING_THROWS_MOD_BUTTON, &CDMCharViewDialog::OnBnClickedSavingThrowsModButton)
+	ON_BN_CLICKED(IDC_LANGUAGES_MOD_BUTTON, &CDMCharViewDialog::OnBnClickedLanguagesModButton)
+	ON_BN_CLICKED(IDC_THIEF_SKILLS_MOD_BUTTON, &CDMCharViewDialog::OnBnClickedThiefSkillsModButton)
+	ON_BN_CLICKED(IDC_ASSASSIN_SKILLS_MOD_BUTTON, &CDMCharViewDialog::OnBnClickedAssassinSkillsModButton)
+	ON_BN_CLICKED(IDC_CLERIC_TURN_MOD_BUTTON, &CDMCharViewDialog::OnBnClickedClericTurnModButton)
+	ON_BN_CLICKED(IDC_TOOL_TIP, &CDMCharViewDialog::OnBnClickedToolTip)
+	ON_WM_MOUSEMOVE()
+	ON_STN_CLICKED(IDC_XP1_LABEL, &CDMCharViewDialog::OnStnClickedXp1Label)
+	ON_STN_CLICKED(IDC_XP2_LABEL, &CDMCharViewDialog::OnStnClickedXp2Label)
+	ON_STN_CLICKED(IDC_XP3_LABEL, &CDMCharViewDialog::OnStnClickedXp3Label)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -597,6 +625,18 @@ BOOL CDMCharViewDialog::OnInitDialog()
 
 	//m_SelColor = GetSysColor(COLOR_HIGHLIGHTTEXT);
     //m_Color = GetSysColor(COLOR_WINDOWTEXT);
+
+	CFont CourierFont;
+
+	CourierFont.CreatePointFont(90, "Arial");
+	LOGFONT lf; CourierFont.GetLogFont(&lf);
+	lf.lfWeight = FW_BOLD;
+	lf.lfItalic = (BYTE)1;
+	m_ClassTitleFont.CreateFontIndirect(&lf);
+
+	m_cLevelTitle1.SetFont(&m_ClassTitleFont);
+	m_cLevelTitle2.SetFont(&m_ClassTitleFont);
+	m_cLevelTitle3.SetFont(&m_ClassTitleFont);
 
 	SetWindowText("New Character");
 
@@ -2208,6 +2248,7 @@ void CDMCharViewDialog::Refresh()
 	}
 
 	m_szMove.Format("%d", nMove);
+	m_szMoveDesc = m_szMove;
 
 	m_nCharacterMovementRate = nMove;
 
@@ -2705,6 +2746,29 @@ void CDMCharViewDialog::ProcessCharStats()
 		}
 	}
 
+	if (m_hWnd != NULL) // unit test support
+	{
+		m_cLevelTitle2.ShowWindow(SW_HIDE);
+		m_cLevelTitle3.ShowWindow(SW_HIDE);
+	}
+
+	m_szLevelTitle1 = GetClassLevelTitle(m_pCharacter->m_Class[0], m_pCharacter->m_nLevel[0]);
+	m_szLevelTitle2 = GetClassLevelTitle(m_pCharacter->m_Class[1], m_pCharacter->m_nLevel[1]);
+	m_szLevelTitle3 = GetClassLevelTitle(m_pCharacter->m_Class[2], m_pCharacter->m_nLevel[2]);
+
+	if (m_hWnd != NULL) // unit test support
+	{
+		if (m_szLevelTitle2 != _T(""))
+		{
+			m_cLevelTitle2.ShowWindow(SW_SHOW);
+		}
+		if (m_szLevelTitle3 != _T(""))
+		{
+			m_cLevelTitle3.ShowWindow(SW_SHOW);
+		}
+	}
+	
+
 	//armor class calcs
 
 	//ring ring
@@ -2816,7 +2880,7 @@ void CDMCharViewDialog::ProcessCharStats()
 
 	}
 
-	int nTurnUndeadControls[15] = 
+	int nTurnUndeadControls[16] = 
 	{
 		IDC_TURN_STATIC_1,
 		IDC_TURN_STATIC_2,
@@ -2832,12 +2896,14 @@ void CDMCharViewDialog::ProcessCharStats()
 		IDC_TURN_UNDEAD_EDIT_10,
 		IDC_TURN_UNDEAD_EDIT_11,
 		IDC_TURN_UNDEAD_EDIT_12,
-		IDC_TURN_UNDEAD_EDIT_13
+		IDC_TURN_UNDEAD_EDIT_13,
+
+		IDC_CLERIC_TURN_MOD_BUTTON
 	};
 
 	if (m_hWnd != NULL)
 	{
-		for (i = 0; i < 15; ++i)
+		for (i = 0; i < 16; ++i)
 		{
 			(GetDlgItem(nTurnUndeadControls[i]))->ShowWindow(nShowTurnUndead);
 		}
@@ -2873,7 +2939,7 @@ void CDMCharViewDialog::ProcessCharStats()
 		m_szThiefSkill_8 = _T("-");
 	}
 
-	int nThiefControls[17] = 
+	int nThiefControls[18] = 
 	{
 		IDC_THIEF_STATIC_0,
 		IDC_THIEF_STATIC_1,
@@ -2892,12 +2958,14 @@ void CDMCharViewDialog::ProcessCharStats()
 		IDC_THIEF_SKILL_EDIT_5,
 		IDC_THIEF_SKILL_EDIT_6,
 		IDC_THIEF_SKILL_EDIT_7,
-		IDC_THIEF_SKILL_EDIT_8
+		IDC_THIEF_SKILL_EDIT_8,
+
+		IDC_THIEF_SKILLS_MOD_BUTTON
 	};
 
 	if (m_hWnd != NULL)
 	{
-		for (i = 0; i < 17; ++i)
+		for (i = 0; i < 18; ++i)
 		{
 			(GetDlgItem(nThiefControls[i]))->ShowWindow(nShowThiefStats);
 		}
@@ -2938,7 +3006,7 @@ void CDMCharViewDialog::ProcessCharStats()
 		m_szAssEdit10 = _T("-");
 	}
 
-	int nAssControls[21] = 
+	int nAssControls[22] = 
 	{
 		IDC_ASS_STATIC_0,
 		IDC_ASS_STATIC_1,
@@ -2961,12 +3029,14 @@ void CDMCharViewDialog::ProcessCharStats()
 		IDC_ASS_SKILL_EDIT_7,
 		IDC_ASS_SKILL_EDIT_8,
 		IDC_ASS_SKILL_EDIT_9,
-		IDC_ASS_SKILL_EDIT_10
+		IDC_ASS_SKILL_EDIT_10,
+
+		IDC_ASSASSIN_SKILLS_MOD_BUTTON
 	};
 
 	if (m_hWnd != NULL) // unit test support
 	{
-		for (i = 0; i < 21; ++i)
+		for (i = 0; i < 22; ++i)
 		{
 			(GetDlgItem(nAssControls[i]))->ShowWindow(nShowAssassinStats);
 		}
@@ -3091,6 +3161,12 @@ void CDMCharViewDialog::ProcessCharStats()
 				m_szDamageDesc = szTemp;
 				m_szDamageStat = szTemp;
 				m_szDamageStat.Replace(" ", "");
+
+				m_szWeaponDesc = m_pCharacter->m_SelectedWeapons[j].m_szExtendedName;
+				if (m_szWeaponDesc == "")
+				{
+					m_szWeaponDesc = m_pCharacter->m_SelectedWeapons[j].m_szType;
+				}
 			}
 
 			m_cWeaponChartList.SetItemText(nWeaponCount, 23, szTemp);
@@ -5508,3 +5584,133 @@ void CDMCharViewDialog::OnCbnSelchangeLightSourceCombo()
 	}
 
 }
+
+
+void CDMCharViewDialog::OnBnClickedSavingThrowBox()
+{
+	TRACE("WOOT");
+}
+
+
+void CDMCharViewDialog::OnBnDoubleclickedSavingThrowBox()
+{
+	TRACE("WOOT");
+}
+
+
+void CDMCharViewDialog::OnBnClickedSavingThrowsModButton()
+{
+	cDMSavingThrowModifierDialog *pDlg = new cDMSavingThrowModifierDialog(m_pCharacter->m_nSavingThrowModifiers);
+	pDlg->DoModal();
+	delete pDlg;
+
+	ProcessCharStats();
+
+	m_pCharacter->MarkChanged();
+}
+
+
+void CDMCharViewDialog::OnBnClickedLanguagesModButton()
+{
+	OnLbnDblclkLanguagesListBox();
+}
+
+
+void CDMCharViewDialog::OnBnClickedThiefSkillsModButton()
+{
+	cDMModifyThiefSkillsDialog *pDlg = new cDMModifyThiefSkillsDialog(m_pCharacter->m_nThiefSkillModifiers);
+	pDlg->DoModal();
+	delete pDlg;
+
+	ProcessCharStats();
+
+	m_pCharacter->MarkChanged();
+}
+
+
+void CDMCharViewDialog::OnBnClickedAssassinSkillsModButton()
+{
+	cDMModifyAssassinSkillsDialog *pDlg = new cDMModifyAssassinSkillsDialog(m_pCharacter->m_nAssassinSkillModifiers);
+	pDlg->DoModal();
+	delete pDlg;
+
+	ProcessCharStats();
+
+	m_pCharacter->MarkChanged();
+}
+
+
+void CDMCharViewDialog::OnBnClickedClericTurnModButton()
+{
+	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(m_pCharacter->m_nClericTurnModifiers);
+	pDlg->DoModal();
+	delete pDlg;
+
+	ProcessCharStats();
+
+	m_pCharacter->MarkChanged();
+}
+
+void CDMCharViewDialog::PopUpXPToolTip(int nClass)
+{
+
+	if (m_pCharacter->m_Class[nClass] == DND_CHARACTER_CLASS_UNDEF)
+	{
+		return;
+	}
+
+	LONG lPointsForNextLevel = GetExperiencePointsForLevelByClass(m_pCharacter->m_Class[nClass], m_pCharacter->m_nLevel[nClass] + 1);
+
+	CString szLabel;
+	szLabel.Format("%ld XP to reach next level", lPointsForNextLevel - m_pCharacter->m_lExperience[nClass]);
+	m_cToolTip.SetWindowText(szLabel);
+
+	POINT p;
+	if (GetCursorPos(&p))
+	{
+		if (::ScreenToClient(m_hWnd, &p))
+		{
+			m_cToolTip.ShowWindow(SW_SHOW);
+
+			RECT rRect;
+			m_cToolTip.GetClientRect(&rRect);
+
+			rRect.left = p.x;
+			rRect.top = p.y;
+			rRect.right = rRect.left + rRect.right;
+			rRect.bottom = rRect.top + rRect.bottom;
+
+			m_cToolTip.MoveWindow(&rRect, TRUE);
+		}
+	}
+}
+
+void CDMCharViewDialog::OnStnClickedXp1Label()
+{
+	PopUpXPToolTip(0);
+}
+
+void CDMCharViewDialog::OnStnClickedXp2Label()
+{
+	PopUpXPToolTip(1);
+}
+
+void CDMCharViewDialog::OnStnClickedXp3Label()
+{
+	PopUpXPToolTip(2);
+}
+
+void CDMCharViewDialog::OnBnClickedToolTip()
+{
+	m_cToolTip.ShowWindow(SW_HIDE);
+}
+
+void CDMCharViewDialog::OnMouseMove(UINT nFlags, CPoint point)
+{
+	m_cToolTip.ShowWindow(SW_HIDE);
+
+	CDMBaseCharViewDialog::OnMouseMove(nFlags, point);
+}
+
+
+

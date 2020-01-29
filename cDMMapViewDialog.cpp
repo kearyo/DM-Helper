@@ -49,7 +49,12 @@ static char THIS_FILE[] = __FILE__;
 //reference
 //http://msdn.microsoft.com/en-us/library/ms536317(v=vs.85).aspx
 
+/*
+imagemagick command to chunk up Anna's big maps:
 
+convert Flanaess_576.jpg -crop 1024x1024 .\Flanaess_576\Flanaess-%d.png
+
+*/
 
 #define MAX_RAND_ROOMS	200
 #define MAX_RAND_OCCUPIED_ROOMS	30
@@ -836,9 +841,9 @@ void cDMMapViewDialog::OnPaint()
 			szFaker.MakeUpper();
 			strcpy(pCell->m_szBitmapPath, szFaker.GetBuffer(0));
 #endif
-#if 0	
+#if 0
 			CString szFaker;
-			szFaker.Format("<$DMAPATH>\\DATA\\maps\\bitmaps\\flanaess_598\\flanaess_598-%d.jpg", xx + yy * m_pDNDMap->m_nColumns);
+			szFaker.Format("<$DMAPATH>\\DATA\\maps\\bitmaps\\flanaess_576\\flanaess-%d.png", xx + yy * m_pDNDMap->m_nColumns);
 			szFaker.MakeUpper();
 			strcpy(pCell->m_szBitmapPath, szFaker.GetBuffer(0));
 #endif

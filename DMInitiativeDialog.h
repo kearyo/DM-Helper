@@ -79,4 +79,6 @@ public:
 	CString m_szAttacksText;
 	afx_msg void OnBnClickedWeaponSwapButton();
 	CButton m_cSpellButton;
+	afx_msg void OnBnClickedSkipButton();
+	afx_msg void OnBnClickedMoveButton();
 };

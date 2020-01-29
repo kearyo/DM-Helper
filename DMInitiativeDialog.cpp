@@ -80,6 +80,8 @@ BEGIN_MESSAGE_MAP(CDMInitiativeDialog, CDialog)
 	ON_BN_CLICKED(IDC_MISS_BUTTON, &CDMInitiativeDialog::OnBnClickedMissButton)
 	ON_BN_CLICKED(IDC_SPELL_BUTTON, &CDMInitiativeDialog::OnBnClickedSpellButton)
 	ON_BN_CLICKED(IDC_WEAPON_SWAP_BUTTON, &CDMInitiativeDialog::OnBnClickedWeaponSwapButton)
+	ON_BN_CLICKED(IDC_SKIP_BUTTON, &CDMInitiativeDialog::OnBnClickedSkipButton)
+	ON_BN_CLICKED(IDC_MOVE_BUTTON, &CDMInitiativeDialog::OnBnClickedMoveButton)
 END_MESSAGE_MAP()
 
 
@@ -99,6 +101,8 @@ BOOL CDMInitiativeDialog::OnInitDialog()
 	m_cCharacterList.InsertColumn( nCount++, "Action", LVCFMT_LEFT, 170, -1 );
 	m_cCharacterList.InsertColumn( nCount++, "To Hit", LVCFMT_LEFT, 60, -1);
 	m_cCharacterList.InsertColumn( nCount++, "Damage", LVCFMT_LEFT, 140, -1);
+	m_cCharacterList.InsertColumn(nCount++, "Weapon", LVCFMT_LEFT, 140, -1);
+	m_cCharacterList.InsertColumn(nCount++, "Move", LVCFMT_LEFT, 60, -1);
 
 	m_pParentPartyDialog->m_pInitiativeDialog = this;
 
@@ -314,6 +318,10 @@ void CDMInitiativeDialog::Refresh()
 
 				m_cCharacterList.SetItemText(nRow, nCol++, pCharDlg->m_szDamageDesc);
 
+				m_cCharacterList.SetItemText(nRow, nCol++, pCharDlg->m_szWeaponDesc);
+
+				m_cCharacterList.SetItemText(nRow, nCol++, pCharDlg->m_szMoveDesc);
+
 				
 
 				m_cCharacterList.SetItemData(nRow, (DWORD)pCharDlg);
@@ -456,6 +464,10 @@ void CDMInitiativeDialog::Refresh()
 				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szToHitDesc);
 				 
 				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szDamageDesc);
+
+				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szWeaponDesc);
+
+				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szMoveDesc);
 
 				m_cCharacterList.SetItemData(nRow, (DWORD)pNPCDlg);
 			}
@@ -846,6 +858,15 @@ void CDMInitiativeDialog::OnLvnOdstatechangedCharacterList(NMHDR *pNMHDR, LRESUL
 void CDMInitiativeDialog::OnLvnItemchangedCharacterList(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+
+	/*
+	BOOL bSelectedNow = (pNMLV->uNewState  & LVIS_SELECTED);
+	BOOL bSelectedBefore = (pNMLV->uOldState  & LVIS_SELECTED);
+	if (!bSelectedNow && bSelectedBefore)
+	{
+		return;
+	}
+	*/
 	
 	UpdateData(FALSE);
 
@@ -859,6 +880,7 @@ void CDMInitiativeDialog::OnLvnItemchangedCharacterList(NMHDR *pNMHDR, LRESULT *
 	CDMBaseCharViewDialog *pDlg = NULL;
 	CDMBaseCharViewDialog *pTargetDlg = NULL;
 
+	// HERE KEARY
 	if(m_nOldCursor != nCursor)
 	{
 		if(nCursor > -1)
@@ -881,36 +903,44 @@ void CDMInitiativeDialog::OnLvnItemchangedCharacterList(NMHDR *pNMHDR, LRESULT *
 		}
 	}
 
-	if (nCursor != -1 && nOtherSelected != -1)
+	if (nCursor != -1)
 	{
 		pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
 		SetAttackData(pDlg);
-		pTargetDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nOtherSelected);
 
-		if (pDlg != NULL && pTargetDlg != NULL)
+		if (nOtherSelected != -1)
 		{
-			pDlg->m_pTargetBaseDlg = pTargetDlg;
+			pTargetDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nOtherSelected);
 
-			m_pParentPartyDialog->FindPartyListSelection(pDlg);
-			m_pParentPartyDialog->SetSelectedTarget(pDlg);
+			if (pDlg != NULL && pTargetDlg != NULL)
+			{
+				pDlg->m_pTargetBaseDlg = pTargetDlg;
 
-			pDlg->m_szInitiativeAction.Format("attacking %s", pTargetDlg->m_szBaseCharName);
+				m_pParentPartyDialog->FindPartyListSelection(pDlg);
+				m_pParentPartyDialog->SetSelectedTarget(pDlg);
 
-			m_pParentPartyDialog->Refresh();
+				pDlg->m_szInitiativeAction.Format("attacking %s", pTargetDlg->m_szBaseCharName);
 
-			Refresh();
+				m_pParentPartyDialog->Refresh();
+
+				Refresh();
+			}
+			//#ifdef _DEBUG
+			//m_szDebugText.Format("OTHER SEL = %d (%d) %d", nFirstSelected, nCursor, m_nOldCursor);
+			//UpdateData(FALSE);
+			//#endif
+
+			ClearSelectedListCtrlItems(&m_cCharacterList);
+			SetSelectedListCtrlItem(&m_cCharacterList, nCursor);
 		}
-		//#ifdef _DEBUG
-		//m_szDebugText.Format("OTHER SEL = %d (%d) %d", nFirstSelected, nCursor, m_nOldCursor);
-		//UpdateData(FALSE);
-		//#endif
-
-		ClearSelectedListCtrlItems(&m_cCharacterList);
-		SetSelectedListCtrlItem(&m_cCharacterList, nCursor);
+		else
+		{
+			//pDlg->m_szInitiativeAction = " ????? ";
+		}
 	}
 
 	#ifdef _DEBUG
-	m_szDebugText.Format("SEL = %d (%d) %d", nCursor, nOtherSelected, nVeryOldCursor);
+	m_szDebugText.Format("SEL = %d (nOther = %d) %d", nCursor, nOtherSelected, nVeryOldCursor);
 	UpdateData(FALSE);
 	#endif
 
@@ -982,7 +1012,10 @@ void CDMInitiativeDialog::OnBnClickedDownListButton()
 		if(pDlg != NULL)
 		{
 			m_pParentPartyDialog->FindPartyListSelection(pDlg);
-			m_pParentPartyDialog->SetSelectedTarget(pDlg);
+			if(m_pParentPartyDialog->SetSelectedTarget(pDlg))
+			{
+				TRACE("OOPS");
+			}
 		}
 
 		m_nOldCursor = nCursor;
@@ -1215,12 +1248,61 @@ void CDMInitiativeDialog::OnBnClickedMissButton()
 	}
 }
 
+void CDMInitiativeDialog::OnBnClickedMoveButton()
+{
+	if (FALSE == IsSelectedCharacterAlive())
+	{
+		NextSegment();
+		return;
+	}
+
+	int nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+	if (nCursor > -1)
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+
+		nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+		if (nCursor > -1)
+		{
+			pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+
+			int nMovement = 0;
+			switch (pDlg->m_CharViewType)
+			{
+				case DND_CHAR_VIEW_TYPE_PC:		nMovement = ((CDMCharViewDialog*)pDlg)->m_nCharacterMovementRate; break;
+				case DND_CHAR_VIEW_TYPE_NPC:	nMovement = ((cDMBaseNPCViewDialog*)pDlg)->m_nCharacterMovementRate; break;
+			}
+
+			pDlg->m_nInitiativeRoll = min(pDlg->m_nInitiativeRoll + 1, 9);
+			pDlg->m_szInitiativeAction.Format("moved %d feet", nMovement);
+
+			ClearSelectedListCtrlItems(&m_cCharacterList);
+			NextSegment();
+			Refresh();
+			//OnBnClickedUpListButton();
+			SetSelectedListCtrlItem(&m_cCharacterList, nCursor);
+		}
+	}
+
+	return;
+}
+
+void CDMInitiativeDialog::OnBnClickedSkipButton()
+{
+	NextSegment();
+}
+
+
 void CDMInitiativeDialog::OnBnClickedWeaponSwapButton()
 {
 	m_pParentPartyDialog->ClickWeaponSwapButton(IsSelectedCharacterInOpponentParty());
 
 	CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog*)m_cCharacterList.GetItemData(m_nOldCursor);
 	SetAttackData(pDlg);
+
+	pDlg->m_nInitiativeRoll = min(pDlg->m_nInitiativeRoll + 1, 9);
 
 	Refresh();
 }
@@ -1273,5 +1355,6 @@ void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 
 	m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
 }
+
 
 
