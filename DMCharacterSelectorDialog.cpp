@@ -20,8 +20,9 @@ static char THIS_FILE[] = __FILE__;
 // DMCharacterSelectorDialog dialog
 
 
-DMCharacterSelectorDialog::DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DND_SELECTOR_TYPES _SelectorType, CWnd* pParent /*=NULL*/)
+DMCharacterSelectorDialog::DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DND_SELECTOR_TYPES _SelectorType, DND_CHARACTER_CLASSES _SelectorClass, DWORD dwExcludeID, CWnd* pParent /*=NULL*/)
 	: CDialog(DMCharacterSelectorDialog::IDD, pParent)
+	, m_szComment(_T("* Note: New characters must be saved before they will appear in this list !"))
 {
 	//{{AFX_DATA_INIT(DMCharacterSelectorDialog)
 		// NOTE: the ClassWizard will add member initialization here
@@ -33,6 +34,10 @@ DMCharacterSelectorDialog::DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD
 
 	m_SelectorType = _SelectorType;
 
+	m_SelectorClass = _SelectorClass;
+
+	m_dwExcludeID = dwExcludeID;
+
 	m_pdwReturnedID = pdwReturnedID;
 }
 
@@ -43,6 +48,7 @@ void DMCharacterSelectorDialog::DoDataExchange(CDataExchange* pDX)
 	//{{AFX_DATA_MAP(DMCharacterSelectorDialog)
 	DDX_Control(pDX, IDC_CHARACTER_LIST, m_cCharacterList);
 	//}}AFX_DATA_MAP
+	DDX_Text(pDX, IDC_COMMENT, m_szComment);
 }
 
 
@@ -85,11 +91,20 @@ BOOL DMCharacterSelectorDialog::OnInitDialog()
 	int nRow = 0;
 	WORD wID;
 
+	DND_CHARACTER_CLASSES _SelectorClass = m_SelectorClass;
+
 	switch(m_SelectorType)
 	{
 		case DND_SELECTOR_CHARACTER:
+		case DND_SELECTOR_CHARACTER_CASTER:
 		{
 			SetWindowText("Select Character:");
+
+			if (m_SelectorType == DND_SELECTOR_CHARACTER_CASTER)
+			{
+				m_szComment = _T("Select the character into whose spellbook this spell will be copied");
+			}
+
 			for (POSITION pos = m_pApp->m_CharacterViewMap.GetStartPosition(); pos != NULL; )
 			{
 				PDNDCHARVIEWDLG pCharDlg = NULL;
@@ -98,34 +113,64 @@ BOOL DMCharacterSelectorDialog::OnInitDialog()
 
 				if(pCharDlg != NULL && pCharDlg->m_pCharacter != NULL && pCharDlg->m_pCharacter->m_dwCharacterID)
 				{
+					if (pCharDlg->m_pCharacter->m_dwCharacterID == m_dwExcludeID)
+					{
+						continue;
+					}
+
+					if (m_SelectorType == DND_SELECTOR_CHARACTER_CASTER)
+					{
+						DND_CHARACTER_CLASSES _SpellClasses[4];
+						for (int i = 0; i < 4; ++i)
+						{
+							_SpellClasses[i] = pCharDlg->m_pCharacter->m_SpellClasses[i];
+
+							if (_SpellClasses[i] == DND_CHARACTER_SPELL_CLASS_RANGER_MAGE)
+							{
+								_SpellClasses[i] = DND_CHARACTER_CLASS_MAGE;
+							}
+						}
+
+						if (_SpellClasses[0] != _SelectorClass &&
+							_SpellClasses[1] != _SelectorClass &&
+							_SpellClasses[2] != _SelectorClass &&
+							_SpellClasses[3] != _SelectorClass)
+						{
+							continue;
+						}
+					}
+
 					m_cCharacterList.InsertString(nRow, pCharDlg->m_pCharacter->m_szCharacterName);
 					m_cCharacterList.SetItemData(nRow, pCharDlg->m_pCharacter->m_dwCharacterID);
 					++nRow;
 				}
 			}
 
-			for (pos = m_pApp->m_NPCViewMap.GetStartPosition(); pos != NULL; )
+			if (m_SelectorClass == DND_CHARACTER_CLASS_UNDEF)
 			{
-				PDNDNPCVIEWDLG pNPCDlg = NULL;
-
-				m_pApp->m_NPCViewMap.GetNextAssoc(pos,wID,pNPCDlg);
-
-				if(pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL && pNPCDlg->m_pNPC->m_dwCharacterID && !pNPCDlg->m_pNPC->m_bIsCache)
+				for (pos = m_pApp->m_NPCViewMap.GetStartPosition(); pos != NULL;)
 				{
-					for(int i = 0; i < m_cCharacterList.GetCount(); ++i)
-					{
-						if(m_cCharacterList.GetItemData(i) == pNPCDlg->m_pNPC->m_dwCharacterID)
-						{
-							pNPCDlg = NULL;
-							break;
-						}
-					}
+					PDNDNPCVIEWDLG pNPCDlg = NULL;
 
-					if(pNPCDlg != NULL)
+					m_pApp->m_NPCViewMap.GetNextAssoc(pos, wID, pNPCDlg);
+
+					if (pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL && pNPCDlg->m_pNPC->m_dwCharacterID && !pNPCDlg->m_pNPC->m_bIsCache)
 					{
-						m_cCharacterList.InsertString(nRow, pNPCDlg->m_pNPC->m_szCharacterName);
-						m_cCharacterList.SetItemData(nRow, pNPCDlg->m_pNPC->m_dwCharacterID);
-						++nRow;
+						for (int i = 0; i < m_cCharacterList.GetCount(); ++i)
+						{
+							if (m_cCharacterList.GetItemData(i) == pNPCDlg->m_pNPC->m_dwCharacterID)
+							{
+								pNPCDlg = NULL;
+								break;
+							}
+						}
+
+						if (pNPCDlg != NULL)
+						{
+							m_cCharacterList.InsertString(nRow, pNPCDlg->m_pNPC->m_szCharacterName);
+							m_cCharacterList.SetItemData(nRow, pNPCDlg->m_pNPC->m_dwCharacterID);
+							++nRow;
+						}
 					}
 				}
 			}
@@ -152,6 +197,8 @@ BOOL DMCharacterSelectorDialog::OnInitDialog()
 		}
 	}
 	
+	UpdateData(FALSE);
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }

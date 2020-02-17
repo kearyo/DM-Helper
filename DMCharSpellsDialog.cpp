@@ -86,6 +86,7 @@ void DMCharSpellsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_SPELLS_REMAINING_SPELLBOOK, m_szSpellsRemainingSpellbook);
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDC_MATERIAL_COMPONENTS, m_cMaterialComponentsButton);
+	DDX_Control(pDX, IDC_TRANSCRIBE_SPELL, m_cTranscribeSpellButton);
 }
 
 
@@ -113,6 +114,7 @@ BEGIN_MESSAGE_MAP(DMCharSpellsDialog, CDialog)
 	ON_WM_CTLCOLOR()
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_MATERIAL_COMPONENTS, &DMCharSpellsDialog::OnBnClickedMaterialComponents)
+	ON_BN_CLICKED(IDC_TRANSCRIBE_SPELL, &DMCharSpellsDialog::OnBnClickedTranscribeSpell)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -144,6 +146,8 @@ BOOL DMCharSpellsDialog::OnInitDialog()
 	{
 		m_cMaterialComponentsButton.ShowWindow(SW_SHOW);
 	}
+
+	m_cTranscribeSpellButton.ShowWindow(SW_HIDE);
 
 	SetTimer(52249, 500, NULL);
 
@@ -542,6 +546,7 @@ void DMCharSpellsDialog::Refresh()
 						{
 							m_cSpellBookList.InsertString(nRow, szTemp);
 							m_cSpellBookList.SetItemData(nRow, (ULONG)pSpell);
+	
 							break;
 						}
 					}
@@ -636,6 +641,8 @@ void DMCharSpellsDialog::RefreshSpellControls()
 	m_cSaveSpellsButton.EnableWindow(FALSE);
 	m_cRecoverSpellsButton.EnableWindow(FALSE);
 
+	m_cTranscribeSpellButton.ShowWindow(SW_HIDE);
+
 	switch(m_ViewSpellMode)
 	{
 		case DND_VIEW_SPELL_MODE_COPY_TO_SPELLBOOK:
@@ -660,8 +667,17 @@ void DMCharSpellsDialog::RefreshSpellControls()
 		{
 			m_cMemorizeSpellButton.SetWindowText("Memorize");
 
-			if(GetSelectedListBoxItemsCount(&m_cSpellBookList))
+			m_cTranscribeSpellButton.ShowWindow(SW_HIDE);
+
+			int nBookSpellsSelected = GetSelectedListBoxItemsCount(&m_cSpellBookList);
+
+			if (nBookSpellsSelected)
 			{
+				if (nBookSpellsSelected == 1)
+				{
+					m_cTranscribeSpellButton.ShowWindow(SW_SHOW);
+				}
+
 				m_cMemorizeSpellButton.EnableWindow(TRUE);
 				m_cForgetSpellButton.EnableWindow(TRUE);
 			}
@@ -1016,7 +1032,6 @@ void DMCharSpellsDialog::OnSelchangeSpellsMemorizedList()
 
 void DMCharSpellsDialog::OnMemorizeSpell() 
 {
-
 	int nSpellsAllowedForLevel = GetSpellLevels(m_pCharacter, m_pCharacter->m_SpellClasses[m_nTabSpellIndexes[m_nSelectedSpellClass]],  m_pCharacter->m_nCastingLevels[m_nTabSpellIndexes[m_nSelectedSpellClass]], m_nSelectedSpellLevel);
 
 	switch(m_ViewSpellMode)
@@ -1122,6 +1137,7 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 							DWORD dwCharacterID = 0;
 							DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
 							pDlg->DoModal();
+							delete pDlg;
 
 							if (dwCharacterID)
 							{
@@ -1386,3 +1402,66 @@ void DMCharSpellsDialog::OnTimer(UINT_PTR nIDEvent)
 }
 
 
+void DMCharSpellsDialog::OnBnClickedTranscribeSpell()
+{
+	cDNDSpell *pSelectedBookSpell = NULL;
+
+	for (int i = 0; i < m_cSpellBookList.GetCount(); ++i)
+	{
+		if (m_cSpellBookList.GetSel(i))
+		{
+			pSelectedBookSpell = (cDNDSpell *)m_cSpellBookList.GetItemData(i);
+			break;
+		}
+	}
+
+	if (pSelectedBookSpell != NULL)
+	{
+		DWORD dwReturnedID = 0;
+		DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, 0, DND_SELECTOR_CHARACTER_CASTER, pSelectedBookSpell->m_ClassBook, m_pCharacter->m_dwCharacterID);
+		pDlg->DoModal();
+		delete pDlg;
+
+		CString szMsg = _T("");
+
+		if (dwReturnedID != 0)
+		{
+			PDNDCHARVIEWDLG pCharDlg = NULL;
+			if (m_pApp->m_CharacterViewMap.Lookup((WORD)dwReturnedID, pCharDlg) && pCharDlg != NULL)
+			{
+				int nClassIndex = -1;
+				for (int i = 0; i < 4; ++i)
+				{
+					if (pCharDlg->m_pCharacter->m_SpellClasses[i] == pSelectedBookSpell->m_ClassBook || (pCharDlg->m_pCharacter->m_SpellClasses[i] == DND_CHARACTER_SPELL_CLASS_RANGER_MAGE && pSelectedBookSpell->m_ClassBook == DND_CHARACTER_CLASS_MAGE))
+					{
+						nClassIndex = i;
+						break;
+					}
+				}
+
+				if (nClassIndex >= 0)
+				{
+					int nKnowSpell = 0;
+					int nMinSpells = 0;
+					int nMaxSpells = 0;
+
+					int nAddLang = CalculateINTAdjustments(pCharDlg->m_pCharacter, &nKnowSpell, &nMinSpells, &nMaxSpells);
+					int nTotalBookSpellsInLevel = CountSpellsInLevel(pCharDlg->m_pCharacter->m_nSpellBooks[nClassIndex][pSelectedBookSpell->m_nSpellLevel]);
+
+					int nSpellsAllowedForLevel = GetSpellLevels(pCharDlg->m_pCharacter, pCharDlg->m_pCharacter->m_SpellClasses[nClassIndex], pCharDlg->m_pCharacter->m_nCastingLevels[nClassIndex], m_nSelectedSpellLevel);
+
+
+					if (nTotalBookSpellsInLevel >= nMaxSpells || nSpellsAllowedForLevel == 0)
+					{
+						szMsg.Format("%s cannot learn this spell !", pCharDlg->m_pCharacter->m_szCharacterName);
+						AfxMessageBox(szMsg, MB_OK);
+					}
+					else
+					{
+						pCharDlg->m_pCharacter->m_nSpellBooks[nClassIndex][pSelectedBookSpell->m_nSpellLevel][pSelectedBookSpell->m_nSpellNumber] = 1;
+					}
+				}
+			}
+		}
+	}
+}

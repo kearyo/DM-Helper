@@ -61,7 +61,72 @@ UINT DMPartyTimeThreadProc(LPVOID pData)
 	return 0;
 }
 
+UINT DMPartyCalendarThreadProc(LPVOID pData)
+{
 
+	#if GAMETABLE_BUILD
+	DMPartyDialog *pPartyDlg = (DMPartyDialog*)pData;
+	cDNDParty *pParty = pPartyDlg->m_pParty;
+
+	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+	int nCurrentDay = pParty->m_nDayofMonth+1;
+
+	int nCount = 0;
+	CString szMsg = _T("");
+
+	do
+	{
+		Sleep(500);
+
+		if (pPartyDlg->m_pPartyCalendarThread != NULL)
+		{
+			++nCount;
+
+			if (nCount > 100)
+			{
+				nCount = 0;
+			}
+
+			BOOL bBirthday = FALSE;
+			if (nCurrentDay != pParty->m_nDayofMonth+1)
+			{
+				nCurrentDay = pParty->m_nDayofMonth+1;
+
+				for (int i = 0; i < MAX_PARTY_MEMBERS; ++i)
+				{
+					if (pParty->m_dwPartyRoster[i] == 0)
+						break;
+
+					PDNDCHARVIEWDLG pCharDlg = NULL;
+
+					pApp->m_CharacterViewMap.Lookup((WORD)pParty->m_dwPartyRoster[i], pCharDlg);
+
+					if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+					{
+						if (bBirthday == FALSE && pCharDlg->m_pCharacter->m_nDOBDay == nCurrentDay && pCharDlg->m_pCharacter->m_nDOBMonth == pParty->m_nMonth+1)
+						{
+							TRACE("BIRTHDAY!\n");
+							pCharDlg->m_pCharacter->m_nAge += 1;
+							pCharDlg->m_pCharacter->MarkChanged();
+							pApp->PlaySoundFX("Happy Birthday");
+							bBirthday = TRUE;
+
+							szMsg.Format("%s has a birthday today !", pCharDlg->m_pCharacter->m_szCharacterName);
+							AfxMessageBox(szMsg, MB_OK | MB_ICONINFORMATION);
+						}
+					}
+				}
+			}
+		}
+
+	} while (pPartyDlg->m_pPartyCalendarThread != NULL);
+
+	#endif
+	TRACE("PARTY CALENDAR THREAD EXITING !\n");
+
+	return 0;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // DMPartyDialog dialog
@@ -135,6 +200,7 @@ DMPartyDialog::DMPartyDialog(CDMHelperDlg* pMainDialog, cDNDParty *pParty, CWnd*
 	m_nOpponentPartyScrollPos = 0;
 	
 	m_pPartyClockThread = NULL;
+	m_pPartyCalendarThread = NULL;
 
 	m_pPortraitBackDropBitmap = NULL;
 	m_pSelectedCharacterBitmap = NULL;
@@ -1808,6 +1874,7 @@ void DMPartyDialog::OnAddMemberButton()
 	DWORD dwReturnedID = 0;
 	DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_dwParentPartyID, DND_SELECTOR_CHARACTER);
 	pDlg->DoModal();
+	delete pDlg;
 
 	if(dwReturnedID)
 	{
@@ -1996,6 +2063,7 @@ void DMPartyDialog::OnDeleteMemberButton()
 	{
 		DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_dwSubPartyID, DND_SELECTOR_CHARACTER);
 		pDlg->DoModal();
+		delete pDlg;
 	}
 
 	if(dwReturnedID)
@@ -2388,6 +2456,13 @@ void DMPartyDialog::OnLoadPartyButton()
 			}
 		}
 	}
+
+	#if GAMETABLE_BUILD
+	if (m_pParty->m_dwCalendarID)
+	{
+		m_pPartyCalendarThread = AfxBeginThread(DMPartyCalendarThreadProc, this);
+	}
+	#endif
 		
 }
 
@@ -2944,6 +3019,7 @@ void DMPartyDialog::OnSetfocusMapNameEdit()
 	DWORD dwReturnedID = 0;
 	DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, 0, DND_SELECTOR_MAP);
 	pDlg->DoModal();
+	delete pDlg;
 
 	if(dwReturnedID)
 	{
@@ -3065,6 +3141,14 @@ void DMPartyDialog::FreeParty()
 			m_pPartyClockThread = NULL;
 
 			WaitForSingleObject(pPartyClockThread->m_hThread, 5000);
+		}
+
+		if (m_pPartyCalendarThread != NULL)
+		{
+			CWinThread *pPartyCalendarThread = m_pPartyCalendarThread;
+			m_pPartyCalendarThread = NULL;
+
+			WaitForSingleObject(pPartyCalendarThread->m_hThread, 5000);
 		}
 
 		if(m_pPartyLog != NULL)	

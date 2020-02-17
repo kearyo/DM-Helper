@@ -13,6 +13,7 @@
 // DMPartyDialog dialog
 
 extern UINT DMPartyTimeThreadProc(LPVOID pData);
+extern UINT DMPartyCalendarThreadProc(LPVOID pData);
 
 class CDMCalendarDialog;
 class CDMPartyLogDialog;
@@ -77,6 +78,7 @@ public:
 	Bitmap* m_pSelectedOpponentBitmap;
 
 	CWinThread *m_pPartyClockThread;
+	CWinThread *m_pPartyCalendarThread;
 
 	void SetPartyPortraits();
 	void SetOpposingPartyPortraits();

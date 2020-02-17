@@ -231,6 +231,7 @@ public:
 	BOOL m_bMaterialComponentCheck;
 	afx_msg void OnBnClickedMagicComponentsCheck();
 	CString m_szItemDesc;
+	afx_msg void OnStnDblclickCacheNameStatic();
 };
 
 //{{AFX_INSERT_LOCATION}}

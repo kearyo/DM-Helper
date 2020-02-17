@@ -337,6 +337,7 @@ void DMCastSpellDialog::OnOK()
 						DWORD dwCharacterID = 0;
 						DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
 						pDlg->DoModal();
+						delete pDlg;
 
 						if (dwCharacterID)
 						{
@@ -420,7 +421,7 @@ void DMCastSpellDialog::OnBnClickedFailCast()
 		PSPELLSLOT pSpellSlot = (PSPELLSLOT)m_cSpellList.GetItemData(nCursor);
 		if (pSpellSlot != NULL)
 		{
-			if (m_pPartyDialog != NULL && m_pPartyDialog->m_pInitiativeDialog != NULL)
+			if (m_pPartyDialog != NULL)
 			{
 				m_pCharacter->CastSpell(pSpellSlot);
 

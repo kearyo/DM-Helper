@@ -3921,6 +3921,7 @@ void cDMMapViewDialog::SaveMapToFile(char *szFileName)
 		fwrite(m_pDNDMap, sizeof(cDNDMap), 1, pOutFile);
 
 		fclose(pOutFile);
+		pOutFile = NULL;
 
 		m_pDNDMap->MarkSaved();
 
@@ -3946,6 +3947,10 @@ void cDMMapViewDialog::SaveMapToFile(char *szFileName)
 					fwrite(&m_pTreasureCaches->m_Caches, sizeof(cDNDCacheInventory), m_pTreasureCaches->m_Header.m_nCaches, pOutFile);
 
 					fclose(pOutFile);
+				}
+				else
+				{
+					AfxMessageBox("Unable to save cache file !", MB_OK);
 				}
 			}
 

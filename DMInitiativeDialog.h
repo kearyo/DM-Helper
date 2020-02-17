@@ -21,6 +21,8 @@ public:
 	PBASECHARVIEWMAP	m_PlayersViewMap;
 	PBASECHARVIEWMAP	m_MonstersViewMap;
 
+	CDMBaseCharViewDialog *m_pLastAttackCharViewDlg;
+
 	int m_nOldCursor;
 	int m_nMaxRoundTime;
 	int m_nNumAttacksThisRound;

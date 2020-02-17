@@ -26,6 +26,7 @@
 #include "cDMPDFViewDialog.h"
 #include "cDMAddOnDialog.h"
 #include "cDMRandomNameGeneratorDialog.h"
+#include "cDMChartLookupDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -290,6 +291,9 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, &CDMHelperDlg::OnSpellfxonmapsEnabledformagicmissile)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_SPELL_COMPONENTS_CHECK, &CDMHelperDlg::OnBnClickedSpellComponentsCheck)
+	ON_COMMAND(ID_CHARTSANDTABLES_SAVINGTHROWMATRIXFORMAGICALANDNON, &CDMHelperDlg::OnChartsandtablesSavingthrowmatrixformagicalandnon)
+	ON_COMMAND(ID_CHARTSANDTABLES_POTIONMISCIBILITYTABLE, &CDMHelperDlg::OnChartsandtablesPotionmiscibilitytable)
+	ON_COMMAND(ID_CHARTSANDTABLES_TREASURETYPES, &CDMHelperDlg::OnChartsandtablesTreasuretypes)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3511,5 +3515,25 @@ void CDMHelperDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialog::OnTimer(nIDEvent);
 }
 
+void CDMHelperDlg::OnChartsandtablesSavingthrowmatrixformagicalandnon()
+{
+	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_ITEM_SAVING_THROWS);
+	pDlg->DoModal();
+	delete pDlg;
+}
 
 
+void CDMHelperDlg::OnChartsandtablesPotionmiscibilitytable()
+{
+	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_POTION_MISCIBITY);
+	pDlg->DoModal();
+	delete pDlg;
+}
+
+
+void CDMHelperDlg::OnChartsandtablesTreasuretypes()
+{
+	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_TREASURE_TYPES);
+	pDlg->DoModal();
+	delete pDlg;
+}

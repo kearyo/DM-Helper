@@ -18,6 +18,7 @@
 #include "DMTreasureTypeDialog.h"
 #include "DMMagicSwordPropertiesDialog.h"
 #include "DMItemDescriptionDialog.h"
+#include "cDMChartLookupDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -274,6 +275,7 @@ BEGIN_MESSAGE_MAP(DMInventoryDialog, CDialog)
 	ON_BN_CLICKED(IDC_GEN_TREASURE_BUTTON, &DMInventoryDialog::OnBnClickedGenTreasureButton)
 	ON_BN_CLICKED(IDC_IN_LAIR_CHECK, &DMInventoryDialog::OnBnClickedInLairCheck)
 	ON_BN_CLICKED(IDC_MAGIC_COMPONENTS_CHECK, &DMInventoryDialog::OnBnClickedMagicComponentsCheck)
+	ON_STN_DBLCLK(IDC_CACHE_NAME_STATIC, &DMInventoryDialog::OnStnDblclickCacheNameStatic)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -893,6 +895,31 @@ void DMInventoryDialog::CleanUp()
 
 void DMInventoryDialog::Refresh()
 {
+
+	if (m_pCharacter->m_bIsCache && m_pNPCVWindow != NULL)
+	{
+		if (m_pNPCVWindow->m_pCacheInventory != NULL)
+		{
+			//sync here
+			m_pNPCVWindow->m_pCacheInventory->m_lCopperCarried = m_pCharacter->m_lCopperCarried;
+			m_pNPCVWindow->m_pCacheInventory->m_lSilverCarried = m_pCharacter->m_lSilverCarried;
+			m_pNPCVWindow->m_pCacheInventory->m_lElectrumCarried = m_pCharacter->m_lElectrumCarried;
+			m_pNPCVWindow->m_pCacheInventory->m_lGoldCarried = m_pCharacter->m_lGoldCarried;
+			m_pNPCVWindow->m_pCacheInventory->m_lPlatinumCarried = m_pCharacter->m_lPlatinumCarried;
+
+			m_pNPCVWindow->m_pCacheInventory->m_fMapLocationX = m_pCharacter->m_fMapLocationX;
+			m_pNPCVWindow->m_pCacheInventory->m_fMapLocationY = m_pCharacter->m_fMapLocationY;
+
+			m_pNPCVWindow->m_pCacheInventory->m_fLocalLocationX = m_pCharacter->m_fLocalLocationX;
+			m_pNPCVWindow->m_pCacheInventory->m_fLocalLocationY = m_pCharacter->m_fLocalLocationY;
+
+			m_pNPCVWindow->m_pCacheInventory->m_lSaveFlag = m_pCharacter->m_lSaveFlag;
+
+			memcpy(m_pNPCVWindow->m_pCacheInventory->m_szCacheDesc, m_pCharacter->m_szCharacterName, 128 * sizeof(char));
+			memcpy(m_pNPCVWindow->m_pCacheInventory->m_szCacheDetails, m_pCharacter->m_szDetails, 512 * sizeof(char));
+			memcpy(m_pNPCVWindow->m_pCacheInventory->m_Inventory, m_pCharacter->m_Inventory, MAX_CHARACTER_INVENTORY * sizeof(cDNDObject));
+		}
+	}
 
 	m_szCopperEdit.Format("%ld", m_pCharacter->m_lCopperCarried);
 	m_szSilverEdit.Format("%ld", m_pCharacter->m_lSilverCarried);
@@ -3100,8 +3127,14 @@ void DMInventoryDialog::OnBnClickedTreasureTypeButton()
 {
 
 	CString szTreasureType = _T("");
+	BOOL bInLair = FALSE;
+
+	if (m_pNPCVWindow != NULL && m_pNPCVWindow->m_pNPC != NULL && m_pNPCVWindow->m_pNPC->m_bIsCache == TRUE)
+	{
+		bInLair = TRUE;
+	}
 	
-	cDMTreasureTypeDialog *pDlg = new cDMTreasureTypeDialog(&szTreasureType);
+	cDMTreasureTypeDialog *pDlg = new cDMTreasureTypeDialog(&szTreasureType, &bInLair);
 	pDlg->DoModal();
 	delete pDlg;
 
@@ -3112,7 +3145,7 @@ void DMInventoryDialog::OnBnClickedTreasureTypeButton()
 		pMonster->m_szTreasureType = szTreasureType;
 
 		cDNDNonPlayerCharacter *pNPC = (cDNDNonPlayerCharacter *)m_pCharacter;
-		RollMonsterTreasure(pNPC, pMonster, TRUE, TRUE);
+		RollMonsterTreasure(pNPC, pMonster, bInLair, TRUE);
 
 		delete(pMonster);
 
@@ -3266,10 +3299,17 @@ void DMInventoryDialog::OnBnClickedGenTreasureButton()
 	}
 }
 
-
 void DMInventoryDialog::OnBnClickedInLairCheck()
 {
 	UpdateData(TRUE);
 }
 
-
+void DMInventoryDialog::OnStnDblclickCacheNameStatic()
+{
+	if (m_szCacheNameDesc.Find("Treasure Types") >= 0)
+	{
+		cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_TREASURE_TYPES);
+		pDlg->DoModal();
+		delete pDlg;
+	}
+}

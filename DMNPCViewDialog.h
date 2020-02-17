@@ -229,6 +229,7 @@ public:
 	afx_msg void OnStnDblclickDescComment();
 	CStatic m_cDebugCharID;
 	CString m_szDebugCharID;
+	afx_msg void OnStnDblclickTtComment();
 };
 
 //{{AFX_INSERT_LOCATION}}

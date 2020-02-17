@@ -255,6 +255,9 @@
     <ClCompile Include="cDMModifyClericSkillsDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cDMChartLookupDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -506,6 +509,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cDMModifyClericSkillsDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMChartLookupDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

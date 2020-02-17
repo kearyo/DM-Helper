@@ -9,11 +9,12 @@ class cDMTreasureTypeDialog : public CDialog
 	DECLARE_DYNAMIC(cDMTreasureTypeDialog)
 
 public:
-	cDMTreasureTypeDialog(CString *pszTreasureType, CWnd* pParent = NULL);   // standard constructor
+	cDMTreasureTypeDialog(CString *pszTreasureType, BOOL *pbInLair, CWnd* pParent = NULL);   // standard constructor
 	virtual ~cDMTreasureTypeDialog();
 
 
 	CString *m_pszTreasureType;
+	BOOL *m_pbInLair;
 
 // Dialog Data
 	enum { IDD = IDD_TREASURE_TYPE_DIALOG };
@@ -28,4 +29,7 @@ public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedOk();
 	CString m_szTTMul;
+	afx_msg void OnLbnDblclkTreasureTypeList();
+	afx_msg void OnBnClickedInLairCheck();
+	BOOL m_bInLair;
 };

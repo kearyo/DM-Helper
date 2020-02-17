@@ -80,6 +80,8 @@ protected:
 public:
 	afx_msg void OnBnClickedStartClockButton();
 	CButton m_cStartClockButton;
+	CString m_szDayName;
+	CString m_szMonthName;
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -1197,6 +1197,42 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 
 }
 
+CString cDNDParty::GetCurrentMonthName()
+{
+	CString szRetVal = _T("");
+
+	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+	if (pApp->m_pSelectedCalendar != NULL)
+	{
+		if (m_nMonth >=0 && m_nMonth <= pApp->m_pSelectedCalendar->m_nMonthsInYear - 1)
+		{
+			szRetVal = pApp->m_pSelectedCalendar->m_szMonthNames[m_nMonth];
+		}
+	}
+
+	return szRetVal;
+}
+
+CString cDNDParty::GetCurrentDayName()
+{
+	CString szRetVal = _T("");
+
+	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+	if (pApp->m_pSelectedCalendar != NULL)
+	{
+		m_nDayofWeek = pApp->m_pSelectedCalendar->FindDayOfWeek(m_nMonth, m_nDayofMonth, m_nYear);
+
+		if (m_nDayofWeek >= 0 && m_nDayofWeek <= pApp->m_pSelectedCalendar->m_nDaysInWeek - 1)
+		{
+			szRetVal = pApp->m_pSelectedCalendar->m_szDayNames[m_nDayofWeek];
+		}
+	}
+
+	return szRetVal;
+}
+
 void cDNDParty::CollapseRoute()
 {
 	cDNDWayPoint _WayPoints[MAX_PARTY_WAYPOINTS];

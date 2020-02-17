@@ -223,6 +223,9 @@ public:
 	afx_msg void OnSpellfxonmapsEnabledformagicmissile();
 	BOOL m_bUseMaterialComponents;
 	afx_msg void OnBnClickedSpellComponentsCheck();
+	afx_msg void OnChartsandtablesSavingthrowmatrixformagicalandnon();
+	afx_msg void OnChartsandtablesPotionmiscibilitytable();
+	afx_msg void OnChartsandtablesTreasuretypes();
 };
 
 //{{AFX_INSERT_LOCATION}}

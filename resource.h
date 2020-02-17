@@ -177,6 +177,7 @@
 #define IDD_DIALOG5                     298
 #define IDD_ASSASSIN_SKILL_MODIFIER_DIALOG 298
 #define IDD_CLERIC_SKILL_MODIFIER_DIALOG 299
+#define IDD_CHART_LOOKUP_DIALOG         300
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -1286,6 +1287,7 @@
 #define IDC_MATERIAL_COMPONENTS         1645
 #define IDC_HALFLING_BUTTON             1646
 #define IDC_COMPONENTS_LIST             1646
+#define IDC_TRANSCRIBE_SPELL            1646
 #define IDC_GNOME_BUTTON                1647
 #define IDC_COMPONENTS_LINE             1647
 #define IDC_BUGBEAR_BUTTON              1648
@@ -1334,7 +1336,10 @@
 #define ID_FAIL_CAST                    1672
 #define IDC_LEVEL_TITLE_1               1673
 #define IDC_LEVEL_TITLE_2               1674
+#define IDC_DAY_NAME                    1674
 #define IDC_LEVEL_TITLE_3               1675
+#define IDC_MONTH_NAME                  1675
+#define IDC_COMMENT                     1676
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1375,14 +1380,18 @@
 #define ID_MAPS_SPELLFXONMAPS           32808
 #define ID_SPELLFXONMAPS_ENABLED        32809
 #define ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE 32810
+#define ID_DMLIBRARY_CHARTSTABLES       32811
+#define ID_CHARTSANDTABLES_SAVINGTHROWMATRIXFORMAGICALANDNON 32812
+#define ID_CHARTSANDTABLES_POTIONMISCIBILITYTABLE 32813
+#define ID_CHARTSANDTABLES_TREASURETYPES 32814
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        300
-#define _APS_NEXT_COMMAND_VALUE         32811
-#define _APS_NEXT_CONTROL_VALUE         1674
+#define _APS_NEXT_RESOURCE_VALUE        301
+#define _APS_NEXT_COMMAND_VALUE         32815
+#define _APS_NEXT_CONTROL_VALUE         1677
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

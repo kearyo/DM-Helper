@@ -127,6 +127,8 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	CButton m_cMaterialComponentsButton;
 	afx_msg void OnBnClickedMaterialComponents();
+	afx_msg void OnBnClickedTranscribeSpell();
+	CButton m_cTranscribeSpellButton;
 };
 
 //{{AFX_INSERT_LOCATION}}

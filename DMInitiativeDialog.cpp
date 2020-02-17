@@ -31,6 +31,8 @@ CDMInitiativeDialog::CDMInitiativeDialog(CWnd* pParent /*=NULL*/)
 	m_nNumAttacksThisRound = 0;
 	m_nCompletedAttacksThisRound = 0;
 
+	m_pLastAttackCharViewDlg = NULL;
+
 	m_bRollPCs = m_pApp->m_bRollPCsInitiative;
 
 	Create(CDMInitiativeDialog::IDD);
@@ -1335,7 +1337,12 @@ void CDMInitiativeDialog::OnBnClickedSpellButton()
 void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 {
 	m_nNumAttacksThisRound = 0;
-	m_nCompletedAttacksThisRound = 0;
+	
+	if (m_pLastAttackCharViewDlg != pDlg)
+	{
+		m_nCompletedAttacksThisRound = 0;
+		m_pLastAttackCharViewDlg = pDlg;
+	}
 
 	if (NULL == pDlg)
 	{

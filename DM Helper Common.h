@@ -10,7 +10,7 @@
 #endif
 
 #define DMH_CURRENT_VERSION 10040
-#define DMH_BUILD_NUMBER	(22493)
+#define DMH_BUILD_NUMBER	(22498)
 
 #define USE_CANTRIPS	TRUE
 
@@ -257,6 +257,9 @@
 	* Added level titles to character view screen
 	* Clicking on "XP:" label on character view will display experience points required to reach next level 
 
+- 1.0.040.XXXX XX/XX/20
+	* Fix for inventory caches on maps not being saved properly
+
 */
 
 #define PCSTRING CString*
@@ -480,6 +483,16 @@ typedef enum
 	DND_COINS_ALL
 
 } DND_COIN_TYPES;
+
+typedef enum
+{
+	DND_CHART_ITEM_SAVING_THROWS = 0,
+
+	DND_CHART_POTION_MISCIBITY,
+
+	DND_CHART_TREASURE_TYPES
+
+} DND_CHART_TYPES;
 
 
 #define CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE  1024
@@ -3893,6 +3906,8 @@ public:
 	
 
 	void ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYPES nSetType, int nValue = -9999);
+	CString GetCurrentMonthName();
+	CString GetCurrentDayName();
 
 	void CollapseRoute();
 	float TravelRoute(float fDistanceToTravel);

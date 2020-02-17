@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClCompile Include="cDMAddOnDialog.cpp" />
     <ClCompile Include="cDMCharacterPortraitDialog.cpp" />
+    <ClCompile Include="cDMChartLookupDialog.cpp" />
     <ClCompile Include="cDMDetachedMapDialog.cpp" />
     <ClCompile Include="cDMMapNameDialog.cpp" />
     <ClCompile Include="cDMMapSFXDialog.cpp" />
@@ -247,6 +248,7 @@
   <ItemGroup>
     <ClInclude Include="cDMAddOnDialog.h" />
     <ClInclude Include="cDMCharacterPortraitDialog.h" />
+    <ClInclude Include="cDMChartLookupDialog.h" />
     <ClInclude Include="cDMDetachedMapDialog.h" />
     <ClInclude Include="cDMMapNameDialog.h" />
     <ClInclude Include="cDMMapSFXDialog.h" />

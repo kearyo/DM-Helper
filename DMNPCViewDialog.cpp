@@ -10,6 +10,7 @@
 #include "DMNPCViewDialog.h"
 #include "DMModifyValueDialog.h"
 #include "DMNPCPortraitSelectDialog.h"
+#include "cDMChartLookupDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -459,6 +460,7 @@ void cDMBaseNPCViewDialog::Refresh()
 	{
 		if(m_pCacheInventory != NULL)
 		{
+			// sync here
 			m_pCacheInventory->m_lCopperCarried = m_pNPC->m_lCopperCarried;
 			m_pCacheInventory->m_lSilverCarried = m_pNPC->m_lSilverCarried;
 			m_pCacheInventory->m_lElectrumCarried = m_pNPC->m_lElectrumCarried;
@@ -732,6 +734,7 @@ BEGIN_MESSAGE_MAP(DMNPCViewDialog, CDialog)
 	ON_CBN_SELCHANGE(IDC_CHAR_SEX_COMBO, &DMNPCViewDialog::OnCbnSelchangeCharSexCombo)
 	ON_STN_CLICKED(IDC_NPC_PORTRAIT_BUTTON, &DMNPCViewDialog::OnStnClickedNpcPortraitButton)
 	ON_STN_DBLCLK(IDC_DESC_COMMENT, &DMNPCViewDialog::OnStnDblclickDescComment)
+	ON_STN_DBLCLK(IDC_TT_COMMENT, &DMNPCViewDialog::OnStnDblclickTtComment)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3110,4 +3113,12 @@ void DMNPCViewDialog::OnStnDblclickDescComment()
 		case 3:	m_pMainDialog->OpenPDFDocument("PDF\\FiendFolio.pdf", nPage+1); break;
 	}
 
+}
+
+
+void DMNPCViewDialog::OnStnDblclickTtComment()
+{
+	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_TREASURE_TYPES);
+	pDlg->DoModal();
+	delete pDlg;
 }

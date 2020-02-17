@@ -12,6 +12,8 @@ typedef enum
 {
 	DND_SELECTOR_CHARACTER = 0,
 
+	DND_SELECTOR_CHARACTER_CASTER,
+
 	DND_SELECTOR_MAP,
 
 	DND_SELECTOR_PARTY,
@@ -28,11 +30,15 @@ class DMCharacterSelectorDialog : public CDialog
 {
 // Construction
 public:
-	DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DND_SELECTOR_TYPES _SelectorType, CWnd* pParent = NULL);   // standard constructor
+	DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DND_SELECTOR_TYPES _SelectorType, DND_CHARACTER_CLASSES _SelectorClass = DND_CHARACTER_CLASS_UNDEF, DWORD dwExcludeID = 0, CWnd* pParent = NULL);   // standard constructor
 	
 	CDMHelperApp * m_pApp;
 
 	DND_SELECTOR_TYPES m_SelectorType;
+
+	DND_CHARACTER_CLASSES m_SelectorClass;
+
+	DWORD m_dwExcludeID;
 
 	DWORD m_dwParentPartyID;
 
@@ -63,6 +69,8 @@ protected:
 	afx_msg void OnDblclkCharacterList();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	CString m_szComment;
 };
 
 //{{AFX_INSERT_LOCATION}}

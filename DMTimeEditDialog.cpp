@@ -23,6 +23,8 @@ static char THIS_FILE[] = __FILE__;
 
 DMTimeEditDialog::DMTimeEditDialog(cDNDParty *pParty, DMPartyDialog *pPartyDialog, cDMMapViewDialog *pMapDialog, CWnd* pParent /*=NULL*/)
 	: CDialog(DMTimeEditDialog::IDD, pParent)
+	, m_szDayName(_T(""))
+	, m_szMonthName(_T(""))
 {
 	//{{AFX_DATA_INIT(DMTimeEditDialog)
 	m_szYear = _T("");
@@ -54,6 +56,8 @@ void DMTimeEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_ROUND_EDIT, m_szRound);
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDC_START_CLOCK_BUTTON, m_cStartClockButton);
+	DDX_Text(pDX, IDC_DAY_NAME, m_szDayName);
+	DDX_Text(pDX, IDC_MONTH_NAME, m_szMonthName);
 }
 
 
@@ -151,6 +155,9 @@ void DMTimeEditDialog::Refresh()
 	{
 		m_pPartyDialog->Refresh();
 	}
+
+	m_szDayName.Format("Day: (%s)", m_pParty->GetCurrentDayName());
+	m_szMonthName.Format("Month: (%s)", m_pParty->GetCurrentMonthName());
 
 	if(m_pMapDialog != NULL)
 	{
