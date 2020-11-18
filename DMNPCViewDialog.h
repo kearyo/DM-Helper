@@ -230,6 +230,7 @@ public:
 	CStatic m_cDebugCharID;
 	CString m_szDebugCharID;
 	afx_msg void OnStnDblclickTtComment();
+	afx_msg LRESULT OnDirtyWindow(UINT wParam, LONG lParam);
 };
 
 //{{AFX_INSERT_LOCATION}}

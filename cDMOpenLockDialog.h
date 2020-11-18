@@ -8,11 +8,13 @@ class cDMOpenLockDialog : public CDialogEx
 	DECLARE_DYNAMIC(cDMOpenLockDialog)
 
 public:
-	cDMOpenLockDialog(cDNDCharacter	*pCharacter, CWnd* pParent = NULL);   // standard constructor
+	cDMOpenLockDialog(cDNDParty *pParty, cDNDCharacter	*pCharacter, CWnd* pParent = NULL);   // standard constructor
 	virtual ~cDMOpenLockDialog();
 
 	CDMHelperApp *m_pApp;
+	cDNDParty *m_pParty;
 	cDNDCharacter	*m_pCharacter;
+	int m_nAttemptRounds;
 
 // Dialog Data
 	enum { IDD = IDD_PICK_LOCK_DIALOG };
@@ -24,4 +26,7 @@ protected:
 public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedOk();
+	CString m_szTimeComment;
+	virtual BOOL OnInitDialog();
+	afx_msg void OnBnClickedFailed();
 };

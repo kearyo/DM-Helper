@@ -290,6 +290,11 @@ void DMCharSheetDialog::DrawSubInventory(int *pnItemCount, DWORD dwContainerID, 
 				int nAdjWeight = pObj->m_nWeight;
 				LONG lAmount = max(1L, pObj->m_lAmount);
 
+				if (pObj->m_bIgnoreEncumbrance)
+				{
+					nAdjWeight = 0;  // DM FIAT
+				}
+
 				//check for exceptions
 				switch(pObj->m_ObjectType)
 				{
@@ -1209,6 +1214,11 @@ void DMCharSheetDialog::OnPaint()
 				{
 					int nAdjWeight = pObj->m_nWeight;
 					LONG lAmount = max(1L, pObj->m_lAmount);
+
+					if (pObj->m_bIgnoreEncumbrance)
+					{
+						nAdjWeight = 0;  // DM FIAT
+					}
 
 					//check for exceptions
 					switch(pObj->m_ObjectType)

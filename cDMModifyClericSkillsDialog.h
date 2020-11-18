@@ -1,4 +1,5 @@
 #pragma once
+#include "afxwin.h"
 
 
 // cDMModifyClericSkillsDialog dialog
@@ -8,11 +9,14 @@ class cDMModifyClericSkillsDialog : public CDialog
 	DECLARE_DYNAMIC(cDMModifyClericSkillsDialog)
 
 public:
-	cDMModifyClericSkillsDialog(int *pnClericTurnModifiers, CWnd* pParent = NULL);   // standard constructor
+	cDMModifyClericSkillsDialog(CString szCharacterName, int *pnClericTurnModifiers, BOOL bModify, CWnd* pParent = NULL);   // standard constructor
 	virtual ~cDMModifyClericSkillsDialog();
 
 	void Refresh();
 
+	CDMHelperApp *m_pApp;
+	CString m_szCharacterName;
+	BOOL m_bModify;
 	int m_nClericTurnModifiers[13];
 	int *m_pnClericTurnModifiers;
 
@@ -29,4 +33,6 @@ public:
 	afx_msg void OnBnClickedCancel();
 	CString m_szTurnUndeadEdit[13];
 	afx_msg void OnEnSetfocusTurnUndeadEdit();
+	CButton m_cCancelButton;
+	CButton m_cOKButton;
 };

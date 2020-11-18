@@ -6,6 +6,7 @@
 #include "DM HelperDlg.h"
 #include "DMMapEditDialog.h"
 #include "cDMMapViewDialog.h"
+#include "cDMMusicTrackListDialog.h"
 #include "DungeonGen.h"
 
 #ifdef _DEBUG
@@ -13,6 +14,9 @@
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+static OPENFILENAME    g_ofn;
+char g_LG_szFilename[MAX_PATH];
 
 /////////////////////////////////////////////////////////////////////////////
 // DMMapEditDialog dialog
@@ -30,6 +34,7 @@ DMMapEditDialog::DMMapEditDialog(cDNDMap *pDNDMap, CWnd* pParent /*=NULL*/)
 	, m_szTransBlue(_T(""))
 	, m_nTileHeight(0)
 	, m_szTileHeight(_T("0"))
+	, m_szMapMusic(_T(""))
 {
 	//{{AFX_DATA_INIT(DMMapEditDialog)
 	m_szMapName = _T("");
@@ -109,8 +114,11 @@ void DMMapEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDV_MinMaxInt(pDX, m_nTileHeight, -256, 256);
 	DDX_Control(pDX, IDC_TILE_HEIGHT_EDIT, m_cTileHeightEdit);
 	DDX_Text(pDX, IDC_TILE_HEIGHT_EDIT, m_szTileHeight);
+	DDX_Control(pDX, IDC_MAP_MUSIC_EDIT, m_cMapMusicEdit);
+	DDX_Text(pDX, IDC_MAP_MUSIC_EDIT, m_szMapMusic);
+	DDX_Control(pDX, IDC_MAP_MUSIC_LABEL, m_cMusicLabel);
+	DDX_Control(pDX, IDC_OPEN_TRACK_LIST_BUTTON, m_cTrackListButton);
 }
-
 
 BEGIN_MESSAGE_MAP(DMMapEditDialog, CDialog)
 	//{{AFX_MSG_MAP(DMMapEditDialog)
@@ -136,6 +144,8 @@ BEGIN_MESSAGE_MAP(DMMapEditDialog, CDialog)
 	ON_BN_CLICKED(IDC_DEBUG_BUTTON, &DMMapEditDialog::OnBnClickedDebugButton)
 	ON_WM_HSCROLL()
 	ON_BN_CLICKED(IDC_RELOAD_TILES_BUTTON, &DMMapEditDialog::OnBnClickedReloadTilesButton)
+	ON_BN_CLICKED(IDC_DEFINE_LEGEND_BUTTON, &DMMapEditDialog::OnBnClickedDefineLegendButton)
+	ON_BN_CLICKED(IDC_OPEN_TRACK_LIST_BUTTON, &DMMapEditDialog::OnBnClickedOpenTrackListButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -220,7 +230,18 @@ BOOL DMMapEditDialog::OnInitDialog()
 	#ifdef _DEBUG
 	(GetDlgItem( IDC_DEBUG_BUTTON ))-> ShowWindow(SW_SHOW);
 	#endif
-	
+
+	#if GAMETABLE_BUILD
+	m_cMapMusicEdit.ShowWindow(SW_SHOW);
+	m_cMusicLabel.ShowWindow(SW_SHOW);
+
+	m_cTrackListButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_FOLDER_ICON_BITMAP))));
+	m_cTrackListButton.ShowWindow(SW_SHOW);
+
+	m_szMapMusic = m_pDNDMap->m_szMapAmbienceMusicName;
+
+	#endif
+
 	UpdateData(FALSE);
 
 	ShowWindow(SW_SHOW);
@@ -364,6 +385,10 @@ void DMMapEditDialog::OnOK()
 	m_pDNDMap->m_nTransGreen = atoi(m_szTransGreen.GetBuffer(0));
 	m_pDNDMap->m_nTransBlue = atoi(m_szTransBlue.GetBuffer(0));
 
+	#if GAMETABLE_BUILD
+	strcpy(m_pDNDMap->m_szMapAmbienceMusicName, m_szMapMusic.Left(255));
+	#endif
+
 	m_pDMMapViewDialog->ForceRefresh();
 
 	CDialog::OnOK();
@@ -495,6 +520,56 @@ void DMMapEditDialog::OnBnClickedAutoScaleMapButton()
 
 	m_pDMMapViewDialog->InvalidateRect(NULL);
 }
+
+void DMMapEditDialog::OnBnClickedDefineLegendButton()
+{
+	CString szPath;
+
+	ZeroMemory(&g_ofn, sizeof(OPENFILENAME));
+	g_ofn.lStructSize = sizeof(OPENFILENAME);
+	g_ofn.nMaxFile = MAX_PATH;
+	g_ofn.nMaxFileTitle = MAX_PATH;
+	g_ofn.Flags = OFN_HIDEREADONLY | OFN_CREATEPROMPT | OFN_OVERWRITEPROMPT | OFN_NOCHANGEDIR;
+
+	g_ofn.hwndOwner = m_hWnd;
+	g_ofn.hInstance = m_pApp->m_hInstance;
+	g_ofn.lpstrFile = g_LG_szFilename;
+	g_ofn.lpstrInitialDir = "C:/";
+	g_ofn.lpstrTitle = "Load legend bitmap file";
+	//g_ofn.lpstrFilter = "Graphics Files (*.bmp)\0*.bmp\0(*.gif)\0*.gif\0(*.jpg)\0*.jpg\0All Files (*.*)\0*.*\0\0";
+	g_ofn.lpstrFilter = "All Files (*.*)\0*.*\0\0";
+	g_ofn.lpstrDefExt = "bmp";
+
+	// Get action template file name
+	if (GetOpenFileName(&g_ofn))
+	{
+		szPath = g_LG_szFilename;
+		szPath.MakeUpper();
+
+		szPath.Replace(m_pApp->m_szEXEPath, "<$DMAPATH>");
+		
+		strcpy(m_pDNDMap->m_szMapLegendPath, szPath.GetBuffer(0));
+
+		InvalidateRect(NULL);
+
+		m_pDNDMap->MarkChanged();
+
+	}
+
+	m_pDMMapViewDialog->InvalidateRect(NULL);
+}
+
+
+void DMMapEditDialog::OnBnClickedOpenTrackListButton()
+{
+	cDMMusicTrackListDialog *pDlg = new cDMMusicTrackListDialog(this, &m_szMapMusic);
+	pDlg->DoModal();
+	delete pDlg;
+
+	UpdateData(FALSE);
+}
+
+
 
 void DMMapEditDialog::OnEnChangeMapNameEdit()
 {
@@ -897,3 +972,6 @@ void DMMapEditDialog::OnBnClickedReloadTilesButton()
 
 	InvalidateRect(NULL);
 }
+
+
+

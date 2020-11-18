@@ -149,6 +149,9 @@ void cDMBaseNPCViewDialog::OnRollStats()
 	
 	if(pMonster != NULL)
 	{
+		m_pNPC->m_nBaseStats[ATTRIB_INT] = 0;
+		m_pNPC->m_nDisplayStats[ATTRIB_INT] = m_pNPC->m_nBaseStats[ATTRIB_INT];
+
 		RollMonsterTreasure(m_pNPC, pMonster, FALSE, FALSE);
 	}
 
@@ -195,6 +198,8 @@ void cDMBaseNPCViewDialog::GetRandomName(BOOL bRename)
 
 void cDMBaseNPCViewDialog::ProcessCharStats()
 {
+	m_dwCharacterID = m_pNPC->m_dwCharacterID;
+
 	m_szBaseCharName = m_pNPC->m_szCharacterName;
 
 	if(m_pNPCViewDialog != NULL)
@@ -204,6 +209,8 @@ void cDMBaseNPCViewDialog::ProcessCharStats()
 		m_szDamageDesc = m_pNPCViewDialog->m_szDamageDesc;
 
 		m_szMoveDesc.Format("%d", m_nCharacterMovementRate);
+
+		m_szHPDesc.Format("%d", m_pNPC->m_nHitPoints - m_pNPC->m_nCurrentDamage);
 	}
 	else
 	{
@@ -448,6 +455,8 @@ void cDMBaseNPCViewDialog::ProcessCharStats()
 			m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pNPC));
 		}
 
+		m_szHPDesc.Format("%d", m_pNPC->m_nHitPoints - m_pNPC->m_nCurrentDamage);
+	
 	}
 }
 
@@ -735,6 +744,7 @@ BEGIN_MESSAGE_MAP(DMNPCViewDialog, CDialog)
 	ON_STN_CLICKED(IDC_NPC_PORTRAIT_BUTTON, &DMNPCViewDialog::OnStnClickedNpcPortraitButton)
 	ON_STN_DBLCLK(IDC_DESC_COMMENT, &DMNPCViewDialog::OnStnDblclickDescComment)
 	ON_STN_DBLCLK(IDC_TT_COMMENT, &DMNPCViewDialog::OnStnDblclickTtComment)
+	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, &DMNPCViewDialog::OnDirtyWindow)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -968,7 +978,7 @@ void DMNPCViewDialog::Refresh()
 		szReplace.Replace("MM2 ", "");
 		m_szDescComment.Replace("<PAGE>", szReplace);
 
-		m_szIntComment.Format("INT: %s", pMonster->m_szIntelligence);
+		m_szIntComment.Format("INT: %s (%d)", pMonster->m_szIntelligence, m_pNPC->m_nDisplayStats[ATTRIB_INT]);
 		m_szMonsterSize.Format("SIZE: %s", pMonster->m_szSize);
 		m_szAttackComment.Format( "SPECIAL ATTACK: %s", pMonster->m_szSpecialAttack);
 		m_szDefenseComment.Format( "SPECIAL DEFENSE: %s", pMonster->m_szSpecialDefense);
@@ -990,6 +1000,7 @@ void DMNPCViewDialog::Refresh()
 
 	m_szHitPoints.Format("%d", m_pNPC->m_nHitPoints);
 	m_szCurrentHitPoints.Format("%d", m_pNPC->m_nHitPoints - m_pNPC->m_nCurrentDamage);
+	m_szHPDesc = m_szCurrentHitPoints;
 
 	if(m_pNPC->m_szCharacterName[0] != 0)
 	{
@@ -1749,15 +1760,24 @@ void DMNPCViewDialog::ProcessCharStats()
 	{
 		m_nBaseArmorClass = pMonster->m_nBaseAC;
 
+		m_pNPC->m_Class[0] = DND_CHARACTER_CLASS_MONSTER;
+
 		m_pNPC->CalculateNPCHitDice(pMonster);
+
+		if (m_pNPC->m_nBaseStats[ATTRIB_INT] == 0)
+		{
+			m_pNPC->m_nBaseStats[ATTRIB_INT] = pMonster->GetIntelligenceStat();
+		}
 	}
 	else
 	{
 		m_nBaseArmorClass = 10;
-
+		m_pNPC->m_nBaseStats[ATTRIB_INT] = 0;
 		m_pNPC->m_nHitDice = 1;
 		m_pNPC->m_nHitDicePlus = 0;
 	}
+
+	m_pNPC->m_nDisplayStats[ATTRIB_INT] = m_pNPC->m_nBaseStats[ATTRIB_INT];
 
 	//armor class calcs
 
@@ -1809,6 +1829,7 @@ void DMNPCViewDialog::ProcessCharStats()
 	//////////////////////////////////////////////
 
 	m_pNPC->m_nLevel[0] = m_pNPC->CalculateCombatLevel();
+	m_pNPC->m_nLevel[1] = m_pNPC->CalculateSaveLevel();
 
 	int nSavesMatrix[5];
 	GetSavingThrows(m_pNPC, nSavesMatrix);
@@ -2093,6 +2114,9 @@ void DMNPCViewDialog::GetRandomName(BOOL bRename)
 void DMNPCViewDialog::OnRollStats() 
 {	
 	m_pNPC->m_bRolled = FALSE;
+
+	m_pNPC->m_nBaseStats[ATTRIB_INT] = 0;
+	m_pNPC->m_nDisplayStats[ATTRIB_INT] = m_pNPC->m_nBaseStats[ATTRIB_INT];
 
 	PDNDMONSTERMANUALENTRY pMonster = NULL;
 	
@@ -3121,4 +3145,11 @@ void DMNPCViewDialog::OnStnDblclickTtComment()
 	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_TREASURE_TYPES);
 	pDlg->DoModal();
 	delete pDlg;
+}
+
+LRESULT DMNPCViewDialog::OnDirtyWindow(UINT wParam, LONG lParam)
+{
+	ProcessCharStats();
+	Refresh();
+	return 0; // I handled this message
 }

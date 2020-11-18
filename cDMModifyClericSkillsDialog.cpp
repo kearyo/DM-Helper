@@ -11,10 +11,16 @@
 
 IMPLEMENT_DYNAMIC(cDMModifyClericSkillsDialog, CDialog)
 
-cDMModifyClericSkillsDialog::cDMModifyClericSkillsDialog(int *pnClericTurnModifiers, CWnd* pParent /*=NULL*/)
+cDMModifyClericSkillsDialog::cDMModifyClericSkillsDialog(CString szCharacterName, int *pnClericTurnModifiers, BOOL bModify, CWnd* pParent /*=NULL*/)
 	: CDialog(cDMModifyClericSkillsDialog::IDD, pParent)
 {
+	m_pApp = (CDMHelperApp *)AfxGetApp();
+
+	m_szCharacterName = szCharacterName;
+
 	m_pnClericTurnModifiers = pnClericTurnModifiers;
+
+	m_bModify = bModify;
 
 	memcpy(m_nClericTurnModifiers, m_pnClericTurnModifiers, 13 * sizeof(int));
 }
@@ -39,6 +45,8 @@ void cDMModifyClericSkillsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_TURN_UNDEAD_EDIT_11, m_szTurnUndeadEdit[10]);
 	DDX_Text(pDX, IDC_TURN_UNDEAD_EDIT_12, m_szTurnUndeadEdit[11]);
 	DDX_Text(pDX, IDC_TURN_UNDEAD_EDIT_13, m_szTurnUndeadEdit[12]);
+	DDX_Control(pDX, IDCANCEL, m_cCancelButton);
+	DDX_Control(pDX, IDOK, m_cOKButton);
 }
 
 
@@ -68,15 +76,56 @@ BOOL cDMModifyClericSkillsDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	for (int i = 0; i < 13; ++i)
+	int nCtrls[] = {
+		IDC_TURN_UNDEAD_EDIT_1,
+		IDC_TURN_UNDEAD_EDIT_2,
+		IDC_TURN_UNDEAD_EDIT_3,
+		IDC_TURN_UNDEAD_EDIT_4,
+		IDC_TURN_UNDEAD_EDIT_5,
+		IDC_TURN_UNDEAD_EDIT_6,
+		IDC_TURN_UNDEAD_EDIT_7,
+		IDC_TURN_UNDEAD_EDIT_8,
+		IDC_TURN_UNDEAD_EDIT_9,
+		IDC_TURN_UNDEAD_EDIT_10,
+		IDC_TURN_UNDEAD_EDIT_11,
+		IDC_TURN_UNDEAD_EDIT_12,
+		IDC_TURN_UNDEAD_EDIT_13 };
+
+
+	if (m_bModify == FALSE)
 	{
-		if (m_nClericTurnModifiers[i] >= 0)
+		SetWindowText("Turn Undead");
+		m_cOKButton.SetWindowText("SUCCESS !");
+		m_cCancelButton.SetWindowText("FAILED");
+
+		(GetDlgItem(IDC_PLUS_MINUS))->ShowWindow(SW_HIDE);
+
+		for (int i = 0; i < 13; ++i)
 		{
-			m_szTurnUndeadEdit[i].Format("+%d", m_nClericTurnModifiers[i]);
+			(GetDlgItem(nCtrls[i]))->EnableWindow(FALSE);
+
+			switch (m_nClericTurnModifiers[i])
+			{
+				case -2: m_szTurnUndeadEdit[i] = "dmn"; break;
+				case -1: m_szTurnUndeadEdit[i] = "turn"; break;
+				case 99: m_szTurnUndeadEdit[i] = "-"; break;
+				default: m_szTurnUndeadEdit[i].Format("%d", m_nClericTurnModifiers[i]); break;
+			}
 		}
-		else
+		
+	}
+	else
+	{
+		for (int i = 0; i < 13; ++i)
 		{
-			m_szTurnUndeadEdit[i].Format("%d", m_nClericTurnModifiers[i]);
+			if (m_nClericTurnModifiers[i] >= 0)
+			{
+				m_szTurnUndeadEdit[i].Format("+%d", m_nClericTurnModifiers[i]);
+			}
+			else
+			{
+				m_szTurnUndeadEdit[i].Format("%d", m_nClericTurnModifiers[i]);
+			}
 		}
 	}
 
@@ -109,14 +158,41 @@ void cDMModifyClericSkillsDialog::Refresh()
 
 void cDMModifyClericSkillsDialog::OnBnClickedOk()
 {
-	Refresh();
-	memcpy(m_pnClericTurnModifiers, m_nClericTurnModifiers, 13 * sizeof(int));
+	if (m_bModify)
+	{
+		Refresh();
+		memcpy(m_pnClericTurnModifiers, m_nClericTurnModifiers, 13 * sizeof(int));
+	}
+	else
+	{
+		if (!m_pApp->PlayPCSoundFX("* PC Cast Spell", m_szCharacterName, "NADA", FALSE, 1)) // "1" is the spell identifier for whatever the first spell is - so the sound is consistent
+		{
+			m_pApp->m_szLoggedError.Format("WARN - SFX (%s PC Cast Spell) NOT FOUND", m_szCharacterName);
+		}
+		if (!m_pApp->PlaySoundFX("TURN UNDEAD"))
+		{
+			m_pApp->m_szLoggedError.Format("WARN - SFX (TURN UNDEAD) NOT FOUND");
+		}
+	}
+
 	CDialog::OnOK();
 }
 
 
 void cDMModifyClericSkillsDialog::OnBnClickedCancel()
 {
+	if (!m_bModify)
+	{
+		if (!m_pApp->PlayPCSoundFX("* PC Cast Spell", m_szCharacterName, "NADA", FALSE, 1))
+		{
+			m_pApp->m_szLoggedError.Format("WARN - SFX (%s PC Cast Spell) NOT FOUND", m_szCharacterName);
+		}
+		if (!m_pApp->PlaySoundFX("SPELL FAILURE"))
+		{
+			m_pApp->m_szLoggedError.Format("WARN - SFX (SPELL FAILURE) NOT FOUND");
+		}
+	}
+
 	CDialog::OnCancel();
 }
 

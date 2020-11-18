@@ -502,6 +502,7 @@ typedef CTypedPtrMap <CMapWordToPtr, WORD, PDNDMAPVIEWDLG> PMAPVIEWMAP;
 
 typedef CTypedPtrMap <CMapStringToString, CString, CString> PSTRINGTOSTRINGMAP;
 
+
 class CDMHelperApp : public CWinApp
 {
 public:
@@ -518,6 +519,7 @@ public:
 	int m_nTotalSpells;
 
 	CString m_szEXEPath;
+	CString m_szLoggedError;
 
 	cDMUpdateParams m_UpdateParams;
 	
@@ -624,6 +626,7 @@ public:
 	Bitmap* m_pIsometricDungeonTilesBitmap;
 	
 	int m_nCalendarSecond;		// for sub-segment time tracking
+	int m_nGlobalRound;			// for spell durations
 
 	DWORD m_dwInventoryFlag;	// flag for validity of object tables
 
@@ -638,6 +641,14 @@ public:
 	DWORD m_dwInitiativeCurrentAttackerID;
 
 	CDMReminderSFXDialog *m_pDMReminderSFXDialog;
+
+	#if GAMETABLE_BUILD
+	CWinThread *m_pGameServerUpdateThread;
+	MiniUpdateMap m_MiniUpdateMap;
+	DWORD m_dwMiniUpdateFlag;
+	BOOL GetServerMiniPosition(char *szMiniName, float *pfX, float *pFY);
+	cDNDSpell m_UtilitySpell;		// used for dragon breat weapons etc.
+	#endif
 
 	#if USE_DX_SOUND
 	SoundClass *m_pDXSound;
@@ -655,6 +666,7 @@ public:
 
 	BOOL m_bSpellFXOnMaps;
 	BOOL m_bSpellFXOnMapsMagicMissile;
+	BOOL m_bEnableGameWatcher;
 
 	BOOL PlayDXSFX(CString szWAVPath);
 
@@ -751,8 +763,15 @@ public:
 
 	int GetCastingTime(cDNDSpell* pSpell);
 
+	BOOL SpellIsDirectDamageSpell(cDNDSpell* pSpell);
+	CString GetCharacterNameFromID(DWORD dwCharacterID);
+	LONG GetCharacterXPFromID(DWORD dwCharacterID);
+	BOOL WoundCharacter(DWORD dwCharacterID, int *nRetDamage);
 	BOOL SpellIsHealingSpell(cDNDSpell* pSpell);
 	BOOL HealCharacter(DWORD dwCharacterID);
+	#if GAMETABLE_BUILD
+	void DragonBreathWeaponSFX(cDMBaseNPCViewDialog *pNPCDialog);
+	#endif
 	void RefreshAllMapViews();
 
 	cDNDRandomEncounterTable *FindEncounterTableByName(CString szTableName);
@@ -775,6 +794,7 @@ public:
 
 	BOOL EncryptRandomSounds(CString szFileName, int *pnNumEncrypts);
 	BOOL EncryptWAVFile(CString szFileName);
+	BOOL SendRemoteMusicCommand(CString szCommand, int nValue = -999);
 
 	#ifdef _DEBUG
 	#if KEARY_BUILD
@@ -806,5 +826,8 @@ public:
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
+
+UINT DMGameServerUpdateThreadProc(LPVOID pData);
+void ProcessMiniDataUpdate(std::string sBuffer);
 
 #endif // !defined(AFX_DMHELPER_H__180AE6A1_F00E_4FB9_878D_216E96C10BB1__INCLUDED_)

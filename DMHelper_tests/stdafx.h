@@ -54,7 +54,9 @@ using namespace Gdiplus;
 #include "ImageEx.h"
 
 
+#include <memory>
 #include <vector>
+#include <map>
 
 #include "DM Helper Common.h"
 #include "ColoredListCtrl.h"
@@ -70,12 +72,7 @@ using namespace Gdiplus;
 #endif // !defined(AFX_STDAFX_H__4FB782FA_3217_4CF2_9FC1_BAAB14031BE1__INCLUDED_)
 #include <afxcontrolbars.h>
 #include <afxdisp.h>
-#include <afxdisp.h>
-#include <afxdisp.h>
 
 
-
-//#include <afxcontrolbars.h>
-// #include <afxcontrolbars.h>
 
 

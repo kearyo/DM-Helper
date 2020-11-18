@@ -1,4 +1,5 @@
 #include "afxwin.h"
+#include "afxcmn.h"
 #if !defined(AFX_DMSOUNDBOARDDIALOG_H__B281FB7F_6CA1_4808_B680_7D5EFB98947D__INCLUDED_)
 #define AFX_DMSOUNDBOARDDIALOG_H__B281FB7F_6CA1_4808_B680_7D5EFB98947D__INCLUDED_
 
@@ -25,6 +26,8 @@ public:
 	BOOL m_bEditMode;
 
 	void Init();
+	int GetVolume();
+	void SetVolume(int nVolume);
 
 // Dialog Data
 	//{{AFX_DATA(DMSoundboardDialog)
@@ -73,6 +76,11 @@ public:
 	CButton m_cImportBoardsButton;
 	CButton m_cResetDXSoundsButton;
 	afx_msg void OnBnClickedResetDxSoundsButton();
+	CString m_szVolume;
+	CSliderCtrl m_cVolumeSlider;
+	afx_msg void OnNMReleasedcaptureVolumeSlider(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
 
 //{{AFX_INSERT_LOCATION}}

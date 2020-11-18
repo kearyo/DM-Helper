@@ -330,6 +330,7 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 	m_szWeaponDesc = _T("");  //for initiative view
 	m_szDamageDesc = _T("");  //for party view
 	m_szMoveDesc = _T("");
+	m_szHPDesc = _T("");
 
 	m_nPage = 0;
 	m_nLastPage = 0;
@@ -607,6 +608,7 @@ BEGIN_MESSAGE_MAP(CDMCharViewDialog, CDialog)
 	ON_STN_CLICKED(IDC_XP1_LABEL, &CDMCharViewDialog::OnStnClickedXp1Label)
 	ON_STN_CLICKED(IDC_XP2_LABEL, &CDMCharViewDialog::OnStnClickedXp2Label)
 	ON_STN_CLICKED(IDC_XP3_LABEL, &CDMCharViewDialog::OnStnClickedXp3Label)
+	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, OnDirtyWindow)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1031,6 +1033,12 @@ void CDMCharViewDialog::OnSelchangeCharClassCombo3()
 	
 }
 
+LRESULT CDMCharViewDialog::OnDirtyWindow(UINT wParam, LONG lParam)
+{
+	ProcessCharStats();
+	Refresh();
+	return 0; // I handled this message
+}
 
 void CDMCharViewDialog::Refresh()
 {
@@ -1167,6 +1175,7 @@ void CDMCharViewDialog::Refresh()
 
 	m_szHitPoints.Format("%d", m_pCharacter->m_nHitPoints);
 	m_szCurrentHitPoints.Format("%d", m_pCharacter->m_nHitPoints - m_pCharacter->m_nCurrentDamage);
+	m_szHPDesc = m_szCurrentHitPoints;
 
 	if(m_bShowHPCheck)
 	{
@@ -2454,6 +2463,8 @@ void CDMCharViewDialog::ProcessCharStats()
 	CString szTemp;
 
 	int nRaceBonus[7] = {0,0,0,0,0,0,0};
+
+	m_dwCharacterID = m_pCharacter->m_dwCharacterID;
 
 	m_bNPCCheck = m_pCharacter->m_bIsHenchman || m_pCharacter->m_bPocketPC;
 
@@ -5642,7 +5653,7 @@ void CDMCharViewDialog::OnBnClickedAssassinSkillsModButton()
 
 void CDMCharViewDialog::OnBnClickedClericTurnModButton()
 {
-	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(m_pCharacter->m_nClericTurnModifiers);
+	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(m_pCharacter->m_szCharacterName, m_pCharacter->m_nClericTurnModifiers, TRUE);
 	pDlg->DoModal();
 	delete pDlg;
 

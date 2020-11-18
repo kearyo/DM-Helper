@@ -115,7 +115,7 @@ public:
 	void Cleanup();
 	void SavePartyExternal();
 
-	void LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_TYPES nType, char *szName, DWORD dwID, LONG lAmount, char *szComment);
+	void LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_TYPES nType, char *szName, DWORD dwID, LONG lAmount, char *szComment, BOOL bRefresh = TRUE);
 
 	void GenerateStatBlock(cDNDParty *pParty);
 
@@ -129,7 +129,6 @@ public:
 	void InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialog, cDMBaseNPCViewDialog *pAttackingNPCDialog, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP);
 	void InitiativeMissileAttack(CDMCharViewDialog *pAttackingCharacterDialog, cDMBaseNPCViewDialog *pAttackingNPCDialog, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP);
 	BOOL InitiativeWound(int nDamage, CDMCharViewDialog *pTargetCharacterDialog, cDMBaseNPCViewDialog *pTargetNPCDialog, BOOL bGrantXP);
-
 
 // Dialog Data
 	//{{AFX_DATA(DMPartyDialog)
@@ -254,6 +253,7 @@ public:
 	CString m_szPartyNameStatic;
 	afx_msg void OnBnClickedRandomEncounterButton();
 	afx_msg LRESULT OnDNDMessage(UINT wParam, LONG lParam);
+	afx_msg LRESULT OnDirtyWindow(UINT wParam, LONG lParam);
 	CEdit m_cSegmentEdit;
 	CEdit m_cRoundEdit;
 	afx_msg void OnBnClickedStatBlockButton();
@@ -262,6 +262,10 @@ public:
 	afx_msg void OnBnClickedPickLockButton();
 	CButton m_cRecoverAmmoButton;
 	afx_msg void OnBnClickedRecoverAmmoButton();
+	CBitmapButton m_cMusicButton;
+	afx_msg void OnBnClickedMusicButton();
+	CButton m_cTurnUndeadButton;
+	afx_msg void OnBnClickedTurnUndeadButton();
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -15,11 +15,15 @@
 
 IMPLEMENT_DYNAMIC(CDMInitiativeDialog, CDialog)
 
+#define START_TURN_TIMER	21
+
 CDMInitiativeDialog::CDMInitiativeDialog(CWnd* pParent /*=NULL*/)
 	: CDialog(CDMInitiativeDialog::IDD, pParent)
 	, m_bRollPCs(FALSE)
 	, m_szDebugText(_T(""))
 	, m_szAttacksText(_T("ATTACK #X of X THIS ROUND"))
+	, m_szCombatNote(_T(""))
+	, m_szTurnTimer(_T("TIME : 00s"))
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();
 
@@ -30,6 +34,7 @@ CDMInitiativeDialog::CDMInitiativeDialog(CWnd* pParent /*=NULL*/)
 	m_nMaxRoundTime = -1;
 	m_nNumAttacksThisRound = 0;
 	m_nCompletedAttacksThisRound = 0;
+	m_nTurnSecondsRemaining = 0;
 
 	m_pLastAttackCharViewDlg = NULL;
 
@@ -57,6 +62,16 @@ void CDMInitiativeDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_DEBUG_TEXT, m_szDebugText);
 	DDX_Text(pDX, IDC_ATTACKS_TEXT, m_szAttacksText);
 	DDX_Control(pDX, IDC_SPELL_BUTTON, m_cSpellButton);
+	DDX_Control(pDX, IDC_MUSIC_BUTTON, m_cMusicButton);
+	DDX_Text(pDX, IDC_COMBAT_NOTE, m_szCombatNote);
+	DDX_Control(pDX, IDC_COMBAT_NOTE, m_cCombatNote);
+	DDX_Control(pDX, IDC_WEAPON_SWAP_BUTTON, m_cWeaponSwapButton);
+	DDX_Control(pDX, IDC_HIT_BUTTON, m_cAttackButton);
+	DDX_Control(pDX, IDC_MISS_BUTTON, m_cMissButton);
+	DDX_Control(pDX, IDC_MOVE_BUTTON, m_cMoveButton);
+	DDX_Control(pDX, IDC_SKIP_BUTTON, m_cSkipButton);
+	DDX_Text(pDX, IDC_TIMER_NOTE, m_szTurnTimer);
+	DDX_Control(pDX, IDC_TIMER_NOTE, m_cTurnTimerNote);
 }
 
 
@@ -84,6 +99,10 @@ BEGIN_MESSAGE_MAP(CDMInitiativeDialog, CDialog)
 	ON_BN_CLICKED(IDC_WEAPON_SWAP_BUTTON, &CDMInitiativeDialog::OnBnClickedWeaponSwapButton)
 	ON_BN_CLICKED(IDC_SKIP_BUTTON, &CDMInitiativeDialog::OnBnClickedSkipButton)
 	ON_BN_CLICKED(IDC_MOVE_BUTTON, &CDMInitiativeDialog::OnBnClickedMoveButton)
+	ON_BN_CLICKED(IDC_MUSIC_BUTTON, &CDMInitiativeDialog::OnBnClickedMusicButton)
+	ON_WM_TIMER()
+	ON_STN_DBLCLK(IDC_TIMER_NOTE, &CDMInitiativeDialog::OnStnDblclickTimerNote)
+	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, &CDMInitiativeDialog::OnDirtyWindow)
 END_MESSAGE_MAP()
 
 
@@ -96,6 +115,11 @@ BOOL CDMInitiativeDialog::OnInitDialog()
 	m_cUpListButton.LoadBitmaps(IDB_UP_ARROW_BITMAP, IDB_UP_ARROW_PRESSED_BITMAP);
 	m_cDownListButton.LoadBitmaps(IDB_DOWN_ARROW_BITMAP, IDB_DOWN_ARROW_PRESSED_BITMAP);
 
+	#if GAMETABLE_BUILD
+	m_cMusicButton.LoadBitmaps(IDB_MUSIC_NOTE_BITMAP, IDB_MUSIC_NOTE_ALERT_BITMAP);
+	m_cMusicButton.ShowWindow(SW_SHOW);
+	#endif
+
 	int nCount = 0;
 	m_cCharacterList.InsertColumn( nCount++, "Character", LVCFMT_LEFT, 150, -1 );
 	m_cCharacterList.InsertColumn( nCount++, "Roll", LVCFMT_LEFT, 50, -1 );
@@ -105,6 +129,7 @@ BOOL CDMInitiativeDialog::OnInitDialog()
 	m_cCharacterList.InsertColumn( nCount++, "Damage", LVCFMT_LEFT, 140, -1);
 	m_cCharacterList.InsertColumn(nCount++, "Weapon", LVCFMT_LEFT, 140, -1);
 	m_cCharacterList.InsertColumn(nCount++, "Move", LVCFMT_LEFT, 60, -1);
+	m_cCharacterList.InsertColumn(nCount++, "HP", LVCFMT_LEFT, 60, -1);
 
 	m_pParentPartyDialog->m_pInitiativeDialog = this;
 
@@ -113,6 +138,8 @@ BOOL CDMInitiativeDialog::OnInitDialog()
 #ifdef _DEBUG
 	m_cDebugText.ShowWindow(SW_SHOW);
 #endif
+
+	SetTimer(8088, 1000, NULL);
 
 	ShowWindow(SW_SHOW);
 
@@ -324,7 +351,7 @@ void CDMInitiativeDialog::Refresh()
 
 				m_cCharacterList.SetItemText(nRow, nCol++, pCharDlg->m_szMoveDesc);
 
-				
+				m_cCharacterList.SetItemText(nRow, nCol++, pCharDlg->m_szHPDesc);
 
 				m_cCharacterList.SetItemData(nRow, (DWORD)pCharDlg);
 			}
@@ -470,6 +497,8 @@ void CDMInitiativeDialog::Refresh()
 				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szWeaponDesc);
 
 				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szMoveDesc);
+
+				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szHPDesc);
 
 				m_cCharacterList.SetItemData(nRow, (DWORD)pNPCDlg);
 			}
@@ -902,6 +931,15 @@ void CDMInitiativeDialog::OnLvnItemchangedCharacterList(NMHDR *pNMHDR, LRESULT *
 			//#endif
 
 			m_nOldCursor = nCursor;
+
+			if (m_pParentPartyDialog->m_pParty->CharacterIsPartyMember(pDlg->m_dwCharacterID))
+			{
+				m_nTurnSecondsRemaining = START_TURN_TIMER;
+			}
+			else
+			{
+				m_nTurnSecondsRemaining = 0;
+			}
 		}
 	}
 
@@ -1047,7 +1085,7 @@ void CDMInitiativeDialog::OnPaint()
 	listRect.top += 34;
 	listRect.left += 50;
 	listRect.right -= 10;
-	listRect.bottom -= 60;
+	listRect.bottom -= 70;
 
 	m_cCharacterList.MoveWindow(&listRect, FALSE);
 
@@ -1095,6 +1133,92 @@ void CDMInitiativeDialog::OnPaint()
 	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
 
 	m_cRollPCsCheck.MoveWindow(&buttonRect, FALSE);
+
+	////////////////////
+
+	buttonRect.left += (buttonSizeRect.right - buttonSizeRect.left + 12);
+
+	m_cWeaponSwapButton.GetClientRect(&buttonSizeRect);
+
+	buttonRect.right = buttonRect.left + (buttonSizeRect.right - buttonSizeRect.left);
+	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
+
+	m_cWeaponSwapButton.MoveWindow(&buttonRect, FALSE);
+
+	////////////////////
+
+	buttonRect.left += (buttonSizeRect.right - buttonSizeRect.left + 5);
+
+	m_cAttackButton.GetClientRect(&buttonSizeRect);
+
+	buttonRect.right = buttonRect.left + (buttonSizeRect.right - buttonSizeRect.left);
+	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
+
+	m_cAttackButton.MoveWindow(&buttonRect, FALSE);
+
+	////////////////////
+
+	buttonRect.left += (buttonSizeRect.right - buttonSizeRect.left + 5);
+
+	m_cMissButton.GetClientRect(&buttonSizeRect);
+
+	buttonRect.right = buttonRect.left + (buttonSizeRect.right - buttonSizeRect.left);
+	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
+
+	m_cMissButton.MoveWindow(&buttonRect, FALSE);
+
+	////////////////////
+
+	buttonRect.left += (buttonSizeRect.right - buttonSizeRect.left + 5);
+
+	m_cSpellButton.GetClientRect(&buttonSizeRect);
+
+	buttonRect.right = buttonRect.left + (buttonSizeRect.right - buttonSizeRect.left);
+	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
+
+	m_cSpellButton.MoveWindow(&buttonRect, FALSE);
+
+	////////////////////
+
+	buttonRect.left += (buttonSizeRect.right - buttonSizeRect.left + 5);
+
+	m_cMoveButton.GetClientRect(&buttonSizeRect);
+
+	buttonRect.right = buttonRect.left + (buttonSizeRect.right - buttonSizeRect.left);
+	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
+
+	m_cMoveButton.MoveWindow(&buttonRect, FALSE);
+
+	////////////////////
+
+	buttonRect.left += (buttonSizeRect.right - buttonSizeRect.left + 5);
+
+	m_cSkipButton.GetClientRect(&buttonSizeRect);
+
+	buttonRect.right = buttonRect.left + (buttonSizeRect.right - buttonSizeRect.left);
+	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
+
+	m_cSkipButton.MoveWindow(&buttonRect, FALSE);
+
+	////////////////////////////
+
+	buttonRect.left = 0;
+	buttonRect.top = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top) + 8;
+
+	m_cCombatNote.GetClientRect(&buttonSizeRect);
+
+	buttonRect.right = buttonRect.left + (buttonSizeRect.right - buttonSizeRect.left);
+	buttonRect.bottom = buttonRect.top + (buttonSizeRect.bottom - buttonSizeRect.top);
+
+	m_cCombatNote.MoveWindow(&buttonRect, FALSE);
+
+
+	////////////////////////////
+
+
+
+	//m_cTurnTimerNote.MoveWindow(&buttonRect, FALSE);
+	
 
 }
 
@@ -1200,6 +1324,7 @@ CDMBaseCharViewDialog *CDMInitiativeDialog::GetSelectedCharacterDialog()
 
 void CDMInitiativeDialog::OnBnClickedHitButton()
 {
+	m_nTurnSecondsRemaining = 0;
 	
 	if (FALSE == IsSelectedCharacterAlive())
 	{
@@ -1229,6 +1354,8 @@ void CDMInitiativeDialog::OnBnClickedHitButton()
 
 void CDMInitiativeDialog::OnBnClickedMissButton()
 {
+	m_nTurnSecondsRemaining = 0;
+
 	if (FALSE == IsSelectedCharacterAlive())
 	{
 		NextSegment();
@@ -1252,6 +1379,8 @@ void CDMInitiativeDialog::OnBnClickedMissButton()
 
 void CDMInitiativeDialog::OnBnClickedMoveButton()
 {
+	m_nTurnSecondsRemaining = 0;
+
 	if (FALSE == IsSelectedCharacterAlive())
 	{
 		NextSegment();
@@ -1293,12 +1422,16 @@ void CDMInitiativeDialog::OnBnClickedMoveButton()
 
 void CDMInitiativeDialog::OnBnClickedSkipButton()
 {
+	m_nTurnSecondsRemaining = 0;
+
 	NextSegment();
 }
 
 
 void CDMInitiativeDialog::OnBnClickedWeaponSwapButton()
 {
+	m_nTurnSecondsRemaining = 0;
+
 	m_pParentPartyDialog->ClickWeaponSwapButton(IsSelectedCharacterInOpponentParty());
 
 	CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog*)m_cCharacterList.GetItemData(m_nOldCursor);
@@ -1312,6 +1445,8 @@ void CDMInitiativeDialog::OnBnClickedWeaponSwapButton()
 
 void CDMInitiativeDialog::OnBnClickedSpellButton()
 {
+	m_nTurnSecondsRemaining = 0;
+
 	if (FALSE == IsSelectedCharacterAlive())
 	{
 		NextSegment();
@@ -1320,10 +1455,10 @@ void CDMInitiativeDialog::OnBnClickedSpellButton()
 
 	CDMBaseCharViewDialog *pDlg = GetSelectedCharacterDialog();
 
-	if (pDlg->m_bHasBreathWeapon == FALSE)
-	{
-		ClearSelectedCharacterTarget();
-	}
+	//if (pDlg->m_bHasBreathWeapon == FALSE)
+	//{
+	//	ClearSelectedCharacterTarget();  ??? why did we do this ?
+	//}
 
 	m_pParentPartyDialog->ClickSpellButton(IsSelectedCharacterInOpponentParty());
 
@@ -1360,8 +1495,104 @@ void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 
 	m_nNumAttacksThisRound = pDlg->GetAttacksPerRound(m_pParentPartyDialog->m_pParty->m_nRound);
 
+	m_szCombatNote = _T("");
+	CString szTemp = _T("");
+
+	switch (pDlg->m_CharViewType)
+	{
+		case DND_CHAR_VIEW_TYPE_PC:
+		{
+			CDMCharViewDialog* pCharViewDlg = (CDMCharViewDialog*)pDlg;
+			
+			if (pCharViewDlg->m_pCharacter != NULL)
+			{
+				if (IsMissileWeapon(&pCharViewDlg->m_pCharacter->m_SelectedWeapons[0]))
+				{
+					m_szCombatNote = _T("Missiles: -5 at long range, -2 at medium range");
+				}
+
+				int nSpecializedToHitBonus = 0;
+				int nSpecializedDamageBonus = 0;
+				if (pCharViewDlg->m_pCharacter->IsProficientWithWeapon(&pCharViewDlg->m_pCharacter->m_SelectedWeapons[0], &nSpecializedToHitBonus, &nSpecializedDamageBonus) == FALSE)
+				{
+					if (m_szCombatNote != _T(""))
+					{
+						m_szCombatNote += _T(" : ");
+					}
+
+					int nProfPenalty = 0;
+					int nNumProfs = CalculateWeaponProficiencies(pCharViewDlg->m_pCharacter, &nProfPenalty);
+
+					szTemp.Format("NOT PROFICIENT WITH THIS WEAPON ! (%d)", nProfPenalty);
+
+					m_szCombatNote += szTemp;
+				}
+			}
+
+			break;
+		}
+		case DND_CHAR_VIEW_TYPE_NPC:
+		{
+			break;
+		}
+	}
+
 	m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
+
+	UpdateData(FALSE);
+
 }
 
 
+void CDMInitiativeDialog::OnBnClickedMusicButton()
+{
+	m_pApp->SendRemoteMusicCommand("SETMOOD COMBAT");
+}
 
+
+void CDMInitiativeDialog::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == 8088)
+	{
+		if (m_nTurnSecondsRemaining == 6)
+		{
+			m_pApp->PlaySoundFX("Time's Ticking");
+		}
+		else if (m_nTurnSecondsRemaining == 1)
+		{
+			m_pApp->PlaySoundFX("Time's Up");
+		}
+
+		--m_nTurnSecondsRemaining;
+
+		if (m_nTurnSecondsRemaining < 0)
+		{
+			m_nTurnSecondsRemaining = 0;
+		}
+
+		m_szTurnTimer.Format("TIME : %02ds", m_nTurnSecondsRemaining);
+		UpdateData(FALSE);
+	}
+
+	CDialog::OnTimer(nIDEvent);
+}
+
+
+void CDMInitiativeDialog::OnStnDblclickTimerNote()
+{
+	if (m_nTurnSecondsRemaining == 0)
+	{
+		m_nTurnSecondsRemaining = START_TURN_TIMER;
+	}
+	else
+	{
+		m_nTurnSecondsRemaining = 0;
+	}
+}
+
+LRESULT CDMInitiativeDialog::OnDirtyWindow(UINT wParam, LONG lParam)
+{
+	Refresh();
+
+	return 0; // I handled this message
+}

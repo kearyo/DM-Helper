@@ -17,6 +17,7 @@ CDMFileManagementDialog::CDMFileManagementDialog(DMLoadFileDescriptor *_pFileDes
 	: CDialog(CDMFileManagementDialog::IDD, pParent)
 	, m_szDebugString(_T(""))
 	, m_szFileNameEdit(_T(""))
+	, m_szSearchString(_T(""))
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();
 
@@ -44,6 +45,11 @@ CDMFileManagementDialog::CDMFileManagementDialog(DMLoadFileDescriptor *_pFileDes
 	m_nOldScrollOffset = 0;
 
 	memset(m_bIsDirectory, 0, 16 * sizeof(BOOL));
+
+	for (int i = 0; i < 16; ++i)
+	{
+		m_szDirectories[i] = _T("");
+	}
 }
 
 CDMFileManagementDialog::~CDMFileManagementDialog()
@@ -93,6 +99,9 @@ void CDMFileManagementDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_FILETYPES_CHECK, m_cShowAllFileTypesCheck);
 	DDX_Control(pDX, IDC_DELETE_FOLDER_BUTTON, m_cDeleteFolderButton);
 	DDX_Control(pDX, IDC_GROUP_STATIC, m_cGroupBox);
+	DDX_Text(pDX, IDC_SEARCH_EDIT, m_szSearchString);
+	DDX_Control(pDX, IDC_FILENAME_EDIT, m_cFileNameEdit);
+	DDX_Control(pDX, IDC_SEARCH_EDIT, m_cSearchEdit);
 }
 
 
@@ -122,6 +131,8 @@ BEGIN_MESSAGE_MAP(CDMFileManagementDialog, CDialog)
 	ON_BN_CLICKED(IDC_DELETE_BUTTON, &CDMFileManagementDialog::OnBnClickedDeleteButton)
 	ON_BN_CLICKED(IDC_FILETYPES_CHECK, &CDMFileManagementDialog::OnBnClickedFiletypesCheck)
 	ON_BN_CLICKED(IDC_DELETE_FOLDER_BUTTON, &CDMFileManagementDialog::OnBnClickedDeleteFolderButton)
+	ON_WM_MOUSEWHEEL()
+	ON_EN_CHANGE(IDC_SEARCH_EDIT, &CDMFileManagementDialog::OnEnChangeSearchEdit)
 END_MESSAGE_MAP()
 
 
@@ -132,12 +143,16 @@ BOOL CDMFileManagementDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	m_cFileNameEdit.ShowWindow(SW_HIDE);
+
 	CString szWindowTitle = _T("Load ");
 
 	if (m_pFileDescriptor->m_bSave)
 	{
 		szWindowTitle = _T("Save ");
 		m_szFileNameEdit = m_pFileDescriptor->m_szInitialFileName;
+		m_cFileNameEdit.ShowWindow(SW_SHOW);
+		m_cSearchEdit.EnableWindow(FALSE);
 	}
 
 	if (m_pFileDescriptor->m_szFileTypes == _T(".dmp"))
@@ -241,7 +256,9 @@ BOOL CDMFileManagementDialog::OnInitDialog()
 
 	Refresh();
 
-	return TRUE;  // return TRUE unless you set the focus to a control
+	m_cSearchEdit.SetFocus();
+
+	return FALSE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
@@ -251,6 +268,7 @@ void CDMFileManagementDialog::Refresh()
 	{
 		m_FileButtons[i]->ShowWindow(SW_HIDE);
 		m_FileButtons[i]->EnableWindow(TRUE);
+		m_szDirectories[i] = _T("");
 	}
 
 	memset(m_bIsDirectory, 0, 16 * sizeof(BOOL));
@@ -277,6 +295,14 @@ void CDMFileManagementDialog::Refresh()
 	DirPath += m_szSubDirectory;
 	DirPath.Replace("^", "\\");
 
+	BOOL bSubSearch = FALSE;
+	CString szSearchString = m_szSearchString;
+	if (szSearchString.GetLength() > 0)
+	{
+		bSubSearch = TRUE;
+		szSearchString.MakeUpper(); 
+	}
+
 	m_szDebugString = m_szPath + m_szSubDirectory;
 
 	int nPos = m_szSubDirectory.ReverseFind('^');
@@ -301,6 +327,7 @@ void CDMFileManagementDialog::Refresh()
 
 			++nIndex;
 		}
+
 		++nItemsCount;
 	}
 
@@ -330,28 +357,38 @@ void CDMFileManagementDialog::Refresh()
 					continue;
 				}
 
-				CString szDirName = strFileName;
-
-				if (nItemsCount >= m_nScrollOffset)
+				if (bSubSearch == FALSE)
 				{
-					if (nIndex < 16)
+					CString szDirName = strFileName;
+
+					if (nItemsCount >= m_nScrollOffset)
 					{
-						m_FileButtons[nIndex]->m_nAlignStyle = CMFCButton::ALIGN_LEFT;
-						m_FileButtons[nIndex]->SetFont(&m_ListFont);
+						if (nIndex < 16)
+						{
+							m_FileButtons[nIndex]->m_nAlignStyle = CMFCButton::ALIGN_LEFT;
+							m_FileButtons[nIndex]->SetFont(&m_ListFont);
 
-						m_FileButtons[nIndex]->SetImage(IDB_FOLDER_ICON_BITMAP, IDB_FOLDER_ICON_BITMAP);
-						m_FileButtons[nIndex]->SetWindowText(szDirName);
+							m_FileButtons[nIndex]->SetImage(IDB_FOLDER_ICON_BITMAP, IDB_FOLDER_ICON_BITMAP);
+							m_FileButtons[nIndex]->SetWindowText(szDirName);
 
-						m_bIsDirectory[nIndex] = TRUE;
+							m_bIsDirectory[nIndex] = TRUE;
 
-						m_FileButtons[nIndex]->ShowWindow(SW_SHOW);
+							m_FileButtons[nIndex]->ShowWindow(SW_SHOW);
+						}
+
+						++nIndex;
 					}
 
-					++nIndex;
-				}
-				++nItemsCount;
+					++nItemsCount;
 
-				continue;
+					continue;
+				}
+				else
+				{			
+					CString szDirName = DirPath + "\\" + strFileName;
+					SearchSubDirectory(szDirName, szSearchString, bShowAll, &nItemsCount, &nIndex);
+					TRACE("!\n");
+				}
 			}
 
 			strFileName = find.GetFileName();
@@ -362,6 +399,16 @@ void CDMFileManagementDialog::Refresh()
 			{
 				if ((bShowAll || ext4.CompareNoCase(m_pFileDescriptor->m_szFileTypes) == 0) || ext5.CompareNoCase(m_pFileDescriptor->m_szFileTypes) == 0)
 				{
+					if (bSubSearch)
+					{
+						CString szTemp = strFileName;
+						szTemp.MakeUpper();
+						if (szTemp.Find(szSearchString) == -1)
+						{
+							continue;
+						}
+					}
+
 					if (nItemsCount >= m_nScrollOffset)
 					{
 						if (nIndex < 16)
@@ -371,6 +418,8 @@ void CDMFileManagementDialog::Refresh()
 
 							m_FileButtons[nIndex]->SetImage((HBITMAP)NULL);
 							m_FileButtons[nIndex]->SetWindowText(strFileName);
+
+							m_szDirectories[nIndex] = DirPath;
 
 							m_FileButtons[nIndex]->ShowWindow(SW_SHOW);
 
@@ -402,6 +451,91 @@ void CDMFileManagementDialog::Refresh()
 	UpdateData(FALSE);
 }
 
+void CDMFileManagementDialog::SearchSubDirectory(CString szDirPath, CString szSearchString, BOOL bShowAll, int *pnItemsCount, int *pnIndex)
+{
+	if (!szDirPath.IsEmpty())
+	{
+		CFileFind find;
+		CString strFile;
+
+		if (szDirPath.Right(1) != _T("\\"))
+			strFile = szDirPath + _T("\\*.*");
+		else
+			strFile = szDirPath + _T("*.*");
+
+		BOOL bFound = find.FindFile(strFile);
+
+		while (bFound)
+		{
+			bFound = find.FindNextFile();
+			CString strFileName;
+
+			if (find.IsDirectory())
+			{
+				strFileName = find.GetFileName();
+
+				if (strFileName == _T(".") || strFileName == _T("..") || strFileName == _T("portraits") || strFileName == _T("bitmaps") || strFileName == _T("icons"))
+				{
+					continue;
+				}
+
+				CString szDirName = szDirPath + "\\" + strFileName;
+
+				SearchSubDirectory(szDirName, szSearchString, bShowAll, pnItemsCount, pnIndex);
+			}
+
+			strFileName = find.GetFileName();
+			CString ext4 = strFileName.Right(4);
+			CString ext5 = strFileName.Right(5);
+
+			if (!strFileName.IsEmpty() && (strFileName.GetLength()>4))
+			{
+				if ((bShowAll || ext4.CompareNoCase(m_pFileDescriptor->m_szFileTypes) == 0) || ext5.CompareNoCase(m_pFileDescriptor->m_szFileTypes) == 0)
+				{
+					
+					CString szTemp = strFileName;
+					szTemp.MakeUpper();
+					if (szTemp.Find(szSearchString) == -1)
+					{
+						continue;
+					}
+					
+					if (*pnItemsCount >= m_nScrollOffset)
+					{
+						if (*pnIndex < 16)
+						{
+							m_FileButtons[*pnIndex]->m_nAlignStyle = CMFCButton::ALIGN_LEFT;
+							m_FileButtons[*pnIndex]->SetFont(&m_ListFont);
+
+							m_FileButtons[*pnIndex]->SetImage((HBITMAP)NULL);
+							m_FileButtons[*pnIndex]->SetWindowText(strFileName);
+
+							m_szDirectories[*pnIndex] = szDirPath;
+
+							m_FileButtons[*pnIndex]->ShowWindow(SW_SHOW);
+
+							if (ext4.CompareNoCase(m_pFileDescriptor->m_szFileTypes) == 0)
+							{
+								m_FileButtons[*pnIndex]->EnableWindow(TRUE);
+							}
+							else
+							{
+								m_FileButtons[*pnIndex]->EnableWindow(FALSE);
+							}
+						}
+
+
+						++*pnIndex;
+					}
+
+					++*pnItemsCount;
+				}
+			}
+		}
+
+	}
+}
+
 void CDMFileManagementDialog::SelectedFile(int nSelected)
 {
 	CString szName;
@@ -419,7 +553,7 @@ void CDMFileManagementDialog::SelectedFile(int nSelected)
 	{
 		if (m_bIsDirectory[nSelected] == FALSE)
 		{
-			CString szPath = m_szPath;
+			CString szPath = m_szDirectories[nSelected]; //m_szPath;
 
 			m_szFileNameEdit = szName;
 
@@ -610,45 +744,58 @@ void CDMFileManagementDialog::OnPaint()
 		}
 	}
 
-	if (m_szFileNameEdit.GetLength() > 0)
+	if (m_szSearchString.GetLength() > 0)
 	{
-		m_cOKButton.EnableWindow(TRUE);
-	}
-	else
-	{
-		m_cOKButton.EnableWindow(FALSE);
-	}
-
-	if (m_szCutFileName == _T(""))
-	{
-		m_cPasteFileButton.EnableWindow(FALSE);
-	}
-	else
-	{
-		m_cPasteFileButton.EnableWindow(TRUE);
-	}
-
-	if (m_nLastButtonSelected == -1)
-	{
+		m_cNewFolderButton.EnableWindow(FALSE);
 		m_cCopyFileButton.EnableWindow(FALSE);
+		m_cPasteFileButton.EnableWindow(FALSE);
 		m_cDeleteFileButton.EnableWindow(FALSE);
-	}
-	else
-	{
-		m_cCopyFileButton.EnableWindow(TRUE);
-		m_cDeleteFileButton.EnableWindow(TRUE);
-	}
-
-	BOOL bShowAll = m_cShowAllFileTypesCheck.GetCheck();
-	BOOL bButtonEnabled = m_FileButtons[1]->IsWindowVisible();
-
-	if (bShowAll && m_bTopIsUpDirectory && bButtonEnabled == FALSE)
-	{
-		m_cDeleteFolderButton.EnableWindow(TRUE);
-	}
-	else
-	{
 		m_cDeleteFolderButton.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_cNewFolderButton.EnableWindow(TRUE);
+
+		if (m_szFileNameEdit.GetLength() > 0)
+		{
+			m_cOKButton.EnableWindow(TRUE);
+		}
+		else
+		{
+			m_cOKButton.EnableWindow(FALSE);
+		}
+
+		if (m_szCutFileName == _T(""))
+		{
+			m_cPasteFileButton.EnableWindow(FALSE);
+		}
+		else
+		{
+			m_cPasteFileButton.EnableWindow(TRUE);
+		}
+
+		if (m_nLastButtonSelected == -1)
+		{
+			m_cCopyFileButton.EnableWindow(FALSE);
+			m_cDeleteFileButton.EnableWindow(FALSE);
+		}
+		else
+		{
+			m_cCopyFileButton.EnableWindow(TRUE);
+			m_cDeleteFileButton.EnableWindow(TRUE);
+		}
+
+		BOOL bShowAll = m_cShowAllFileTypesCheck.GetCheck();
+		BOOL bButtonEnabled = m_FileButtons[1]->IsWindowVisible();
+
+		if (bShowAll && m_bTopIsUpDirectory && bButtonEnabled == FALSE)
+		{
+			m_cDeleteFolderButton.EnableWindow(TRUE);
+		}
+		else
+		{
+			m_cDeleteFolderButton.EnableWindow(FALSE);
+		}
 	}
 	
 }
@@ -708,6 +855,39 @@ void CDMFileManagementDialog::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pSc
 
 }
 
+BOOL CDMFileManagementDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	if (zDelta > 0 && m_nScrollOffset > 0)
+	{
+		m_nScrollOffset -= 1;
+
+		if (m_nScrollOffset < 0)
+			m_nScrollOffset = 0;
+
+		TRACE("UP WHEEL %d\n", m_nScrollOffset);
+		Refresh();
+
+	}
+	else if (zDelta < 0)
+	{
+		m_nScrollOffset += 1;
+
+		int nMin = 0;
+		int nMax = 0;
+		m_cFileScrollBar.GetScrollRange(&nMin, &nMax);
+
+		if (m_nScrollOffset >= nMax)
+			m_nScrollOffset = nMax;
+
+		TRACE("DN WHEEL %d\n", m_nScrollOffset);
+
+		Refresh();
+	}
+
+	return CDialog::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+
 BOOL CDMFileManagementDialog::LoadCharacterFromFile(char *szFileName)
 {
 	FILE *pInFile = fopen(szFileName, "rb");
@@ -734,9 +914,19 @@ BOOL CDMFileManagementDialog::LoadCharacterFromFile(char *szFileName)
 void CDMFileManagementDialog::OnBnClickedOk()
 {
 	UpdateData(TRUE);
-	
+
+
 	m_pFileDescriptor->m_bSuccess = TRUE;
-	m_pFileDescriptor->m_szReturnedPath = m_szPath + m_szSubDirectory + "\\" + m_szFileNameEdit;
+
+	if (m_nLastButtonSelected < 0)
+	{
+		m_pFileDescriptor->m_szReturnedPath = m_szPath + m_szSubDirectory + "\\" + m_szFileNameEdit;
+	}
+	else
+	{
+		m_pFileDescriptor->m_szReturnedPath = m_szDirectories[m_nLastButtonSelected] + "\\" + m_szFileNameEdit;
+	}
+
 	m_pFileDescriptor->m_szReturnedPath.Replace("^", "//");
 
 	if (m_pFileDescriptor->m_szReturnedPath.Find(m_pFileDescriptor->m_szFileTypes) < 0)
@@ -858,4 +1048,12 @@ void CDMFileManagementDialog::OnBnClickedDeleteFolderButton()
 
 		OnBnClickedFileButton1();
 	}
+}
+
+
+void CDMFileManagementDialog::OnEnChangeSearchEdit()
+{
+	UpdateData(TRUE);
+
+	Refresh();
 }

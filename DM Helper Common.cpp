@@ -748,7 +748,6 @@ BOOL cDNDParty::CharacterIsPartyMember(DWORD dwCharacterID)
 void cDNDCalendar::Initialize()
 {
 	//calculate phase points in the moon cycles
-
 	for(int i = 0; i < m_nMoons; ++i)
 	{
 		m_fMoonPhasePoint[i][0] = 0.0f;
@@ -763,7 +762,15 @@ void cDNDCalendar::Initialize()
 		m_fMoonPhasePoint[i][0] = m_fMoonCycle[i];
 	}
 
+	//calculate total days in year
+	m_nDaysInYear = 0;
+	for (int i = 0; i < m_nMonthsInYear; ++i)
+	{
+		m_nDaysInYear += m_nDaysInMonth[i];
+	}
+
 }
+
 
 float cDNDCalendar::GetMoonCycleDay(int nMoon, int nFindMonth, int nFindDayofMonth, int nFindYear, float fCycleStart)
 {
@@ -975,6 +982,32 @@ int cDNDCalendar::FindDayOfWeek(int nFindMonth, int nFindDayofMonth, int nFindYe
 	return 0;
 }
 
+int cDNDCalendar::FindDayofYear(int nFindMonth, int nFindDayofMonth)
+{
+	int nRetDay = 0;
+	for (int i = 0; i < nFindMonth; ++i)
+	{
+		nRetDay += m_nDaysInMonth[i];
+	}
+
+	nRetDay += nFindDayofMonth;
+
+	nRetDay += 1;
+
+	return nRetDay;
+}
+
+ULONG cDNDCalendar::FindTurnofYear(int nFindYear, int nFindMonth, int nFindDayofMonth, int nFindHour, int nFindTurn)
+{
+	ULONG lRetTurn = 0;
+	
+	lRetTurn = nFindYear * m_nDaysInYear * 144; // 144 turns in a day;
+	lRetTurn += (ULONG)FindDayofYear(nFindMonth, nFindDayofMonth) * 144;  // 144 turns in a day;
+	lRetTurn += 6 * nFindHour; // six turns in an hour
+	lRetTurn += nFindTurn;
+
+	return lRetTurn;
+}
 
 void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYPES nSetType, int nValue)
 {
@@ -1046,7 +1079,10 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 			if(bSet)
 				m_nRound = nValue;
 			else
+			{
 				m_nRound += nIncrement;
+				pApp->m_nGlobalRound += nIncrement;
+			}
 
 			break;
 		}
@@ -1060,6 +1096,7 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 			else
 			{
 				m_nTurn += nIncrement;
+				pApp->m_nGlobalRound += 10 * nIncrement;
 			}
 			break;
 		}
@@ -1073,6 +1110,7 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 			else
 			{
 				m_nHour += nIncrement;
+				pApp->m_nGlobalRound += 60 * nIncrement;
 			}
 			break;
 		}
@@ -1086,6 +1124,7 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 			else
 			{
 				m_nDayofMonth += nIncrement;
+				pApp->m_nGlobalRound += 60 * 24 * nIncrement;
 			}
 
 			break;
@@ -1095,7 +1134,10 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 			if(bSet)
 				m_nMonth = nValue;
 			else
+			{
 				m_nMonth += nIncrement;
+				pApp->m_nGlobalRound += 60 * 24 * 30 * nIncrement;
+			}
 
 			break;
 		}
@@ -1104,7 +1146,10 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 			if(bSet)
 				m_nYear = nValue;
 			else
+			{
 				m_nYear += nIncrement;
+				pApp->m_nGlobalRound += 60 * 24 * 30 * 365 * nIncrement;
+			}
 
 			break;
 		}
@@ -1156,6 +1201,7 @@ void cDNDParty::ModifyCalendar(DND_CALENDAR_MOD_TYPES nSet, DND_CALENDAR_MOD_TYP
 	{
 		m_nSegment = 0;
 		++m_nRound;
+		++pApp->m_nGlobalRound;
 	}
 	if(m_nRound >= 10)
 	{
@@ -2007,6 +2053,11 @@ BOOL cDNDCharacter::IsProficientWithWeapon(PWEAPONTYPE pWeapon, int *nSpecialize
 		}
 	}
 
+	if (m_bIsNPC) // finally check here in case there were specialization bonuses
+	{
+		return TRUE;
+	}
+
 	return FALSE;
 }
 
@@ -2463,11 +2514,38 @@ int cDNDCharacter::GetWeaponSpecializationLevel()
 				{
 					return m_nLevel[i];
 				}
+				case DND_CHARACTER_CLASS_CUSTOM_1:
+				case DND_CHARACTER_CLASS_CUSTOM_2:
+				case DND_CHARACTER_CLASS_CUSTOM_3:
+				case DND_CHARACTER_CLASS_CUSTOM_4:
+				case DND_CHARACTER_CLASS_CUSTOM_5:
+				case DND_CHARACTER_CLASS_CUSTOM_6:
+				case DND_CHARACTER_CLASS_CUSTOM_7:
+				case DND_CHARACTER_CLASS_CUSTOM_8:
+				case DND_CHARACTER_CLASS_CUSTOM_9:
+				case DND_CHARACTER_CLASS_CUSTOM_10:
+				case DND_CHARACTER_CLASS_CUSTOM_11:
+				case DND_CHARACTER_CLASS_CUSTOM_12:
+				{
+					if (GetCustomClass(m_Class[i])->m_bWeaponSpecialization)
+					{
+						int nStartLevel = GetCustomClass(m_Class[i])->m_nWeaponSpecializationLevel;
+
+						return (max((m_nLevel[i] - nStartLevel + 1), 0));
+					}
+
+					return 0;
+				}
 			}
 		}
 	}
 
 	return 0;
+}
+
+BOOL cDNDCharacter::EquippedRegenerationRing()
+{
+	return m_RingsWorn[0].IsRegenerationRing() || m_RingsWorn[1].IsRegenerationRing();
 }
 
 DND_SPELL_MATERIAL_RETURN_CODES cDNDCharacter::CasterHasSpellMaterialComponents(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bGetInfo, std::vector<POBJECTINDEXER> *pSpellMaterialComponentsRequiredVector)
@@ -2882,6 +2960,33 @@ int cDNDNonPlayerCharacter::CalculateCombatLevel()
 	if(nLevel > 11)
 		nLevel = 11;
 
+
+	return nLevel;
+}
+
+int cDNDNonPlayerCharacter::CalculateSaveLevel()
+{
+	if (m_nHitDice == 0)
+	{
+		return 0;
+	}
+
+	if (m_nHitDice == 1)
+	{
+		if (m_nHitDicePlus < 0)
+			return 0;
+	}
+
+	int nLevel = m_nHitDice;
+
+	if (m_nHitDicePlus)
+	{
+		nLevel += 1;
+	}
+	if (m_nHitDicePlus > 4)
+	{
+		nLevel += 1;
+	}
 
 	return nLevel;
 }
@@ -6136,17 +6241,41 @@ void GetSavingThrows(cDNDCharacter *pCharacter, int *pnSaveMatrix)
 			break;
 		}
 
-		default: //fighter chart is default
+		case DND_CHARACTER_CLASS_FIGHTER:
+		case DND_CHARACTER_CLASS_RANGER:
 		{
 			if (pCharacter->m_nLevel[nClassLevel] > 0)
 			{
 				nCol = min(pCharacter->m_nLevel[nClassLevel] - 1 + nSaveAdjust, 17) / 2 + 1;
 			}
 
-			if(nCol < 0) nCol = 0;
+			if (nCol < 0) nCol = 0;
 
+			for (int i = 0; i < 5; ++i)
+			{
+				pnSaveMatrix[i] = _FighterSaves[i][nCol];
+			}
+			break;
+		}
+
+		default: //fighter chart is default, this particular case is for monsters
+		{
 			for(int i = 0; i < 5; ++i)
 			{
+				if (pCharacter->m_nLevel[1] > 0)
+				{
+					int nLevel = pCharacter->m_nLevel[1]; // yes [1] - as this is where we store the saving throw level
+
+					if (i && pCharacter->m_nDisplayStats[ATTRIB_INT] == 0) // see DMG page 79, 11. SAVING THROW MATRIX FOR MONSTERS part (D) for non-intelligent monsters
+					{
+						nLevel /= 2;
+					}
+
+					nCol = min(nLevel - 1 + nSaveAdjust, 17) / 2 + 1;
+				}
+
+				if (nCol < 0) nCol = 0;
+
 				pnSaveMatrix[i] = _FighterSaves[i][nCol];
 			}
 			break;
@@ -7479,15 +7608,15 @@ int CalculateEncumbrance(cDNDCharacter *pCharacter, int *pnMaxWeight)
 
 	nMaxWeight += nWeightAllow;
 
-	for(int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
+	for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
 	{
-		if(pCharacter->m_Inventory[i].m_wTypeId)
+		if (pCharacter->m_Inventory[i].m_wTypeId)
 		{
 			LONG lAmount = max(pCharacter->m_Inventory[i].m_lAmount, 1L);
-			
+
 			cDNDObject *pCheckObject = pApp->m_ObjectsIndexedTypeArray.GetAt(pCharacter->m_Inventory[i].m_wTypeId);
 
-			if(pCheckObject != NULL) //sanity check for weight in case the table was changed
+			if (pCheckObject != NULL) //sanity check for weight in case the table was changed
 			{
 				if (strcmp(pCheckObject->m_szType, pCharacter->m_Inventory[i].m_szType) == 0 && pCharacter->m_Inventory[i].m_nWeight != pCheckObject->m_nWeight)
 				{
@@ -7496,19 +7625,24 @@ int CalculateEncumbrance(cDNDCharacter *pCharacter, int *pnMaxWeight)
 						pCharacter->m_Inventory[i].m_nWeight = pCheckObject->m_nWeight;
 					}
 				}
-				#ifdef _DEBUG
+#ifdef _DEBUG
 				else
 				{
 					if (pCharacter->m_Inventory[i].m_nWeight != pCheckObject->m_nWeight)
-					{ 
+					{
 						// NOT an error, usually magic item overriding encumbrance of mundane item i.e. bracers of defense
 						TRACE("ENC MISMATCH ! %s != %s\n", pCheckObject->m_szType, pCharacter->m_Inventory[i].m_szType);
 					}
 				}
-				#endif
+#endif
 			}
 
 			int nWeight = pCharacter->m_Inventory[i].m_nWeight;
+
+			if (pCharacter->m_Inventory[i].m_bIgnoreEncumbrance) // DM FIAT
+			{
+				nWeight = 0;
+			}
 
 			//check for exceptions
 			switch(pCharacter->m_Inventory[i].m_ObjectType)
@@ -12266,6 +12400,9 @@ void cDNDCustomClass::Clear()
 
 	m_nFirstLevelHD = 1;
 
+	m_bWeaponSpecialization = FALSE;
+	m_nWeaponSpecializationLevel = 0;
+
 	memset(m_ExpansionBuffer, 0, CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE * sizeof(ULONG));
 }
 
@@ -12321,6 +12458,60 @@ int GetNumDefinedCustomClasses()
 	#else
 	return 0;
 	#endif
+}
+
+int cDNDMonsterManualEntry::GetIntelligenceStat()
+{
+	int nRetVal = 0;
+
+	if(m_szIntelligence.Find("(0)") >= 0)
+	{
+		return nRetVal;
+	}
+
+	int nLowVal = 0;
+	int nHighVal = 0;
+
+	CString szDigits = _T("");
+
+	for (int i = 0; i < m_szIntelligence.GetLength(); ++i)
+	{
+		CString szChar = m_szIntelligence.GetAt(i);
+
+		if ((szChar >= "0" && szChar <= "9") || szChar == "-")
+		{
+			szDigits += szChar;
+		}
+	}
+
+	CString sToken = _T("");
+	i = 0; // substring index to extract
+	while (AfxExtractSubString(sToken, szDigits, i, '-'))
+	{
+		if (sToken != "")
+		{
+			switch (i)
+			{
+				case 0:	nLowVal = atoi(sToken.GetBuffer(0)); break;
+				case 1:	nHighVal = atoi(sToken.GetBuffer(0)); break;
+			}
+		}
+
+		++i;		
+	}
+
+	if (nHighVal < nLowVal)
+	{
+		nRetVal = nLowVal;
+	}
+	else
+	{
+		int nSpan = (nHighVal - nLowVal) + 1;
+
+		nRetVal = nLowVal + rand() % nSpan;
+	}
+
+	return nRetVal;
 }
 
 void cDNDMapSFXMotionTracker::Init(float fStartPosX, float fStartPosY, float fTargetPosX, float fTargetPosY, float fSpeed, int nSprites)

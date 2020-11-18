@@ -294,6 +294,10 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_CHARTSANDTABLES_SAVINGTHROWMATRIXFORMAGICALANDNON, &CDMHelperDlg::OnChartsandtablesSavingthrowmatrixformagicalandnon)
 	ON_COMMAND(ID_CHARTSANDTABLES_POTIONMISCIBILITYTABLE, &CDMHelperDlg::OnChartsandtablesPotionmiscibilitytable)
 	ON_COMMAND(ID_CHARTSANDTABLES_TREASURETYPES, &CDMHelperDlg::OnChartsandtablesTreasuretypes)
+	ON_COMMAND(ID_CHARTSANDTABLES_COINAGETYPES, &CDMHelperDlg::OnChartsandtablesCoinagetypes)
+	ON_COMMAND(ID_CHARTSANDTABLES_NPCSPELLCASTINGCOSTS, &CDMHelperDlg::OnChartsandtablesNpcspellcastingcosts)
+	ON_COMMAND(ID_CHARTSANDTABLES_DETECTIONOFINVISIBILITY, &CDMHelperDlg::OnChartsandtablesDetectionofinvisibility)
+	ON_COMMAND(ID_ENABLEGAMEWATCHER_ENABLED, &CDMHelperDlg::OnEnablegamewatcherEnabled)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -337,18 +341,22 @@ BOOL CDMHelperDlg::OnInitDialog()
 
 	#if GAMETABLE_BUILD
 	pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLED, MF_CHECKED | MF_BYCOMMAND);
-	pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_CHECKED | MF_BYCOMMAND);
+	pMenu->CheckMenuItem(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_UNCHECKED | MF_BYCOMMAND);
+	pMenu->CheckMenuItem(ID_ENABLEGAMEWATCHER_ENABLED, MF_UNCHECKED | MF_BYCOMMAND);
 	#else
 	BOOL b = pMenu->DeleteMenu(ID_SPELLFXONMAPS_ENABLEDFORMAGICMISSILE, MF_BYCOMMAND);
 	b = pMenu->DeleteMenu(ID_SPELLFXONMAPS_ENABLED, MF_BYCOMMAND);
+	b = pMenu->DeleteMenu(ID_ENABLEGAMEWATCHER_ENABLED, MF_BYCOMMAND);
 
 	CMenu *pSubMenu = pMenu->GetSubMenu(0);
 
 	if (pSubMenu != NULL)
 	{
-		BOOL bbb = pSubMenu->DeleteMenu(4, MF_BYPOSITION);
+		BOOL bbb = pSubMenu->DeleteMenu(4, MF_BYPOSITION); // remove spell fx submenu
+		bbb = pSubMenu->DeleteMenu(4, MF_BYPOSITION); // remove GameWatcher submenu
 		TRACE("!");
 	}
+
 	#endif
 
 	// Set the icon for this dialog.  The framework does this automatically
@@ -426,6 +434,12 @@ void CDMHelperDlg::SetAppTitle(CString szMessage)
 #endif
 #if GAMETABLE_BUILD
 	szText += " - Gametable Build";
+
+	if (m_pApp->m_bEnableGameWatcher)
+	{
+		szText += " - GameWatcher Enabled";
+	}
+
 #endif
 
 #ifdef _DEBUG
@@ -2400,6 +2414,7 @@ void CDMHelperDlg::OnSpellfxonmapsEnabled()
 	}
 }
 
+
 void CDMHelperDlg::OnSpellfxonmapsEnabledformagicmissile()
 {
 	CMenu *pMenu = GetMenu();
@@ -2417,6 +2432,32 @@ void CDMHelperDlg::OnSpellfxonmapsEnabledformagicmissile()
 	}
 }
 
+void CDMHelperDlg::OnEnablegamewatcherEnabled()
+{
+	CMenu *pMenu = GetMenu();
+	if (pMenu != NULL)
+	{
+		m_pApp->m_bEnableGameWatcher = !m_pApp->m_bEnableGameWatcher;
+		if (m_pApp->m_bEnableGameWatcher)
+		{
+			pMenu->CheckMenuItem(ID_ENABLEGAMEWATCHER_ENABLED, MF_CHECKED | MF_BYCOMMAND);
+		}
+		else
+		{
+			pMenu->CheckMenuItem(ID_ENABLEGAMEWATCHER_ENABLED, MF_UNCHECKED | MF_BYCOMMAND);
+
+			#if GAMETABLE_BUILD
+			for (auto it = m_pApp->m_MiniUpdateMap.begin(); it != m_pApp->m_MiniUpdateMap.end(); it++)
+			{
+				pMiniUpdatePtr pMini = it->second;
+				pMini->Reset();
+			}
+			#endif
+		}
+
+		SetAppTitle();
+	}
+}
 
 
 void CDMHelperDlg::OnOpenParty() 
@@ -3537,3 +3578,29 @@ void CDMHelperDlg::OnChartsandtablesTreasuretypes()
 	pDlg->DoModal();
 	delete pDlg;
 }
+
+
+void CDMHelperDlg::OnChartsandtablesCoinagetypes()
+{
+	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_COINAGE_TYPES);
+	pDlg->DoModal();
+	delete pDlg;
+}
+
+
+void CDMHelperDlg::OnChartsandtablesNpcspellcastingcosts()
+{
+	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_SPELL_CASTING_COSTS);
+	pDlg->DoModal();
+	delete pDlg;
+}
+
+
+void CDMHelperDlg::OnChartsandtablesDetectionofinvisibility()
+{
+	cDMChartLookupDialog *pDlg = new cDMChartLookupDialog(DND_CHART_DETECTION_OF_INVISIBILITY);
+	pDlg->DoModal();
+	delete pDlg;
+}
+
+

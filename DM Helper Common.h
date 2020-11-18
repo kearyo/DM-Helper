@@ -10,7 +10,7 @@
 #endif
 
 #define DMH_CURRENT_VERSION 10040
-#define DMH_BUILD_NUMBER	(22498)
+#define DMH_BUILD_NUMBER	(22714)
 
 #define USE_CANTRIPS	TRUE
 
@@ -258,7 +258,12 @@
 	* Clicking on "XP:" label on character view will display experience points required to reach next level 
 
 - 1.0.040.XXXX XX/XX/20
+	* Added weapon specialization option to custom characters
+	* Added commonly used tables to DM Library menu 
 	* Fix for inventory caches on maps not being saved properly
+	* Fixed bug in stat block spell display
+	* 'under' map SFX capability added, allows sfx to be drawn under a map mask for stuff like animated water etc.
+	
 
 */
 
@@ -490,12 +495,18 @@ typedef enum
 
 	DND_CHART_POTION_MISCIBITY,
 
-	DND_CHART_TREASURE_TYPES
+	DND_CHART_TREASURE_TYPES,
+
+	DND_CHART_COINAGE_TYPES,
+
+	DND_CHART_SPELL_CASTING_COSTS,
+
+	DND_CHART_DETECTION_OF_INVISIBILITY
 
 } DND_CHART_TYPES;
 
 
-#define CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE  1024
+#define CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE  1022
 
 class cDNDCustomClass
 {
@@ -548,6 +559,9 @@ public:
 	BOOL m_bPrerequisiteAttrib[6];
 
 	int m_nFirstLevelHD;
+
+	BOOL m_bWeaponSpecialization;
+	int m_nWeaponSpecializationLevel;
 
 	ULONG m_ExpansionBuffer[CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE];
 };
@@ -828,6 +842,7 @@ public:
 	int m_nMoonPhaseSymbol[MAX_CALENDAR_MOONS][MAX_CALENDAR_MOON_PHASES];
 	float m_fMoonCycle[MAX_CALENDAR_MOONS];
 	float m_fMoonCycleBase[MAX_CALENDAR_MOONS];
+	int m_nDaysInYear;
 
 	cDNDCalendar()
 	{
@@ -861,6 +876,7 @@ public:
 		memset(m_fMoonCycle, 0, MAX_CALENDAR_MOONS*sizeof(float));
 		memset(m_fMoonCycleBase, 0, MAX_CALENDAR_MOONS*sizeof(float));
 
+		m_nDaysInYear = 0;
 	}
 
 	~cDNDCalendar()
@@ -870,6 +886,8 @@ public:
 	void Initialize();
 	BOOL IsLeapYear(int nFindYear);
 	int FindDayOfWeek(int nFindMonth, int nFindDayofMonth, int nFindYear);
+	int FindDayofYear(int nFindMonth, int nFindDayofMonth);
+	ULONG FindTurnofYear(int nFindYear, int nFindMonth, int nFindDayofMonth, int nFindHour, int nFindTurn);
 	float GetMoonCycleDay(int nMoon, int nFindMonth, int nFindDayofMonth, int nFindYear, float fCycleStart = 999.9f);
 	float IncrementMoonDay(int nMoon, float fMoonDay);
 	int GetMoonPhase(int nMoon, float fMoonDay);
@@ -967,7 +985,9 @@ public:
 
 	unsigned int m_nCustomFlags;		// flag 000001 is a custom sword
 
-	int m_nReserved[687];	// was 882
+	BOOL m_bIgnoreEncumbrance;		// encumbrance ignored by DM fiat
+
+	int m_nReserved[686];	// was 882
 
 	cDNDObject()
 	{
@@ -1010,6 +1030,7 @@ public:
 		memset(m_szExtendedName, 0, 128*sizeof(char));
 
 		m_bMysteryItem = FALSE;
+		m_bIgnoreEncumbrance = FALSE;
 
 		//magic sword stuff
 		m_nIntelligence = 0;
@@ -1022,7 +1043,7 @@ public:
 
 		m_nCustomFlags = 0;
 
-		memset(m_nReserved, 0, 687 * sizeof(int));
+		memset(m_nReserved, 0, 686 * sizeof(int));
 	}
 
 	char *GetExtendedName()
@@ -1307,6 +1328,7 @@ public:
 		memcpy(pDestObject->m_szExtendedName, pSourceObject->m_szExtendedName, 128 * sizeof(char)); 
 
 		pDestObject->m_bMysteryItem = pSourceObject->m_bMysteryItem;
+		pDestObject->m_bIgnoreEncumbrance = pSourceObject->m_bIgnoreEncumbrance;
 
 		pDestObject->m_nIntelligence = pSourceObject->m_nIntelligence;
 		pDestObject->m_Alignment = pSourceObject->m_Alignment;
@@ -1384,6 +1406,7 @@ public:
 		memcpy(pDestObject->m_szExtendedName, pSourceObject->m_szExtendedName, 128 * sizeof(char)); 
 
 		pDestObject->m_bMysteryItem = pSourceObject->m_bMysteryItem;
+		pDestObject->m_bIgnoreEncumbrance = pSourceObject->m_bIgnoreEncumbrance;
 
 		pDestObject->m_nIntelligence = pSourceObject->m_nIntelligence;
 		pDestObject->m_Alignment = pSourceObject->m_Alignment;
@@ -2406,7 +2429,9 @@ public:
 	int m_nAssassinSkillModifiers[10];
 	int m_nClericTurnModifiers[13];
 
-	int m_nReserved_1[6417];  // remember to divide by 4 dummy was 6518 before IconPath
+	char m_szMiniName[64];
+
+	int m_nReserved_1[6401];  // remember to divide by 4 dummy was 6417 before m_szMiniName
 
 	cDNDCharacter()
 	{
@@ -2549,8 +2574,9 @@ public:
 		memset(m_nThiefSkillModifiers, 0, 8 * sizeof(int));
 		memset(m_nAssassinSkillModifiers, 0, 10 * sizeof(int));
 		memset(m_nClericTurnModifiers, 0, 13 * sizeof(int));
-		
-		memset(m_nReserved_1,0,6417*sizeof(int));
+		memset(m_szMiniName, 0, 64 * sizeof(char));
+
+		memset(m_nReserved_1,0,6401*sizeof(int));
 
 	}
 
@@ -2579,6 +2605,7 @@ public:
 	void ValidateLanguages();
 	BOOL CanSpeakLanguage(DND_LANGUAGES nLanguage);
 	int GetWeaponSpecializationLevel();
+	BOOL EquippedRegenerationRing();
 
 	void ValidateProficiencies();
 	void AddWeaponProficiency(PWEAPONTYPE pWeapon);
@@ -2635,6 +2662,7 @@ public:
 	CString m_szArmors;
 	CString m_szWeapons;
 	CString m_szBook;						//MM, MM2, FF etc.
+	int m_nIntelligence;					// calculated from m_szIntelligence
 
 	cDNDMonsterManualEntry()
 	{
@@ -2672,6 +2700,7 @@ public:
 		m_szArmors			= _T("");   
 		m_szWeapons			= _T("");   
 		m_szBook			= _T("");
+		m_nIntelligence		= 0;
 	}
 
 	void CopyFrom(cDNDMonsterManualEntry* pMonster)
@@ -2701,7 +2730,10 @@ public:
 		m_szArmors			= pMonster->m_szArmors;			
 		m_szWeapons			= pMonster->m_szWeapons;
 		m_szBook			= pMonster->m_szBook;
+		m_nIntelligence		= pMonster->m_nIntelligence;
 	}
+
+	int GetIntelligenceStat();
 
 };
 
@@ -2962,6 +2994,7 @@ public:
 
 	BOOL CalculateNPCHitDice(PDNDMONSTERMANUALENTRY pMonster);
 	int CalculateCombatLevel();
+	int CalculateSaveLevel();
 
 };
 
@@ -3123,8 +3156,20 @@ public:
 	BOOL m_bInMotion;
 	int m_nCycles;
 	float m_fAlpha;
+	BOOL m_bLightSource;
+	int m_nLightSourceRange;
+	int m_nCreationRound;
+	int m_nDurationRounds;
 
-	int m_nReserved[27];
+	BOOL m_bColorize;
+	float m_fRed;
+	float m_fGreen;
+	float m_fBlue;
+
+	BOOL m_bDefaultActive;
+	BOOL m_bDrawUnder;
+
+	int m_nReserved[17];
 
 	cDNDMapSFX()
 	{
@@ -3140,6 +3185,8 @@ public:
 		m_SFXState = DND_SFX_STATE_UNDEF;
 		m_bCycle = FALSE;
 		m_bAnimated = FALSE;
+		m_bDefaultActive = FALSE;
+		m_bDrawUnder = FALSE;
 
 		m_nMapX = 0;
 		m_nMapY = 0;
@@ -3153,7 +3200,18 @@ public:
 		m_nCycles = 0;
 		m_fAlpha = 0.7f;
 
-		memset(m_nReserved, 0, 27 * sizeof(int));
+		m_bLightSource = FALSE;
+		m_nLightSourceRange = 0;
+
+		m_nCreationRound = 0;
+		m_nDurationRounds = 0;
+
+		m_bColorize = FALSE;
+		m_fRed = 1.0f;
+		m_fGreen = 1.0f;
+		m_fBlue = 1.0f;
+
+		memset(m_nReserved, 0, 17 * sizeof(int));
 	}
 
 	~cDNDMapSFX()
@@ -3238,6 +3296,7 @@ public:
 };
 
 class cDMMapViewDialog;
+class DMPartyDialog;
 
 class cDNDInstantMapSFXPlacer
 {
@@ -3247,8 +3306,11 @@ public:
 	CString m_szCharacterName;
 	DWORD m_dwCharacterID;
 	PSPELL m_pSpell;
+	int m_nCasterLevel;
 	BOOL m_bCastFromDevice;
 	int m_nRepeats;
+	DMPartyDialog *m_pPartyDlg;
+	DWORD m_dwSpellAttackedCharacterID;
 
 	cDMMapViewDialog *m_pDMMapViewDialog;
 	cDNDMapSFX *m_pDNDMapSFX;
@@ -3266,14 +3328,17 @@ public:
 		Init();
 	};
 
-	cDNDInstantMapSFXPlacer(CString szCharacterName, DWORD dwCharacterID, PSPELL pSpell, BOOL bCastFromDevice, int nRepeats)
+	cDNDInstantMapSFXPlacer(CString szCharacterName, DWORD dwCharacterID, PSPELL pSpell, int nCasterLevel, BOOL bCastFromDevice, int nRepeats, DMPartyDialog *pPartyDlg, DWORD dwSpellAttackedCharacterID)
 	{
 		Init();
 		m_szCharacterName = szCharacterName;
 		m_dwCharacterID = dwCharacterID;
 		m_pSpell = pSpell;
+		m_nCasterLevel = nCasterLevel;
 		m_bCastFromDevice = bCastFromDevice;
 		m_nRepeats = nRepeats;
+		m_pPartyDlg = pPartyDlg;
+		m_dwSpellAttackedCharacterID = dwSpellAttackedCharacterID;
 	};
 
 	~cDNDInstantMapSFXPlacer()
@@ -3286,8 +3351,11 @@ public:
 		m_szCharacterName = _T("");
 		m_dwCharacterID = 0;
 		m_pSpell = NULL;
+		m_nCasterLevel = 0;
 		m_bCastFromDevice = FALSE;
 		m_nRepeats = 0;
+		m_pPartyDlg = NULL;
+		m_dwSpellAttackedCharacterID = 0;
 
 		m_pDMMapViewDialog = NULL;
 		m_pDNDMapSFX = NULL;
@@ -3505,7 +3573,7 @@ public:
 
 };
 
-#define MAP_RESERVED_DATA_SIZE 32629  // was 32765
+#define MAP_RESERVED_DATA_SIZE 32500  // was 32564
 #define MAX_MAP_TILES	8192
 #define MAP_RESERVED_DATA_SIZE_2 18989
 
@@ -3587,6 +3655,9 @@ public:
 
 	int m_nMapIconScale;
 
+	char m_szMapLegendPath[MAX_PATH];
+	char m_szMapAmbienceMusicName[256];
+
 	int m_nReserved[MAP_RESERVED_DATA_SIZE];
 
 	cDNDMapTile m_Tiles[MAX_MAP_TILES];
@@ -3633,6 +3704,9 @@ public:
 		m_bTiles = FALSE;
 
 		m_nMapIconScale = 0;
+
+		memset(m_szMapLegendPath, 0, MAX_PATH * sizeof(char));
+		memset(m_szMapAmbienceMusicName, 0, 256*sizeof(char));
 
 		m_nTransRed = 255;
 		m_nTransGreen = 0;
@@ -4134,8 +4208,48 @@ public:
 #define PDNDSTATBLOCK cDNDStatBlock*
 typedef CTypedPtrMap <CMapStringToPtr, CString, PDNDSTATBLOCK> PDNDSTATBLOCKMAP;
 
+class cMiniatureUpdateStruct
+{
 
- 
+public:
+	CString m_szMiniName;
+	float m_fOffsetX;
+	float m_fOffsetY;
+	DWORD m_dwUpdateFlag;
+
+	cMiniatureUpdateStruct()
+	{
+		m_szMiniName = _T("");
+		m_fOffsetX = 0.0f;
+		m_fOffsetY = 0.0f;
+		m_dwUpdateFlag = 0;
+	}
+	cMiniatureUpdateStruct(std::string sMiniName)
+	{
+		m_szMiniName = sMiniName.c_str();
+		m_fOffsetX = 0.0f;
+		m_fOffsetY = 0.0f;
+		m_dwUpdateFlag = 0;
+	}
+
+	void Reset()
+	{
+		m_fOffsetX = 0.0f;
+		m_fOffsetY = 0.0f;
+		m_dwUpdateFlag = 0;
+	}
+
+	virtual ~cMiniatureUpdateStruct()
+	{
+
+	}
+
+};
+
+typedef std::shared_ptr<cMiniatureUpdateStruct> pMiniUpdatePtr;
+typedef std::map<std::string, pMiniUpdatePtr> MiniUpdateMap;
+
+
 //utility functions
 void RemoveSpaces(char *szInString);
 void RemoveLineFeeds(char *szInString);

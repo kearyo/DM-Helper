@@ -232,6 +232,9 @@ public:
 	afx_msg void OnBnClickedMagicComponentsCheck();
 	CString m_szItemDesc;
 	afx_msg void OnStnDblclickCacheNameStatic();
+	CButton m_cIgnoreEncumbrance;
+	BOOL m_bIgnoreEncumbrance;
+	afx_msg void OnBnClickedItemEncumbranceCheck();
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -42,10 +42,12 @@ public:
 	int m_nSelectedSpellViewClass;
 	BOOL m_bFirstSpellViewRefresh;
 
+	DWORD m_dwCharacterID;
 	CString m_szWeaponDesc;
 	CString m_szDamageDesc;
 	CString m_szToHitDesc;
 	CString m_szMoveDesc;
+	CString m_szHPDesc;
 
 	int m_nAttackMatrix[21];
 	CString m_szNumAttacks;
@@ -73,7 +75,7 @@ public:
 	CString m_szMonsterManualName;
 
 	BOOL m_bHasBreathWeapon;
-
+	
 	DWORD m_dwLastSelectedAmmoID;
 	DWORD m_dwLastThrownObjectID;
 
@@ -90,6 +92,7 @@ public:
 
 		m_CharViewType = _ViewType;
 		
+		m_dwCharacterID = 0;
 		m_szDamageDesc = _T("");
 		m_szToHitDesc = _T("-");
 		m_szNumAttacks = _T("");
@@ -526,6 +529,7 @@ public:
 	CStatic m_cLevelTitle3;
 	CString m_szLevelTitle2;
 	CString m_szLevelTitle3;
+	afx_msg LRESULT OnDirtyWindow(UINT wParam, LONG lParam);
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -23,6 +23,8 @@
 #include "DMInitiativeDialog.h"
 #include "DMRandomEncounterDialog.h"
 #include "cDMOpenLockDialog.h"
+#include "cDMModifyClericSkillsDialog.h"
+#include "cMusicMoodDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -40,7 +42,7 @@ UINT DMPartyTimeThreadProc(LPVOID pData)
 	{
 		Sleep(10);
 
-		if(pPartyDlg->m_pPartyClockThread != NULL)
+		if (pPartyDlg->m_pPartyClockThread != NULL && pPartyDlg->m_pInitiativeDialog == NULL) // background time does not run if party is in combat with initiative dialog open
 		{
 			++nCount;
 
@@ -71,13 +73,19 @@ UINT DMPartyCalendarThreadProc(LPVOID pData)
 	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
 
 	int nCurrentDay = pParty->m_nDayofMonth+1;
+	int nCurrentTurn = pParty->m_nTurn;
+	ULONG lCurrentCalendarTurn = 0L;
 
 	int nCount = 0;
 	CString szMsg = _T("");
 
+	Sleep(2000);
+
 	do
 	{
 		Sleep(500);
+
+		BOOL bUpdate = FALSE;
 
 		if (pPartyDlg->m_pPartyCalendarThread != NULL)
 		{
@@ -117,7 +125,63 @@ UINT DMPartyCalendarThreadProc(LPVOID pData)
 						}
 					}
 				}
+
 			}
+
+			if (pApp->m_pSelectedCalendar != NULL)
+			{
+				if (lCurrentCalendarTurn == 0L)
+				{
+					lCurrentCalendarTurn = pApp->m_pSelectedCalendar->FindTurnofYear(pParty->m_nYear, pParty->m_nMonth, pParty->m_nDayofMonth, pParty->m_nHour, pParty->m_nTurn);
+				}
+
+				ULONG lTurn = pApp->m_pSelectedCalendar->FindTurnofYear(pParty->m_nYear, pParty->m_nMonth, pParty->m_nDayofMonth, pParty->m_nHour, pParty->m_nTurn);
+
+				if (lCurrentCalendarTurn != lTurn)
+				{
+					ULONG lTurnDelta = 0;
+					if (lTurn > lCurrentCalendarTurn)
+					{
+						lTurnDelta = lTurn - lCurrentCalendarTurn;
+					}
+
+					if (lTurnDelta > 0)
+					{
+						for (int i = 0; i < MAX_PARTY_MEMBERS; ++i)
+						{
+							if (pParty->m_dwPartyRoster[i] == 0)
+								break;
+
+							PDNDCHARVIEWDLG pCharDlg = NULL;
+
+							pApp->m_CharacterViewMap.Lookup((WORD)pParty->m_dwPartyRoster[i], pCharDlg);
+
+							if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+							{
+								if (pCharDlg->m_pCharacter->m_nCurrentDamage)
+								{
+									if (pCharDlg->m_pCharacter->EquippedRegenerationRing()) // ring of regeneration
+									{
+										pCharDlg->m_pCharacter->m_nCurrentDamage -= (int)lTurnDelta;
+										pCharDlg->m_pCharacter->m_nCurrentDamage = max(pCharDlg->m_pCharacter->m_nCurrentDamage, 0);
+										pCharDlg->m_pCharacter->MarkChanged();
+										bUpdate = TRUE;
+									}
+								}
+							}
+						}
+					}
+
+
+					lCurrentCalendarTurn = lTurn;
+				}
+			}
+
+		}
+
+		if (bUpdate)
+		{
+			PostMessage(pPartyDlg->m_hWnd, DND_DIRTY_WINDOW_MESSAGE, 0, 0);
 		}
 
 	} while (pPartyDlg->m_pPartyCalendarThread != NULL);
@@ -280,6 +344,8 @@ void DMPartyDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_ROUND_EDIT, m_cRoundEdit);
 	DDX_Control(pDX, IDC_PICK_LOCK_BUTTON, m_cPickLockButton);
 	DDX_Control(pDX, IDC_RECOVER_AMMO_BUTTON, m_cRecoverAmmoButton);
+	DDX_Control(pDX, IDC_MUSIC_BUTTON, m_cMusicButton);
+	DDX_Control(pDX, IDC_TURN_UNDEAD_BUTTON, m_cTurnUndeadButton);
 }
 
 
@@ -341,10 +407,14 @@ BEGIN_MESSAGE_MAP(DMPartyDialog, CDialog)
 	ON_BN_CLICKED(IDC_SUB_PARTY_BUTTON, &DMPartyDialog::OnBnClickedSubPartyButton)
 	ON_BN_CLICKED(IDC_RANDOM_ENCOUNTER_BUTTON, &DMPartyDialog::OnBnClickedRandomEncounterButton)
 	ON_MESSAGE(DND_WM_MESSAGE, OnDNDMessage)
+	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, &DMPartyDialog::OnDirtyWindow)
 	ON_BN_CLICKED(IDC_STAT_BLOCK_BUTTON, &DMPartyDialog::OnBnClickedStatBlockButton)
 	ON_BN_CLICKED(IDC_STAT_BLOCK_BUTTON2, &DMPartyDialog::OnBnClickedStatBlockButton2)
 	ON_BN_CLICKED(IDC_PICK_LOCK_BUTTON, &DMPartyDialog::OnBnClickedPickLockButton)
 	ON_BN_CLICKED(IDC_RECOVER_AMMO_BUTTON, &DMPartyDialog::OnBnClickedRecoverAmmoButton)
+	
+	ON_BN_CLICKED(IDC_MUSIC_BUTTON, &DMPartyDialog::OnBnClickedMusicButton)
+	ON_BN_CLICKED(IDC_TURN_UNDEAD_BUTTON, &DMPartyDialog::OnBnClickedTurnUndeadButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -359,6 +429,11 @@ BOOL DMPartyDialog::OnInitDialog()
 
 	m_cUpPartyButton2.LoadBitmaps(IDB_UP_ARROW_BITMAP, IDB_UP_ARROW_PRESSED_BITMAP);
 	m_cDownPartyButton2.LoadBitmaps(IDB_DOWN_ARROW_BITMAP, IDB_DOWN_ARROW_PRESSED_BITMAP);
+
+	#if GAMETABLE_BUILD
+	m_cMusicButton.LoadBitmaps(IDB_MUSIC_NOTE_BITMAP, IDB_MUSIC_NOTE_SELECT_BITMAP);
+	m_cMusicButton.ShowWindow(SW_SHOW);
+	#endif
 
 	int nCount = 0;
 	m_cPartyList.InsertColumn( nCount++, "Member", LVCFMT_LEFT, 100, -1 );
@@ -900,8 +975,9 @@ void DMPartyDialog::UpdateSelections()
 	BOOL bHasBreathWeapon = FALSE;
 
 	m_cPickLockButton.ShowWindow(SW_HIDE);
+	m_cTurnUndeadButton.ShowWindow(SW_HIDE);
 	m_cRecoverAmmoButton.ShowWindow(SW_HIDE);
-
+	
 	//crash here next line
 	if(m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
 	{
@@ -928,12 +1004,21 @@ void DMPartyDialog::UpdateSelections()
 			
 		}
 
-		float fThiefSkillMatrix[8];
-		GetThiefSkills(m_pSelectedCharacterDialog->m_pCharacter, fThiefSkillMatrix);
-
-		if (fThiefSkillMatrix[2] > 0.0f)
+		int nTurnUndeadMatrix[13];
+		BOOL bTurnUndead = GetTurnUndeadMatrix(m_pSelectedCharacterDialog->m_pCharacter, nTurnUndeadMatrix);
+		if (bTurnUndead)
 		{
-			m_cPickLockButton.ShowWindow(SW_SHOW);
+			m_cTurnUndeadButton.ShowWindow(SW_SHOW);
+		}
+		else
+		{
+			float fThiefSkillMatrix[8];
+			GetThiefSkills(m_pSelectedCharacterDialog->m_pCharacter, fThiefSkillMatrix);
+
+			if (fThiefSkillMatrix[2] > 0.0f)
+			{
+				m_cPickLockButton.ShowWindow(SW_SHOW);
+			}
 		}
 
 		if (m_pSelectedCharacterDialog->m_RecoverAmmoInventory[0].m_wTypeId != 0)
@@ -1490,11 +1575,14 @@ void DMPartyDialog::RefreshTime()
 			m_pApp->m_pSelectedCalendar->m_szMonthNames[m_pParty->m_nMonth],
 			m_pParty->m_nYear);
 
+		if (m_pApp->m_szLoggedError != _T(""))
+		{
+			m_szPartyLegend += " : ";
+			m_szPartyLegend += m_pApp->m_szLoggedError;
+		}
 
 		m_szRoundEdit.Format("%d", m_pParty->m_nRound);
-		m_szSegmentEdit.Format("%d", m_pParty->m_nSegment);
-
-		
+		m_szSegmentEdit.Format("%d", m_pParty->m_nSegment);	
 	}
 
 }
@@ -2843,6 +2931,15 @@ void DMPartyDialog::SearchAndLoadMaps(CString szFilePath, CString szSubDir)
 						pMap->m_nTransBlue = 255;
 					}
 
+					for (int i = 0; i < MAX_MAP_SFX; ++i)
+					{
+						pMap->m_MapSFX[i].m_pDataPtr = NULL;
+						if (pMap->m_MapSFX[i].m_bDefaultActive)
+						{
+							pMap->m_MapSFX[i].m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+						}
+					}
+
 					if(m_pParty->m_dwPartyMapID == pMap->m_dwMapID && !MapIsLoaded(pMap))
 					{
 						if(pMap->m_dwParentMapID)
@@ -2953,6 +3050,15 @@ BOOL DMPartyDialog::SearchAndLoadParentMap(cDNDMap *pChildMap, CString szFilePat
 						pMap->m_nTransRed = 255;
 						pMap->m_nTransGreen = 255;
 						pMap->m_nTransBlue = 255;
+					}
+
+					for (int i = 0; i < MAX_MAP_SFX; ++i)
+					{
+						pMap->m_MapSFX[i].m_pDataPtr = NULL;
+						if (pMap->m_MapSFX[i].m_bDefaultActive)
+						{
+							pMap->m_MapSFX[i].m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+						}
 					}
 
 					if(pChildMap->m_dwParentMapID == pMap->m_dwMapID)
@@ -3974,6 +4080,8 @@ BOOL DMPartyDialog::InitiativeWound(int nDamage, CDMCharViewDialog *pTargetChara
 		{
 			m_pApp->PlayPCSoundFX("* Hurt", pTargetNPCDialog->m_szMonsterName, pTargetNPCDialog->GetMonsterSFXID());
 		}
+
+		pTargetNPCDialog->ProcessCharStats();
 	}
 
 	Refresh();
@@ -4284,9 +4392,27 @@ void DMPartyDialog::OnCastSpellButton()
 		}
 	}	
 
+	/*
 	if (m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL && m_pSelectedNPCDialog->m_bHasBreathWeapon)
 	{
 		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pSelectedNPCDialog->m_szMonsterManualName, m_pSelectedNPCDialog->GetMonsterSFXID(), TRUE);
+	}
+	*/
+
+	if (m_pSelectedNPCDialog != NULL && m_pSelectedNPCDialog->m_pNPC != NULL && m_pSelectedNPCDialog->m_bHasBreathWeapon)
+	{
+		#if GAMETABLE_BUILD
+		if (m_pApp->m_bSpellFXOnMaps)
+		{
+			m_pApp->DragonBreathWeaponSFX(m_pSelectedNPCDialog);
+		}
+		else
+		{
+			m_pApp->PlayPCSoundFX("* Breath Weapon", m_pSelectedNPCDialog->m_szMonsterManualName, m_pSelectedNPCDialog->GetMonsterSFXID(), TRUE);
+		}
+		#else
+		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pSelectedNPCDialog->m_szMonsterManualName, m_pSelectedNPCDialog->GetMonsterSFXID(), TRUE);
+		#endif
 	}
 
 }
@@ -4599,7 +4725,6 @@ void DMPartyDialog::OnAttackMissButton2()
 
 	if(m_pOpposingNPCDialog != NULL)
 	{
-		// here Keary
 		if (m_pApp->m_dwInitiativeCurrentAttackerID != m_pOpposingNPCDialog->m_pNPC->m_dwCharacterID)
 		{
 			m_pApp->m_nInitiativeCurrentAttackNumber = 0;
@@ -4757,7 +4882,18 @@ void DMPartyDialog::OnCastSpellButton2()
 
 	if (m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL && m_pOpposingNPCDialog->m_bHasBreathWeapon)
 	{
+		#if GAMETABLE_BUILD
+		if (m_pApp->m_bSpellFXOnMaps)
+		{
+			m_pApp->DragonBreathWeaponSFX(m_pOpposingNPCDialog);
+		}
+		else
+		{
+			m_pApp->PlayPCSoundFX("* Breath Weapon", m_pOpposingNPCDialog->m_szMonsterManualName, m_pOpposingNPCDialog->GetMonsterSFXID(), TRUE);
+		}
+		#else
 		m_pApp->PlayPCSoundFX("* Breath Weapon", m_pOpposingNPCDialog->m_szMonsterManualName, m_pOpposingNPCDialog->GetMonsterSFXID(), TRUE);
+		#endif
 	}
 	
 }
@@ -4848,6 +4984,7 @@ void DMPartyDialog::OnWoundButton2()
 			m_pApp->PlayPCSoundFX("* Hurt", m_pOpposingNPCDialog->m_szMonsterName, m_pOpposingNPCDialog->GetMonsterSFXID());
 		}
 	}
+
 
 	Refresh();
 	
@@ -5090,6 +5227,7 @@ void DMPartyDialog::OnBnClickedPasteMemberButton()
 
 			sprintf(pNPC->m_szCharacterName, "%s %d", pOriginalNPCDialog->m_pNPC->m_szCharacterName, ++pOriginalNPCDialog->m_nCharacterCopy);
 			pNPC->m_dwCharacterID = GetUniqueID();
+			pNPC->m_nBaseStats[ATTRIB_INT] = 0; // so it will re-roll
 
 			cDMBaseNPCViewDialog *pNPCDlg = new cDMBaseNPCViewDialog(m_pMainDialog, pNPC, NULL, &m_pMainDialog->m_cMainTab);
 			m_pMainDialog->AddTab(pNPCDlg, DND_TAB_TYPE_NPC, FALSE);
@@ -5211,7 +5349,7 @@ void DMPartyDialog::OnBnClickedLogEventButton()
 	}
 }
 
-void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_TYPES nType, char *szName, DWORD dwID, LONG lAmount, char *szComment)
+void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_TYPES nType, char *szName, DWORD dwID, LONG lAmount, char *szComment, BOOL bRefresh)
 {
 
 	/*
@@ -5384,7 +5522,7 @@ void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_
 				m_pParty->m_lXP += lAmount;
 			}
 
-			if (m_hWnd != NULL)
+			if (m_hWnd != NULL && bRefresh)
 			{
 				Refresh();
 			}
@@ -5410,7 +5548,7 @@ void DMPartyDialog::LogPartyEvent(BOOL bCreateLog, int nPosition, DND_LOG_EVENT_
 		pPartyLog = NULL;
 	}
 
-	if (m_hWnd != NULL)
+	if (m_hWnd != NULL && bRefresh)
 	{
 		Refresh();
 	}
@@ -5558,7 +5696,11 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 	}
 	else
 	{
-		return;
+		if (m_pParty == NULL)
+		{
+			return;
+		}
+		szKiller = m_pParty->m_szPartyName;
 	}
 
 	/*
@@ -5584,7 +5726,10 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 			m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage = m_pOpposingCharacterDialog->m_pCharacter->m_nHitPoints;
 		}
 
-		pKillerDlg->m_szInitiativeAction.Format("killed %s", m_pOpposingCharacterDialog->m_pCharacter->m_szCharacterName);
+		if (pKillerDlg != NULL)
+		{
+			pKillerDlg->m_szInitiativeAction.Format("killed %s", m_pOpposingCharacterDialog->m_pCharacter->m_szCharacterName);
+		}
 	}
 	else if (m_pOpposingNPCDialog != NULL && m_pOpposingNPCDialog->m_pNPC != NULL)
 	{
@@ -5596,14 +5741,20 @@ void DMPartyDialog::OnBnClickedKillForXpButton()
 			m_pOpposingNPCDialog->m_pNPC->m_nCurrentDamage = m_pOpposingNPCDialog->m_pNPC->m_nHitPoints;
 		}
 
-		pKillerDlg->m_szInitiativeAction.Format("killed %s", m_pOpposingNPCDialog->m_szMonsterName);
+		if (pKillerDlg != NULL)
+		{
+			pKillerDlg->m_szInitiativeAction.Format("killed %s", m_pOpposingNPCDialog->m_szMonsterName);
+		}
 	}
 	else
 	{
 		return;
 	}
 
-	pKillerDlg->m_pTargetBaseDlg = NULL;
+	if (pKillerDlg != NULL)
+	{
+		pKillerDlg->m_pTargetBaseDlg = NULL;
+	}
 
 	if(lXP == 0L)
 	{
@@ -5838,6 +5989,18 @@ LRESULT DMPartyDialog::OnDNDMessage(UINT wParam, LONG lParam)
     return 0; // I handled this message
 }
 
+LRESULT DMPartyDialog::OnDirtyWindow(UINT wParam, LONG lParam)
+{
+	Refresh();
+
+	if (m_pInitiativeDialog != NULL)
+	{
+		m_pInitiativeDialog->PostMessage(DND_DIRTY_WINDOW_MESSAGE, 1, 0);
+	}
+
+	return 0; // I handled this message
+}
+
 void DMPartyDialog::GenerateStatBlock(cDNDParty *pParty)
 {
 	if (pParty == NULL)
@@ -5921,41 +6084,52 @@ void DMPartyDialog::GenerateStatBlock(cDNDParty *pParty)
 		for (int nSpellClass = 0; nSpellClass < 4; ++nSpellClass)
 		{
 			if (pChar->m_SpellClasses[nSpellClass] == 0)
+			{
 				continue;
+			}
 
 			cDNDSpellBook *pSpellBook = NULL;
 			switch (pChar->m_SpellClasses[nSpellClass])
 			{
-			case DND_CHARACTER_CLASS_CLERIC:
-			case DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC:
-			{
-				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_CLERIC);
-				break;
-			}
-			case DND_CHARACTER_CLASS_DRUID:
-			case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
-			{
-				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_DRUID);
-				break;
-			}
-			case DND_CHARACTER_CLASS_MAGE:
-			case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
-			{
-				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);
-				break;
-			}
-			case DND_CHARACTER_CLASS_ILLUSIONIST:
-			{
-				pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_ILLUSIONIST);
-				break;
-			}
+				case DND_CHARACTER_CLASS_CLERIC:
+				case DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC:
+				{
+					pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_CLERIC);
+					break;
+				}
+				case DND_CHARACTER_CLASS_DRUID:
+				case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
+				{
+					pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_DRUID);
+					break;
+				}
+				case DND_CHARACTER_CLASS_MAGE:
+				case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+				{
+					pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);
+					break;
+				}
+				case DND_CHARACTER_CLASS_ILLUSIONIST:
+				{
+					pSpellBook = m_pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_ILLUSIONIST);
+					break;
+				}
 			} //end switch
 
 			if (pSpellBook == NULL)
+			{
 				continue;
+			}
 
 			for (int nSpellLevel = 0; nSpellLevel < 10 && !bComplete; ++nSpellLevel)
 			{
+				int nSpellsAllowedForLevel = GetSpellLevels(pCharDlg->m_pCharacter, pCharDlg->m_pCharacter->m_SpellClasses[nSpellClass], pCharDlg->m_pCharacter->m_nCastingLevels[nSpellClass], nSpellLevel);
+
+				if (nSpellsAllowedForLevel == 0)
+				{
+					continue;
+				}
+
 				BOOL bDone = FALSE;
 				int nSpellCount = 0;
 				BOOL bFirstSpellThisLevel = TRUE;
@@ -6209,10 +6383,22 @@ void DMPartyDialog::OnBnClickedPickLockButton()
 {
 	if (m_pSelectedCharacterDialog != NULL && m_pSelectedCharacterDialog->m_pCharacter != NULL)
 	{
-		cDMOpenLockDialog *pDlg = new cDMOpenLockDialog(m_pSelectedCharacterDialog->m_pCharacter);
+		cDMOpenLockDialog *pDlg = new cDMOpenLockDialog(m_pParty, m_pSelectedCharacterDialog->m_pCharacter);
 		pDlg->DoModal();
+		delete pDlg;
 	}
 }
+
+void DMPartyDialog::OnBnClickedTurnUndeadButton()
+{
+	int nTurnUndeadMatrix[13];
+	GetTurnUndeadMatrix(m_pSelectedCharacterDialog->m_pCharacter, nTurnUndeadMatrix);
+
+	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(m_pSelectedCharacterDialog->m_pCharacter->m_szCharacterName, nTurnUndeadMatrix, FALSE);
+	pDlg->DoModal();
+	delete pDlg;
+}
+
 
 
 void DMPartyDialog::OnBnClickedRecoverAmmoButton()
@@ -6223,3 +6409,12 @@ void DMPartyDialog::OnBnClickedRecoverAmmoButton()
 		Refresh();
 	}
 }
+
+void DMPartyDialog::OnBnClickedMusicButton()
+{
+	cMusicMoodDialog *pDlg = new cMusicMoodDialog();
+	pDlg->DoModal();
+	delete pDlg;
+}
+
+

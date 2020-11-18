@@ -498,6 +498,8 @@ BOOL CDMHelperApp::InitInstance()
 
 	m_szEXEPath.MakeUpper();
 
+	m_szLoggedError = _T("");
+
 	CString szTemp;
 	CString szTemp2;
 
@@ -614,6 +616,7 @@ BOOL CDMHelperApp::InitInstance()
 	m_pIsometricDungeonTilesBitmap = NULL;
 
 	m_nCalendarSecond = 0;
+	m_nGlobalRound = 1;
 
 	m_SoundFXCutPasteType = DND_EDIT_TYPE_NONE;
 	m_pSoundFXCutPasteBuffer = NULL;
@@ -623,13 +626,19 @@ BOOL CDMHelperApp::InitInstance()
 	m_dwInitiativeCurrentAttackerID = 0;
 
 	m_bSpellFXOnMaps = TRUE;
-	m_bSpellFXOnMapsMagicMissile = TRUE;
+	m_bSpellFXOnMapsMagicMissile = FALSE;
+	m_bEnableGameWatcher = FALSE;
 
 	m_pDMReminderSFXDialog = NULL;
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	m_pGameMapSingleLock = new CSingleLock(&m_GameMapMutex);
+
+	#if GAMETABLE_BUILD
+	m_dwMiniUpdateFlag = 0;
+	m_pGameServerUpdateThread = AfxBeginThread(DMGameServerUpdateThreadProc, (LPVOID)this);
+	#endif
 
 	CDMHelperDlg dlg;
 	m_pMainWnd = &dlg;
@@ -5272,7 +5281,9 @@ void CDMHelperApp::InitializeSpellMaterialComponents(CString szPath, BOOL bCusto
 
 							if (pSpellBook == NULL)
 							{
-								AfxMessageBox("LOAD SPELL COMPONENT SPELLBOOK ERROR !", MB_OK);
+								CString szError;
+								szError.Format("LOAD SPELL COMPONENT SPELLBOOK ERROR ! (%s)", sToken);
+								AfxMessageBox(szError, MB_OK);
 								break;
 							}
 							//cDNDSpell m_Spells[MAX_SPELL_LEVELS][MAX_SPELLS_PER_LEVEL]; 
@@ -5291,7 +5302,9 @@ void CDMHelperApp::InitializeSpellMaterialComponents(CString szPath, BOOL bCusto
 							}
 							if (pSpell == NULL)
 							{
-								AfxMessageBox("LOAD SPELL COMPONENT SPELL ERROR !", MB_OK);
+								CString szError;
+								szError.Format("LOAD SPELL COMPONENT SPELL ERROR ! (%s)", sToken);
+								AfxMessageBox(szError, MB_OK);
 								break;
 							}
 
@@ -5955,8 +5968,11 @@ BOOL CDMHelperApp::PlaySoundFX(CString szDesc, BOOL bAsync, int nOverrideNum)
 				szPath.Replace("<$DMAPATH>", m_szEXEPath);
 				return PlaySoundFXFromFile(szPath.GetBuffer(0), bAsync, nOverrideNum);
 			}
+	
 		}
 	}
+
+	m_szLoggedError.Format("WARN - SFX (%s) NOT FOUND", szDesc);
 
 	return FALSE;
 }
@@ -6331,6 +6347,27 @@ int CDMHelperApp::GetCastingTime(cDNDSpell* pSpell) // in segments
 	return nSegments;
 }
 
+BOOL CDMHelperApp::SpellIsDirectDamageSpell(cDNDSpell* pSpell)
+{
+	CString szName = pSpell->m_szSpellDesc;
+	szName.MakeUpper();
+
+	if (szName.Find("WEB") >= 0)
+	{
+		return FALSE;
+	}
+
+	CString szDesc = pSpell->m_szSpellDesc;
+	szDesc.MakeUpper();
+
+	if (szDesc.Find("OF DAMAGE") >= 0)
+	{
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 BOOL CDMHelperApp::SpellIsHealingSpell(cDNDSpell* pSpell)
 {
 	CString szCheck = pSpell->m_szSpellName;
@@ -6347,6 +6384,158 @@ BOOL CDMHelperApp::SpellIsHealingSpell(cDNDSpell* pSpell)
 
 	return FALSE;
 }
+
+CString CDMHelperApp::GetCharacterNameFromID(DWORD dwCharacterID)
+{
+	PDNDCHARVIEWDLG pCharDlg = NULL;
+	m_CharacterViewMap.Lookup(dwCharacterID, pCharDlg);
+
+	if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+	{
+		return pCharDlg->m_pCharacter->m_szCharacterName;
+	}
+
+	PDNDNPCVIEWDLG pNPCDlg = NULL;
+	m_NPCViewMap.Lookup(dwCharacterID, pNPCDlg);
+
+	if (pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL)
+	{
+		return pNPCDlg->m_pNPC->m_szCharacterName;
+	}
+
+	return _T("?");
+}
+
+LONG CDMHelperApp::GetCharacterXPFromID(DWORD dwCharacterID)
+{
+	PDNDCHARVIEWDLG pCharDlg = NULL;
+	m_CharacterViewMap.Lookup(dwCharacterID, pCharDlg);
+
+	if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+	{
+		return pCharDlg->m_nCalculatedXPValue;
+	}
+
+	PDNDNPCVIEWDLG pNPCDlg = NULL;
+	m_NPCViewMap.Lookup(dwCharacterID, pNPCDlg);
+
+	if (pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL)
+	{
+		return pNPCDlg->m_pNPC->m_nNPCXPValue;
+	}
+
+	return 0L;
+}
+
+
+BOOL CDMHelperApp::WoundCharacter(DWORD dwCharacterID, int *nRetDamage)
+{
+	PDNDCHARVIEWDLG pCharDlg = NULL;
+	m_CharacterViewMap.Lookup(dwCharacterID, pCharDlg);
+
+	PDNDNPCVIEWDLG pNPCDlg = NULL;
+	m_NPCViewMap.Lookup(dwCharacterID, pNPCDlg);
+
+	BOOL bWasAlive = TRUE;
+	BOOL bKilledTarget = FALSE;
+
+	CString szLabel = _T("");
+	if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL)
+	{
+		bWasAlive = pCharDlg->m_pCharacter->IsAlive();
+
+		int nValue = 0;
+
+		szLabel.Format("Add Damage to %s:", pCharDlg->m_pCharacter->m_szCharacterName);
+		ModifyValue((int *)&nValue, szLabel.GetBuffer(0), pCharDlg->m_pCharacter->m_nHitPoints, FALSE);
+
+		*nRetDamage = nValue;
+
+		if (nValue == 0)
+		{
+			return FALSE;
+		}
+
+		pCharDlg->m_pCharacter->m_nCurrentDamage += nValue;
+
+		if (pCharDlg->m_pCharacter->m_nCurrentDamage < 0)
+			pCharDlg->m_pCharacter->m_nCurrentDamage = 0;
+
+		pCharDlg->PostMessage(DND_DIRTY_WINDOW_MESSAGE, 1, 0);
+
+		if (bWasAlive == TRUE && pCharDlg->m_pCharacter->IsAlive() == FALSE)
+		{
+			if (pCharDlg->m_pCharacter->m_nSex)
+			{
+				//m_pApp->PlaySoundFX("Female PC Die");
+				PlayPCSoundFX("* PC Die", pCharDlg->m_szCharacterFirstName, "Female");
+			}
+			else
+			{
+				//m_pApp->PlaySoundFX("Male PC Die");
+				PlayPCSoundFX("* PC Die", pCharDlg->m_szCharacterFirstName, "Male");
+			}
+
+			pCharDlg->m_szInitiativeAction = _T("DEAD");
+
+			bKilledTarget = TRUE;
+		}
+		else
+		{
+			if (pCharDlg->m_pCharacter->m_nSex)
+			{
+				//m_pApp->PlaySoundFX("Female PC Hurt");
+				PlayPCSoundFX("* PC Hurt", pCharDlg->m_szCharacterFirstName, "Female");
+			}
+			else
+			{
+				//m_pApp->PlaySoundFX("Male PC Hurt");
+				PlayPCSoundFX("* PC Hurt", pCharDlg->m_szCharacterFirstName, "Male");
+			}
+		}
+	}
+
+	if (pNPCDlg != NULL && pNPCDlg->m_pNPC != NULL)
+	{
+		bWasAlive = pNPCDlg->m_pNPC->IsAlive();
+
+		int nValue = 0;
+
+		szLabel.Format("Add Damage to %s:", pNPCDlg->m_pNPC->m_szCharacterName);
+		ModifyValue((int *)&nValue, szLabel.GetBuffer(0), pNPCDlg->m_pNPC->m_nHitPoints, FALSE);
+
+		*nRetDamage = nValue;
+
+		if (nValue == 0)
+		{
+			return FALSE;
+		}
+
+		pNPCDlg->m_pNPC->m_nCurrentDamage += nValue;
+
+		if (pNPCDlg->m_pNPC->m_nCurrentDamage < 0)
+			pNPCDlg->m_pNPC->m_nCurrentDamage = 0;
+
+		pNPCDlg->PostMessage(DND_DIRTY_WINDOW_MESSAGE, 1, 0);
+
+		if (bWasAlive == TRUE && pNPCDlg->m_pNPC->IsAlive() == FALSE)
+		{
+			//m_pApp->PlaySoundFX("Monster Die");
+			PlayPCSoundFX("* Die", pNPCDlg->m_szMonsterName, pNPCDlg->GetMonsterSFXID());
+
+			bKilledTarget = TRUE;
+		}
+		else
+		{
+			PlayPCSoundFX("* Hurt", pNPCDlg->m_szMonsterName, pNPCDlg->GetMonsterSFXID());
+		}
+
+		pNPCDlg->m_szInitiativeAction = _T("DEAD");
+	}
+
+	return bKilledTarget;
+}
+
 
 BOOL CDMHelperApp::HealCharacter(DWORD dwCharacterID)
 {
@@ -6399,6 +6588,23 @@ BOOL CDMHelperApp::HealCharacter(DWORD dwCharacterID)
 	return bRetVal;
 }
 
+#if GAMETABLE_BUILD
+void CDMHelperApp::DragonBreathWeaponSFX(cDMBaseNPCViewDialog *pNPCDialog)
+{
+	// case 11122: // red dragon breath
+	m_UtilitySpell.m_nSpellIdentifier = 10000 + pNPCDialog->m_pNPC->m_nMonsterIndex;
+
+	m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(pNPCDialog->m_szMonsterManualName, pNPCDialog->m_dwCharacterID, &m_UtilitySpell, 7, FALSE, 1, NULL, 0);
+	AfxBeginThread(DMInstantMapSFXThreadProc, (LPVOID)this);
+	if (m_pDMReminderSFXDialog == NULL)
+	{
+		m_pDMReminderSFXDialog = new CDMReminderSFXDialog(AfxGetMainWnd());
+	}
+
+}
+#endif
+
+
 void CDMHelperApp::RefreshAllMapViews()
 {
 	for (POSITION pos = m_MapViewMap.GetStartPosition(); pos != NULL;)
@@ -6428,7 +6634,6 @@ void CDMHelperApp::RefreshAllMapViews()
 
 cDNDRandomEncounterTable *CDMHelperApp::FindEncounterTableByName(CString szTableName)
 {
-
 	for(int i = 0; i < m_RandomEncounterTables.GetCount(); ++i)
 	{
 		cDNDRandomEncounterTable *pTable = m_RandomEncounterTables.GetAt(i);
@@ -7832,6 +8037,29 @@ BOOL CDMHelperApp::EncryptWAVFile(CString szFileName)
 	return(FALSE);
 }
 
+BOOL CDMHelperApp::SendRemoteMusicCommand(CString szCommand, int nValue)
+{
+	FILE *pOutfile = fopen(".\\REMOTE_MUSIC.CMD", "wt");
+
+	if (pOutfile != NULL)
+	{
+		if (nValue > 0)
+		{
+			fprintf(pOutfile, "%s %d\n", szCommand, nValue);
+		}
+		else
+		{
+			fprintf(pOutfile, "%s\n", szCommand);
+		}
+
+		fclose(pOutfile);
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 #ifdef _DEBUG
 #if KEARY_BUILD
 #if 0
@@ -8240,10 +8468,26 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 	float fMissileSpeed = 1.0f;
 	BOOL bPermanentSFX = FALSE;
 	BOOL bOldLabelsCheck = FALSE;
+	BOOL bIsDragonBreath = FALSE;
 
 	switch (pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier)
 	{
 		case 6:		// cleric light
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\LIGHT_CIRCLE.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.2f;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 8.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 60 + 10 * pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
 		case 188:	// magic-user light
 		case 443:	// illusionist light
 		{
@@ -8257,6 +8501,8 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			pInstantMapSFXPlacer->m_fScale = 8.0f;
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
 			nDelayTenths = 1;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 10 * pInstantMapSFXPlacer->m_nCasterLevel;
 			break;
 		}
 		case 19:	//cleric silence 15' radius spell
@@ -8271,6 +8517,8 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			pInstantMapSFXPlacer->m_fScale = 6.0f;
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
 			nDelayTenths = 1;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 2*pInstantMapSFXPlacer->m_nCasterLevel;
 			break;
 		}
 		case 23:	// cleric spritual hammer
@@ -8288,6 +8536,8 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
 			nDelayTenths = 1;
 			bPermanentSFX = TRUE;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
 			break;
 		}
 		case 25:	// cleric continual light
@@ -8306,7 +8556,35 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			break;
 		}
 		case 206: // magic-user darkness
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\DARKNESS_CIRCLE.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 3.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 10+pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
 		case 438: // illusionist darkness
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\DARKNESS_CIRCLE.PNG";
+			pDNDMapSFX->m_bAnimated = FALSE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 3.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = RollD4() + RollD4() + pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
 		case 458: // illusionist continual darkness
 		{
 			pApp->m_bWaitOnDungeonMaster = TRUE;
@@ -8341,6 +8619,27 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			break;
 		}
 		#endif
+		case 224:	// magic-user stinking cloud
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\green gases.gif";
+
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pInstantMapSFXPlacer->m_fScale = 5.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 20;
+			nDelayTenths = 5;
+			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
 		case 226: // magic-user web
 		{
 			pApp->m_bWaitOnDungeonMaster = TRUE;
@@ -8351,6 +8650,8 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			pInstantMapSFXPlacer->m_fScale = 2.5f;
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
 			nDelayTenths = 1;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 20 * pInstantMapSFXPlacer->m_nCasterLevel; // 2 turns per level
 			break;
 		}
 		case 234:	// magic-user fireball
@@ -8383,6 +8684,61 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			pDNDMapSFX->m_nCycles = 10;
 			pInstantMapSFXPlacer->m_fScale = 7.0f;
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 40; // 40 feet across, 20 foot radius
+			nDelayTenths = 15;
+			break;
+		}
+		case 248:	// magic-user slow
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\blue worm hole.GIF";
+			
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pInstantMapSFXPlacer->m_fScale = 9.5f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			//nRangeCircle = 40;
+			nDelayTenths = 5;
+			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 3 + pInstantMapSFXPlacer->m_nCasterLevel;
+
+			break;
+		}
+		case 110:	// druid call lightning
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			//szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\LIGHTNING_1.GIF";
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ZAPPY_2.GIF";
+			
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_nCycles = 2;
+			pInstantMapSFXPlacer->m_fScale = 5.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 20; // 20 feet across, 10 foot radius
+			nDelayTenths = 15;
+			break;
+		}
+		case 149:	// druid fire seeds
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\FIREWORKS1.GIF";
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_nCycles = 0;
+			pInstantMapSFXPlacer->m_fScale = 7.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 20; // 20 feet across, 10 foot radius
 			nDelayTenths = 15;
 			break;
 		}
@@ -8402,6 +8758,10 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
 			nDelayTenths = 1;
 			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 2 * pInstantMapSFXPlacer->m_nCasterLevel;
+
 			break;
 		}
 		case 444:	// illusionist phantasmal force
@@ -8417,6 +8777,156 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
 			nDelayTenths = 1;
 			bPermanentSFX = TRUE;
+			break;
+		}
+		case 451:	// illusionist hypnotic pattern
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\VORTEX_2.GIF";
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 4.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nDelayTenths = 1;
+			bPermanentSFX = TRUE;
+			break;
+		}
+
+		/////////////////////////////////////////////
+
+		case 11113: // black dragon breath
+		case 11118: // copper dragon breath
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\greyscale_explosion.GIF";
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.8f;
+
+			pDNDMapSFX->m_bColorize = TRUE;
+			pDNDMapSFX->m_fRed = 0.0f;
+			pDNDMapSFX->m_fGreen = 1.0f;
+			pDNDMapSFX->m_fBlue = 0.0f;
+
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 1.6f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 5; // 10 feet across, 2.5 foot radius
+			nDelayTenths = 10;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 6;
+			bIsDragonBreath = TRUE;
+			break;
+		}
+		case 11114: // blue dragon breath
+		case 11116: // bronze dragon breath
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\purple_lightning.GIF";
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.8f;
+
+			pDNDMapSFX->m_bColorize = TRUE;
+			pDNDMapSFX->m_fRed = 0.3f;
+			pDNDMapSFX->m_fGreen = 0.3f;
+			pDNDMapSFX->m_fBlue = 1.0f;
+
+			pDNDMapSFX->m_nCycles = 3;
+
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 5.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 5; // 10 feet across, 2.5 foot radius
+			nDelayTenths = 10;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 6;
+			bIsDragonBreath = TRUE;
+			break;
+		}
+		case 11120: // green dragon breath
+		case 11115: // brass dragon breath
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\greyscale_explosion.GIF";
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.8f;
+
+			pDNDMapSFX->m_bColorize = TRUE;
+			pDNDMapSFX->m_fRed = 1.0f;
+			pDNDMapSFX->m_fGreen = 1.0f;
+			pDNDMapSFX->m_fBlue = 0.0f;
+
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 13.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 40; // 40 feet across, 20 foot radius
+			nDelayTenths = 10;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 6;
+			bIsDragonBreath = TRUE;
+			break;
+		}
+		case 11122: // red dragon breath
+		case 11119: // gold dragon breath
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\greyscale_explosion.GIF";
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.8f;
+
+			pDNDMapSFX->m_bColorize = TRUE;
+			pDNDMapSFX->m_fRed = 1.0f;
+			pDNDMapSFX->m_fGreen = 0.5f;
+			pDNDMapSFX->m_fBlue = 0.25f;
+
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 9.75f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 30; // 30 feet across, 15 foot radius
+			nDelayTenths = 10;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 6;
+			bIsDragonBreath = TRUE;
+			break;
+		}
+		case 11123: // silver dragon breath
+		case 11124: // white dragon breath
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\greyscale_explosion.GIF";
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.8f;
+
+			pDNDMapSFX->m_bColorize = TRUE;
+			pDNDMapSFX->m_fRed = 0.8f;
+			pDNDMapSFX->m_fGreen = 0.8f;
+			pDNDMapSFX->m_fBlue = 1.0f;
+
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pInstantMapSFXPlacer->m_fScale = 8.2f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 25; // 25 feet across, 12.5 foot radius
+			nDelayTenths = 10;
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = 6;
+			bIsDragonBreath = TRUE;
 			break;
 		}
 	}
@@ -8456,103 +8966,185 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 
 	pApp->m_bWaitOnDungeonMaster = FALSE;
 	
-	if (pInstantMapSFXPlacer->m_bCastFromDevice == FALSE && pInstantMapSFXPlacer->m_pSpell->HasVerbalComponent())
+	if (bIsDragonBreath)
 	{
-		pApp->PlayPCSoundFX("* PC Cast Spell", pInstantMapSFXPlacer->m_szCharacterName, "NADA", FALSE, pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier);
+		pApp->PlayPCSoundFX("* Breath Weapon", pInstantMapSFXPlacer->m_szCharacterName, "Monster 01", TRUE);
+	}
+	else if (pInstantMapSFXPlacer->m_bCastFromDevice == FALSE && pInstantMapSFXPlacer->m_pSpell->HasVerbalComponent())
+	{
+		if (!pApp->PlayPCSoundFX("* PC Cast Spell", pInstantMapSFXPlacer->m_szCharacterName, "NADA", FALSE, pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier))
+		{
+			pApp->m_szLoggedError.Format("WARN - SFX (%s PC Cast Spell) NOT FOUND", pInstantMapSFXPlacer->m_szCharacterName);
+		}
 	}
 
 	pApp->PlaySpellSFX(pInstantMapSFXPlacer->m_pSpell->m_nSpellIdentifier, pInstantMapSFXPlacer->m_nRepeats);
 
+	BOOL bDrawAnimation = TRUE;
 	if (pInstantMapSFXPlacer->m_pDMMapViewDialog == NULL || pDNDMapSFX == NULL || pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_bMapScaleFeet == FALSE) // timed out, so abort
 	{
+		bDrawAnimation = FALSE;
+	}
+
+	if (bDrawAnimation)
+	{
+		bOldLabelsCheck = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck;
+		pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = FALSE;
+
+		fParentMapInchScale = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_fScaleX;
+
+		pDNDMapSFX->m_nMapX = pInstantMapSFXPlacer->m_nMapX;
+		pDNDMapSFX->m_nMapY = pInstantMapSFXPlacer->m_nMapY;
+		pDNDMapSFX->m_fSpriteScale = (pInstantMapSFXPlacer->m_fScale / 100.0f) / fParentMapInchScale;
+
+		do
+		{
+			Sleep(100);
+			--nDelayTenths;
+		} while (nDelayTenths > 0 && g_bGlobalShutDownFlag == FALSE);
+
+		if (g_bGlobalShutDownFlag)
+		{
+			return 0;
+		}
+
+		if (pInstantMapSFXPlacer->m_pDMMapViewDialog != NULL)
+		{
+			if (pDNDMapSFX->m_bInMotion) // this is a missile
+			{
+				CDMCharacterHotSpot* pCharacterHotSpot = pInstantMapSFXPlacer->m_pDMMapViewDialog->GetCharacterHotSpotFromID(pInstantMapSFXPlacer->m_dwCharacterID);
+
+				if (pCharacterHotSpot != NULL)
+				{
+					pInstantMapSFXPlacer->m_pDMMapViewDialog->m_SFXMotionTracker.Init(pCharacterHotSpot->m_fMapLocationX, pCharacterHotSpot->m_fMapLocationY, (float)pDNDMapSFX->m_nMapX, (float)pDNDMapSFX->m_nMapY, fMissileSpeed, pInstantMapSFXPlacer->m_nRepeats);
+
+					pDNDMapSFX->m_nMapX = (int)pCharacterHotSpot->m_fMapLocationX;
+					pDNDMapSFX->m_nMapY = (int)pCharacterHotSpot->m_fMapLocationY;
+				}
+			}
+
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+
+			if ((pDNDMapSFX->m_bAnimated == FALSE || bPermanentSFX == TRUE) && pDNDMapSFX->m_bInMotion == FALSE)
+			{
+				for (int i = 0; i < MAX_MAP_SFX; ++i)
+				{
+					if (pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i].m_SFXState == DND_SFX_STATE_UNDEF)
+					{
+						memcpy(&pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i], pDNDMapSFX, sizeof(cDNDMapSFX));
+						break;
+					}
+				}
+
+				pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = FALSE;
+				pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+			}
+			else
+			{
+				pInstantMapSFXPlacer->m_pDNDMapSFX = pDNDMapSFX;
+				pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+
+				nWaitCount = 0;
+				do
+				{
+					BOOL bTimedOut = FALSE;
+					if (pDNDMapSFX->m_bInMotion) // this is a missile
+					{
+						bTimedOut = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_SFXMotionTracker.CheckTimer();
+					}
+
+					Sleep(50);
+					++nWaitCount;
+				} while (pDNDMapSFX->m_SFXState != DND_SFX_STATE_READY && nWaitCount < 400);
+
+				Sleep(2000);
+
+				pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+			}
+
+		}
+
+		int nCreationRound = 0;
+		int nDurationRounds = 0;
+
 		if (pDNDMapSFX != NULL)
 		{
-			delete pDNDMapSFX;
+			nCreationRound = pDNDMapSFX->m_nCreationRound;
+			nDurationRounds = pDNDMapSFX->m_nDurationRounds;
 		}
 
-		pApp->m_pInstantMapSFXPlacer = NULL;
-		delete pInstantMapSFXPlacer;
-
-		return 0;
-	}
-
-	bOldLabelsCheck = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck;
-	pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = FALSE;
-
-	fParentMapInchScale = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_fScaleX;
-
-	pDNDMapSFX->m_nMapX = pInstantMapSFXPlacer->m_nMapX;
-	pDNDMapSFX->m_nMapY = pInstantMapSFXPlacer->m_nMapY;
-	pDNDMapSFX->m_fSpriteScale = (pInstantMapSFXPlacer->m_fScale / 100.0f) / fParentMapInchScale;
-
-	do
-	{
-		Sleep(100);
-		--nDelayTenths;
-	} while (nDelayTenths > 0 && g_bGlobalShutDownFlag == FALSE);
-
-	if (g_bGlobalShutDownFlag)
-	{
-		return 0;
-	}
-
-	if (pInstantMapSFXPlacer->m_pDMMapViewDialog != NULL)
-	{
-		if (pDNDMapSFX->m_bInMotion) // this is a missile
-		{
-			CDMCharacterHotSpot* pCharacterHotSpot = pInstantMapSFXPlacer->m_pDMMapViewDialog->GetCharacterHotSpotFromID(pInstantMapSFXPlacer->m_dwCharacterID);
-
-			if (pCharacterHotSpot != NULL)
-			{
-				pInstantMapSFXPlacer->m_pDMMapViewDialog->m_SFXMotionTracker.Init(pCharacterHotSpot->m_fMapLocationX, pCharacterHotSpot->m_fMapLocationY, (float)pDNDMapSFX->m_nMapX, (float)pDNDMapSFX->m_nMapY, fMissileSpeed, pInstantMapSFXPlacer->m_nRepeats);
-
-				pDNDMapSFX->m_nMapX = (int)pCharacterHotSpot->m_fMapLocationX;
-				pDNDMapSFX->m_nMapY = (int)pCharacterHotSpot->m_fMapLocationY;
-			}
-		}
-
-		pDNDMapSFX->m_SFXState = DND_SFX_STATE_TRIGGERED_START;
-
-		if ((pDNDMapSFX->m_bAnimated == FALSE || bPermanentSFX == TRUE) && pDNDMapSFX->m_bInMotion == FALSE)
+		if (nRangeCircle != 0)
 		{
 			for (int i = 0; i < MAX_MAP_SFX; ++i)
 			{
 				if (pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i].m_SFXState == DND_SFX_STATE_UNDEF)
 				{
-					memcpy(&pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i], pDNDMapSFX, sizeof(cDNDMapSFX));
+					cDNDMapSFX *pDNDMapRangeSFX = &pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i];
+					CString szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\RANGE_CIRCLE.PNG";
+					strcpy(pDNDMapRangeSFX->m_szGFXFileName, szSFXGFXName);
+					pDNDMapRangeSFX->m_bAnimated = FALSE;
+					pDNDMapRangeSFX->m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+					pDNDMapRangeSFX->m_nMapX = pInstantMapSFXPlacer->m_nMapX;
+					pDNDMapRangeSFX->m_nMapY = pInstantMapSFXPlacer->m_nMapY;
+
+					//pDNDMapRangeSFX->m_bTranslucent = TRUE;
+					//pDNDMapRangeSFX->m_fAlpha = 0.3f;
+
+					if (nCreationRound)
+					{
+						pDNDMapRangeSFX->m_nCreationRound = nCreationRound;
+						pDNDMapRangeSFX->m_nDurationRounds = nDurationRounds;
+					}
+					else
+					{
+						pDNDMapRangeSFX->m_nCreationRound = pApp->m_nGlobalRound;
+						pDNDMapRangeSFX->m_nDurationRounds = 10;
+					}
+
+					float fRangeCircle = ((float)nRangeCircle) / fParentMapInchScale / 509.25f;
+					pDNDMapRangeSFX->m_fSpriteScale = fRangeCircle;
+
+					bOldLabelsCheck = FALSE;
+
 					break;
 				}
 			}
 
-			pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = FALSE;
 			pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
 		}
-		else
+
+		pInstantMapSFXPlacer->m_pDMMapViewDialog->UpdateDetachedMaps(TRUE);
+		pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = bOldLabelsCheck;
+
+	} // if (bDrawAnimation)
+
+	BOOL bKilledTarget = FALSE;
+	if (pInstantMapSFXPlacer->m_dwSpellAttackedCharacterID)
+	{
+		int nDamage = 0;
+		bKilledTarget = pApp->WoundCharacter(pInstantMapSFXPlacer->m_dwSpellAttackedCharacterID, &nDamage);
+
+		if (nDamage && pInstantMapSFXPlacer->m_pPartyDlg != NULL && pInstantMapSFXPlacer->m_pPartyDlg->m_pParty != NULL)
 		{
-			pInstantMapSFXPlacer->m_pDNDMapSFX = pDNDMapSFX;
-			pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
-
-			nWaitCount = 0;
-			do
+			CString szVictim;
+			if (bKilledTarget)
 			{
-				BOOL bTimedOut = FALSE;
-				if (pDNDMapSFX->m_bInMotion) // this is a missile
-				{
-					bTimedOut = pInstantMapSFXPlacer->m_pDMMapViewDialog->m_SFXMotionTracker.CheckTimer();
-				}
+				szVictim.Format("%s killed %s with magical damage of %d h.p.", pInstantMapSFXPlacer->m_szCharacterName, pApp->GetCharacterNameFromID(pInstantMapSFXPlacer->m_dwSpellAttackedCharacterID), nDamage);
 
-				Sleep(50);
-				++nWaitCount;
-			} while (pDNDMapSFX->m_SFXState != DND_SFX_STATE_READY && nWaitCount < 400);
+				LONG lXP = pApp->GetCharacterXPFromID(pInstantMapSFXPlacer->m_dwSpellAttackedCharacterID);
+				pInstantMapSFXPlacer->m_pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_PARTY_GAINED_XP_COMBAT, pInstantMapSFXPlacer->m_pPartyDlg->m_pParty->m_szPartyName, pInstantMapSFXPlacer->m_pPartyDlg->m_pParty->m_dwPartyID, lXP, szVictim.GetBuffer(0), FALSE);
+			}
+			else
+			{
+				szVictim.Format("%s hit %s with magic for %d h.p. damage", pInstantMapSFXPlacer->m_szCharacterName, pApp->GetCharacterNameFromID(pInstantMapSFXPlacer->m_dwSpellAttackedCharacterID), nDamage);
+				pInstantMapSFXPlacer->m_pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_MISC, pInstantMapSFXPlacer->m_pPartyDlg->m_pParty->m_szPartyName, pInstantMapSFXPlacer->m_pPartyDlg->m_pParty->m_dwPartyID, 0, szVictim.GetBuffer(0), FALSE);
+			}
 
-			Sleep(2000);
-
-			pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
+			pInstantMapSFXPlacer->m_pPartyDlg->PostMessage(DND_DIRTY_WINDOW_MESSAGE, 1, 0);
 		}
-
 	}
 
-#if 1
+	#if 1
 	if (pDNDMapSFX != NULL && pDNDMapSFX->m_bAnimated)
 	{
 		if (pDNDMapSFX->m_pDataPtr != NULL)
@@ -8565,43 +9157,214 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 
 		pDNDMapSFX->m_pDataPtr = NULL;
 		delete pDNDMapSFX;
+		pDNDMapSFX = NULL;
 	}
-#endif
-
-	if (nRangeCircle != 0)
-	{
-		for (int i = 0; i < MAX_MAP_SFX; ++i)
-		{
-			if (pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i].m_SFXState == DND_SFX_STATE_UNDEF)
-			{
-				cDNDMapSFX *pDNDMapSFX = &pInstantMapSFXPlacer->m_pDMMapViewDialog->m_pDNDMap->m_MapSFX[i];
-				CString szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\RANGE_CIRCLE.PNG";
-				strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
-				pDNDMapSFX->m_bAnimated = FALSE;
-				pDNDMapSFX->m_SFXState = DND_SFX_STATE_TRIGGERED_START;
-				pDNDMapSFX->m_nMapX = pInstantMapSFXPlacer->m_nMapX;
-				pDNDMapSFX->m_nMapY = pInstantMapSFXPlacer->m_nMapY;
-
-				float fRangeCircle = ((float)nRangeCircle)/fParentMapInchScale / 509.25f;
-				pDNDMapSFX->m_fSpriteScale = fRangeCircle;
-
-				bOldLabelsCheck = FALSE;
-
-				break;
-			}
-		}
-
-		
-		pInstantMapSFXPlacer->m_pDMMapViewDialog->InvalidateRect(NULL);
-	}
-
-	pInstantMapSFXPlacer->m_pDMMapViewDialog->UpdateDetachedMaps(TRUE);
-
-	pInstantMapSFXPlacer->m_pDMMapViewDialog->m_bLabelsCheck = bOldLabelsCheck;
+	#endif
 	
+	if (pDNDMapSFX != NULL)
+	{
+		pDNDMapSFX->m_pDataPtr = NULL;
+		delete pDNDMapSFX;
+		pDNDMapSFX = NULL;
+	}
+
 	pApp->m_pInstantMapSFXPlacer = NULL;
 	delete pInstantMapSFXPlacer;
 
 	return 0;
 }
+
+#if GAMETABLE_BUILD
+
+BOOL CDMHelperApp::GetServerMiniPosition(char *szMiniName, float *pfX, float *pFY)
+{
+	std::string sMini = szMiniName;
+
+	auto it = m_MiniUpdateMap.find(sMini);
+
+	if (it != m_MiniUpdateMap.end())
+	{
+		pMiniUpdatePtr pMini = it->second;
+		if (pMini->m_dwUpdateFlag)
+		{
+			*pfX = pMini->m_fOffsetX;
+			*pFY = pMini->m_fOffsetY;
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static std::string readBuffer;
+size_t CurlGameWatcherWriteFunc(void *contents, size_t size, size_t nmemb, void *userp)
+{
+	size_t realsize = size * nmemb;
+	readBuffer.append((char*)contents, realsize);
+	return realsize;
+}
+
+UINT DMGameServerUpdateThreadProc(LPVOID pData)
+{
+	CDMHelperApp *pApp = (CDMHelperApp *)pData;
+
+	CURL *pCurl = NULL;
+
+	UCHAR *pBuffer = NULL;
+
+	do
+	{
+		DWORD dwUpdateTime = GetUniversalTime();
+
+		if (pCurl == NULL)
+		{
+			pCurl = curl_easy_init();
+		}
+
+		if (pCurl != NULL)
+		{
+			CURLcode res;
+
+			CString szURL = "http://192.168.1.101:9467/MiniData";
+
+			char url[MAX_PATH];
+			memset(url, 0, MAX_PATH * sizeof(char));
+			strcpy(url, szURL.GetBuffer(0));
+
+			curl_easy_setopt(pCurl, CURLOPT_URL, szURL.GetBuffer(0));
+			curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, pBuffer);
+			curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, CurlGameWatcherWriteFunc);
+			//curl_easy_setopt(pCurl, CURLOPT_READFUNCTION, CurlGameWatcherReadFunc);
+			curl_easy_setopt(pCurl, CURLOPT_NOPROGRESS, 0L);
+			//curl_easy_setopt(pCurl, CURLOPT_PROGRESSFUNCTION, CurlProgressFunc);
+			//curl_easy_setopt(pCurl, CURLOPT_PROGRESSDATA, pDlg);
+
+			readBuffer.clear();
+			res = curl_easy_perform(pCurl);
+
+			if (res == CURLE_OK)
+			{
+				long respcode = 0L; //response code of the http transaction
+
+				curl_easy_getinfo(pCurl, CURLINFO_RESPONSE_CODE, &respcode);// grabbing it from curl
+
+				switch (respcode)
+				{
+					case 200:
+					case 202:
+					{
+						ProcessMiniDataUpdate(readBuffer);
+						break;
+					}
+					default:
+					{
+						break;
+					}
+
+				}
+
+			}
+			else
+			{
+
+			}
+
+			/* always cleanup */
+			curl_easy_cleanup(pCurl);
+		}
+
+		pCurl = NULL;
+
+		Sleep(1000);
+
+	} while (1);
+
+	return 0;
+}
+
+void ProcessMiniDataUpdate(std::string sBuffer)
+{
+	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+
+	CString szData = sBuffer.c_str();
+	szData.Replace("<br>", "|");
+
+	int nNumMinis = 0;
+
+	CString sToken = _T("");
+	int i = 0; // substring index to extract
+	while (AfxExtractSubString(sToken, szData, i, '|'))
+	{
+		sToken.Replace(" ", "");	//remove spaces
+		switch (i)
+		{
+			case 0:
+			{
+				break;
+			}
+			case 1:
+			{
+				nNumMinis = atoi(sToken.GetBuffer(0));
+				break;
+			}
+			default:
+			{
+				pMiniUpdatePtr pMini = nullptr;
+				CString sSubToken = _T("");
+				int j = 0; // substring index to extract
+				while (AfxExtractSubString(sSubToken, sToken, j, ','))
+				{
+					switch (j)
+					{
+						case 0:
+						{
+							std::string sMini = sSubToken;
+							auto it = pApp->m_MiniUpdateMap.find(sMini);
+
+							if (it == pApp->m_MiniUpdateMap.end())
+							{
+								pMini = std::shared_ptr<cMiniatureUpdateStruct>(new cMiniatureUpdateStruct(sMini));
+								pApp->m_MiniUpdateMap[sMini] = pMini;
+							}
+							else
+							{
+								pMini = it->second;
+							}
+
+							break;
+						}
+						case 1:
+						{
+							pMini->m_fOffsetX = atof(sSubToken.GetBuffer(0));
+							break;
+						}
+						case 2:
+						{
+							pMini->m_fOffsetY = atof(sSubToken.GetBuffer(0));
+							break;
+						}
+						case 3:
+						{
+							pMini->m_dwUpdateFlag = atoi(sSubToken.GetBuffer(0));
+
+							pApp->m_dwMiniUpdateFlag = max(pApp->m_dwMiniUpdateFlag, pMini->m_dwUpdateFlag);
+
+							break;
+						}
+					}
+
+					++j;
+				}
+
+				break;
+			}
+		}
+
+		++i;
+	}
+
+}
+
+#endif
 

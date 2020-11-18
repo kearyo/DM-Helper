@@ -25,6 +25,7 @@ char g_SFXPORT_szFilename[MAX_PATH];
 
 DMSoundboardDialog::DMSoundboardDialog(CWnd* pParent /*=NULL*/)
 	: CDialog(DMSoundboardDialog::IDD, pParent)
+	, m_szVolume(_T(""))
 {
 	//{{AFX_DATA_INIT(DMSoundboardDialog)
 	m_szBoardName = _T("");
@@ -53,6 +54,8 @@ void DMSoundboardDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EXPORT_BOARDS_BUTTON, m_cExportBoardsButton);
 	DDX_Control(pDX, IDC_IMPORT_BOARDS_BUTTON, m_cImportBoardsButton);
 	DDX_Control(pDX, IDC_RESET_DX_SOUNDS_BUTTON, m_cResetDXSoundsButton);
+	DDX_Text(pDX, IDC_VOL_TEXT, m_szVolume);
+	DDX_Control(pDX, IDC_VOLUME_SLIDER, m_cVolumeSlider);
 }
 
 
@@ -72,6 +75,9 @@ BEGIN_MESSAGE_MAP(DMSoundboardDialog, CDialog)
 	ON_BN_CLICKED(IDC_EXPORT_BOARDS_BUTTON, &DMSoundboardDialog::OnBnClickedExportBoardsButton)
 	ON_BN_CLICKED(IDC_IMPORT_BOARDS_BUTTON, &DMSoundboardDialog::OnBnClickedImportBoardsButton)
 	ON_BN_CLICKED(IDC_RESET_DX_SOUNDS_BUTTON, &DMSoundboardDialog::OnBnClickedResetDxSoundsButton)
+	ON_NOTIFY(NM_RELEASEDCAPTURE, IDC_VOLUME_SLIDER, &DMSoundboardDialog::OnNMReleasedcaptureVolumeSlider)
+	ON_WM_VSCROLL()
+	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -100,6 +106,13 @@ BOOL DMSoundboardDialog::OnInitDialog()
 	((CButton *)(GetDlgItem( IDC_PLAY_RADIO )))->SetCheck(1);
 
 	m_szBoardName = m_pApp->m_Settings.m_szSoundBoardTabLabels[0];
+
+	m_cVolumeSlider.SetRange(0, 128);
+
+	//int nVolume = GetVolume();
+	//nVolume &= 0x000000FF;
+
+	SetVolume(128);
 
 	UpdateData(FALSE);
 	
@@ -537,4 +550,124 @@ void DMSoundboardDialog::OnBnClickedResetDxSoundsButton()
 	#if USE_DX_SOUND
 	m_pApp->ShutDownDXSoundFX();
 	#endif
+}
+
+int DMSoundboardDialog::GetVolume()
+{
+	DWORD dwVolume;
+
+	//if (waveOutGetVolume(NULL, &dwVolume) == MMSYSERR_NOERROR)
+	//	waveOutSetVolume(NULL, 0); // mute volume
+
+	waveOutGetVolume(NULL, &dwVolume);
+
+	return dwVolume;
+}
+
+void DMSoundboardDialog::SetVolume(int nVolume)
+{
+	m_szVolume.Format("VOL: %03d", nVolume);
+
+	DWORD dwVolume = nVolume;
+	dwVolume = dwVolume << 24;
+
+	dwVolume |= nVolume << 8;
+
+	//dwVolume &= 0x00FF;
+	//dwVolume = 0xFFFFFFFF;
+
+	//dwVolume = 0xFFFF0000;
+	//dwVolume = 0xFF00FF00;
+
+	CString szCheck;
+	szCheck.Format("0x%x", dwVolume);
+
+	waveOutSetVolume(NULL, dwVolume);
+
+	UpdateData(FALSE);
+}
+
+void DMSoundboardDialog::OnNMReleasedcaptureVolumeSlider(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	*pResult = 0;
+
+	UpdateData(TRUE);
+
+	int nVolume = m_cVolumeSlider.GetPos();
+	nVolume = 128 - nVolume;
+
+	SetVolume(nVolume);
+}
+
+
+void DMSoundboardDialog::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	
+	if (pScrollBar == (CScrollBar*)&m_cVolumeSlider)
+	{
+		// Check what happened  
+		switch (nSBCode)
+		{
+			case TB_LINEUP:
+			case TB_LINEDOWN:
+			case TB_PAGEUP:
+			case TB_PAGEDOWN:
+			case TB_THUMBPOSITION:
+			{
+				SetVolume(128 - nPos);
+				break;
+			}
+			case TB_TOP:
+			case TB_BOTTOM:
+			case TB_THUMBTRACK:
+			{
+				SetVolume(128 - nPos);
+				break;
+			}
+			case TB_ENDTRACK:
+			{
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+
+	}
+
+	CDialog::OnVScroll(nSBCode, nPos, pScrollBar);
+}
+
+
+BOOL DMSoundboardDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	UpdateData(TRUE);
+
+	int nVolume = m_cVolumeSlider.GetPos();
+
+	nVolume = 128 - nVolume;
+
+	if (zDelta < 0)
+	{
+		nVolume -= 1;
+		if (nVolume < 0)
+		{
+			nVolume = 0;
+		}
+	}
+	else
+	{
+		nVolume += 1;
+		if (nVolume > 128)
+		{
+			nVolume = 128;
+		}
+	}
+
+	m_cVolumeSlider.SetPos(128 - nVolume);
+
+	SetVolume(nVolume);
+
+	return CDialog::OnMouseWheel(nFlags, zDelta, pt);
 }

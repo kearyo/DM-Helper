@@ -35,12 +35,15 @@ public:
 
 	CMFCButton *m_FileButtons[16];
 	BOOL m_bIsDirectory[16];
+	CString m_szDirectories[16];
 
 	int m_nScrollOffset;
 	int m_nOldScrollOffset;
 
 
 	void Refresh();
+	void SearchSubDirectory(CString szDirPath, CString szSearchString, BOOL bShowAll, int *pnItemsCount, int *pnIndex);
+
 	void SelectedFile(int nSelected);
 	BOOL LoadCharacterFromFile(char *szFileName);
 	
@@ -107,4 +110,9 @@ public:
 	CButton m_cDeleteFolderButton;
 	afx_msg void OnBnClickedDeleteFolderButton();
 	CStatic m_cGroupBox;
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	CString m_szSearchString;
+	afx_msg void OnEnChangeSearchEdit();
+	CEdit m_cFileNameEdit;
+	CEdit m_cSearchEdit;
 };

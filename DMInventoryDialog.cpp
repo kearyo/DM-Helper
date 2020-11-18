@@ -68,6 +68,7 @@ DMInventoryDialog::DMInventoryDialog(CDMHelperDlg* pMainDialog, cDNDCharacter *_
 	, m_bInLairCheck(FALSE)
 	, m_bMaterialComponentCheck(FALSE)
 	, m_szItemDesc(_T(""))
+	, m_bIgnoreEncumbrance(FALSE)
 {
 	//{{AFX_DATA_INIT(DMInventoryDialog)
 	m_szEncumbrance = _T("");
@@ -201,6 +202,8 @@ void DMInventoryDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_IN_LAIR_CHECK, m_bInLairCheck);
 	DDX_Check(pDX, IDC_MAGIC_COMPONENTS_CHECK, m_bMaterialComponentCheck);
 	DDX_Text(pDX, IDC_ITEM_DESC, m_szItemDesc);
+	DDX_Control(pDX, IDC_ITEM_ENCUMBRANCE_CHECK, m_cIgnoreEncumbrance);
+	DDX_Check(pDX, IDC_ITEM_ENCUMBRANCE_CHECK, m_bIgnoreEncumbrance);
 }
 
 
@@ -276,6 +279,7 @@ BEGIN_MESSAGE_MAP(DMInventoryDialog, CDialog)
 	ON_BN_CLICKED(IDC_IN_LAIR_CHECK, &DMInventoryDialog::OnBnClickedInLairCheck)
 	ON_BN_CLICKED(IDC_MAGIC_COMPONENTS_CHECK, &DMInventoryDialog::OnBnClickedMagicComponentsCheck)
 	ON_STN_DBLCLK(IDC_CACHE_NAME_STATIC, &DMInventoryDialog::OnStnDblclickCacheNameStatic)
+	ON_BN_CLICKED(IDC_ITEM_ENCUMBRANCE_CHECK, &DMInventoryDialog::OnBnClickedItemEncumbranceCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -832,6 +836,7 @@ void DMInventoryDialog::AddContainerItemToList(DWORD dwContainerID, int *pnTotal
 			{
 				m_cInventoryList.SetCurSel(*pnTotalItems);
 				m_cItemIdentified.ShowWindow(SW_SHOW);
+				m_cIgnoreEncumbrance.ShowWindow(SW_SHOW);
 			}
 
 			++*pnTotalItems;
@@ -938,6 +943,7 @@ void DMInventoryDialog::Refresh()
 
 	m_cInventoryList.ResetContent();
 	m_cItemIdentified.ShowWindow(SW_HIDE);
+	m_cIgnoreEncumbrance.ShowWindow(SW_HIDE);
 
 	int nTotalItems = 0;
 
@@ -1032,6 +1038,7 @@ void DMInventoryDialog::Refresh()
 			{
 				m_cInventoryList.SetCurSel(nTotalItems);
 				m_cItemIdentified.ShowWindow(SW_SHOW);
+				m_cIgnoreEncumbrance.ShowWindow(SW_SHOW);
 			}
 
 			++nTotalItems;
@@ -2106,8 +2113,10 @@ void DMInventoryDialog::OnSelchangeInventoryList()
 	if(m_pSelectedInventorySlot != NULL)
 	{
 		m_cItemIdentified.ShowWindow(SW_SHOW);
+		m_cIgnoreEncumbrance.ShowWindow(SW_SHOW);
 
 		m_bItemIdentified = !m_pSelectedInventorySlot->m_bMysteryItem;
+		m_bIgnoreEncumbrance = m_pSelectedInventorySlot->m_bIgnoreEncumbrance;
 
 		m_szRenameItem = m_pSelectedInventorySlot->m_szType;
 		m_cRenameEdit.EnableWindow(TRUE);
@@ -2143,6 +2152,7 @@ void DMInventoryDialog::OnSelchangeInventoryList()
 	else
 	{
 		m_cItemIdentified.ShowWindow(SW_HIDE);
+		m_cIgnoreEncumbrance.ShowWindow(SW_HIDE);
 
 		m_szRenameItem = _T("");
 		m_cRenameEdit.EnableWindow(FALSE);
@@ -3118,10 +3128,25 @@ void DMInventoryDialog::OnBnClickedItemIdentifiedCheck()
 	if(m_pSelectedInventorySlot != NULL)
 	{
 		m_pSelectedInventorySlot->m_bMysteryItem = !m_bItemIdentified;
+		m_pCharacter->MarkChanged();
 	}
 
 	RefreshAll();
 }
+
+void DMInventoryDialog::OnBnClickedItemEncumbranceCheck()
+{
+	UpdateData(TRUE);
+
+	if (m_pSelectedInventorySlot != NULL)
+	{
+		m_pSelectedInventorySlot->m_bIgnoreEncumbrance = m_bIgnoreEncumbrance;  
+		m_pCharacter->MarkChanged();
+	}
+
+	RefreshAll();
+}
+
 
 void DMInventoryDialog::OnBnClickedTreasureTypeButton()
 {
@@ -3313,3 +3338,5 @@ void DMInventoryDialog::OnStnDblclickCacheNameStatic()
 		delete pDlg;
 	}
 }
+
+

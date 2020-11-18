@@ -154,6 +154,9 @@ public:
 
 class DMMapEditDialog;
 class CDMEditMapLayersDialog;
+class cDMMapLegendDialog;
+
+typedef std::shared_ptr<cDMMapLegendDialog> pMapLegendDialog;
 
 class cDMMapViewDialog : public CDialog
 {
@@ -190,6 +193,12 @@ public:
 	int m_nOrientation;
 
 	BOOL m_bUpdateDetachedScale;
+
+	#if GAMETABLE_BUILD
+	DWORD m_dwMiniUpdateFlag;
+	#endif
+
+	pMapLegendDialog m_pMapLegendDialog;
 
 	BOOL m_bCatchMe;	//this is a debugging variable
 
@@ -253,6 +262,7 @@ public:
 	void CleanUp();
 	void CleanupMapSFX();
 	void DrawMapSFX(Graphics* g);
+	void DrawMapLighting(Graphics* graphics);
 
 	RECT *GetSaneScreenRect(RECT *pRect);
 
@@ -492,6 +502,12 @@ public:
 	afx_msg void OnBnClickedCenterButton();
 	afx_msg void OnBnClicked25mmButton();
 	CButton m_c25mmButton;
+	afx_msg void OnBnClickedSetCharacterMiniButton();
+	CButton m_cSetCharacterMiniButton;
+	afx_msg void OnBnClickedLegendButton();
+	CButton m_cLegendButton;
+	CButton m_cMusicButton;
+	afx_msg void OnBnClickedMusicButton();
 };
 
 

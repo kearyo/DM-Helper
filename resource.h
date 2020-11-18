@@ -178,6 +178,15 @@
 #define IDD_ASSASSIN_SKILL_MODIFIER_DIALOG 298
 #define IDD_CLERIC_SKILL_MODIFIER_DIALOG 299
 #define IDD_CHART_LOOKUP_DIALOG         300
+#define IDB_MUSIC_NOTE_BITMAP           301
+#define IDB_MUSIC_NOTE_SELECT_BITMAP    302
+#define IDD_MUSIC_MOOD_DIALOG           303
+#define IDB_MUSIC_NOTE_ALERT_BITMAP     304
+#define IDD_MINI_SELECTOR_DIALOG        305
+#define IDD_MAP_LEGEND_DIALOG           306
+#define IDB_LEGEND_BUTTON_BITMAP        307
+#define IDB_MUSIC_AMBIENCE_BITMAP       308
+#define IDD_TRACK_LIST_DIALOG           309
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -352,6 +361,7 @@
 #define IDC_25MM_BUTTON                 1072
 #define IDC_AMMO_COMBO                  1073
 #define IDC_MAP_SCALE_EDIT              1073
+#define IDC_LEGEND_BUTTON               1073
 #define IDC_CW_STATIC                   1074
 #define IDC_AMMO_PLUS_EDIT              1074
 #define IDC_MAP_WEATHER_BASE_COORD_EDIT 1074
@@ -384,6 +394,7 @@
 #define IDC_INVENTORY_LIST              1082
 #define IDC_NUM_ATTACKS_EDIT            1082
 #define IDC_DEBUG_BUTTON4               1082
+#define IDC_MAP_MUSIC_EDIT              1082
 #define IDC_HP_EDIT_2_2                 1083
 #define IDC_BUY_BUTTON                  1083
 #define IDC_SPELLS_MODE_TAB             1083
@@ -655,6 +666,7 @@
 #define IDC_PARTIES_CHECK               1164
 #define IDC_RECOVER_AMMO_BUTTON         1164
 #define IDC_ROUTES_CHECK                1165
+#define IDC_TURN_UNDEAD_BUTTON          1165
 #define IDC_CHILD_MAPS_CHECK            1166
 #define IDC_SHOW_STATIC                 1167
 #define IDC_CACHE_COMBO                 1168
@@ -668,8 +680,10 @@
 #define IDC_TICKS_STATIC                1173
 #define IDC_RELOAD_TILES_BUTTON         1173
 #define IDC_PLACE_ON_CACHE_BUTTON       1174
+#define IDC_DEFINE_LEGEND_BUTTON        1174
 #define IDC_CALENDAR_COMBO              1175
 #define IDC_DELETE_CACHE_BUTTON         1175
+#define IDC_OPEN_TRACK_LIST_BUTTON      1175
 #define IDC_YEAR_EDIT                   1176
 #define IDC_PLACE_ON_CHARACTER_BUTTON   1176
 #define IDC_INC_YEAR_BUTTON             1177
@@ -878,6 +892,7 @@
 #define IDC_LOG_EVENT_BUTTON            1356
 #define IDC_PARTY_CHARACTERS_BUTTON     1356
 #define IDC_PARTY_INITIATIVE_BUTTON     1357
+#define IDC_SET_CHARACTER_MINI_BUTTON   1357
 #define IDC_CHARSHEET_SLIDER            1360
 #define IDC_D20_BUTTON                  1361
 #define IDC_NUM_DICE_EDIT               1362
@@ -1028,6 +1043,7 @@
 #define IDC_TELEPATH_CHECK              1443
 #define IDC_EXCEPT_STR_CHECK            1443
 #define IDC_PREREQ_ATTRIB_CHECK_3       1443
+#define IDC_SFX_COLORIZE_CHECK          1443
 #define IDC_SP_BUTTON                   1444
 #define IDC_ROLL_PARTY_STATIC           1444
 #define IDC_PREREQ_ATTRIB_CHECK_4       1444
@@ -1062,6 +1078,8 @@
 #define IDC_ITEM_IDENTIFIED_CHECK       1460
 #define IDC_IN_LAIR_CHECK               1461
 #define IDC_TREASURE_TYPE_LIST          1462
+#define IDC_ITEM_IDENTIFIED_CHECK2      1462
+#define IDC_ITEM_ENCUMBRANCE_CHECK      1462
 #define IDC_MAGIC_SWORD_STATIC          1463
 #define IDC_ALIGNMENT_COMBO             1465
 #define IDC_SELECT_LANGUAGES_BUTTON     1467
@@ -1271,7 +1289,9 @@
 #define IDC_NON_WEAPON_PROF_PENALTY_EDIT 1631
 #define IDC_DEX_COMMENT_STATIC          1632
 #define IDC_FILTER_EDIT                 1633
+#define IDC_WEAPON_SPECIALIZATION_CHECK 1633
 #define IDC_SWORD_ICON                  1634
+#define IDC_WEAPON_SPECIALIZATION_LEVEL_EDIT 1634
 #define IDC_GO_BUTTON                   1635
 #define IDC_ADD_ON_PROGRESS             1636
 #define IDC_FILE_NAME_STATIC            1637
@@ -1285,11 +1305,14 @@
 #define IDC_ALPHA_EDIT                  1644
 #define IDC_DWARVEN_BUTTON              1645
 #define IDC_MATERIAL_COMPONENTS         1645
+#define IDC_RED_EDIT                    1645
 #define IDC_HALFLING_BUTTON             1646
 #define IDC_COMPONENTS_LIST             1646
 #define IDC_TRANSCRIBE_SPELL            1646
+#define IDC_GREEN_EDIT                  1646
 #define IDC_GNOME_BUTTON                1647
 #define IDC_COMPONENTS_LINE             1647
+#define IDC_BLUE_EDIT                   1647
 #define IDC_BUGBEAR_BUTTON              1648
 #define IDC_BUY_COMPONENTS_BUTTON       1648
 #define IDC_DRAGON_BUTTON               1649
@@ -1340,6 +1363,30 @@
 #define IDC_LEVEL_TITLE_3               1675
 #define IDC_MONTH_NAME                  1675
 #define IDC_COMMENT                     1676
+#define IDFAILED                        1677
+#define IDC_MUSIC_BUTTON                1678
+#define IDC_MUSIC_MOOD_BUTTON1          1679
+#define IDC_MUSIC_MOOD_BUTTON2          1680
+#define IDC_COMBAT_NOTE                 1680
+#define IDC_MUSIC_MOOD_BUTTON3          1681
+#define IDC_PLUS_MINUS                  1681
+#define IDC_TIMER_NOTE                  1681
+#define IDC_MUSIC_MOOD_BUTTON4          1682
+#define IDC_MINI_SELECTION_LIST         1682
+#define IDC_MUSIC_MOOD_BUTTON5          1683
+#define IDC_MAP_MUSIC_LABEL             1683
+#define IDC_TRACK_LIST                  1684
+#define IDC_VOLUME_SLIDER               1685
+#define IDC_VOL_TEXT                    1686
+#define IDC_TRACK_SEARCH_EDIT           1687
+#define IDC_LIGHT_SOURCE_CHECK          1688
+#define IDC_LIGHT_RANGE_EDIT            1689
+#define IDC_INFO_TEXT_1                 1690
+#define IDC_INFO_TEXT_2                 1691
+#define IDC_COPIED_STATIC               1692
+#define IDC_DEFAULT_ACTIVE_CHECK        1692
+#define IDC_DEFAULT_ACTIVE_CHECK2       1693
+#define IDC_DRAW_UNDER_CHECK            1693
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1384,14 +1431,19 @@
 #define ID_CHARTSANDTABLES_SAVINGTHROWMATRIXFORMAGICALANDNON 32812
 #define ID_CHARTSANDTABLES_POTIONMISCIBILITYTABLE 32813
 #define ID_CHARTSANDTABLES_TREASURETYPES 32814
+#define ID_CHARTSANDTABLES_COINAGETYPES 32815
+#define ID_CHARTSANDTABLES_NPCSPELLCASTINGCOSTS 32816
+#define ID_CHARTSANDTABLES_DETECTIONOFINVISIBILITY 32817
+#define ID_MAPS_ENABLEGAMEWATCHER       32818
+#define ID_ENABLEGAMEWATCHER_ENABLED    32819
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        301
-#define _APS_NEXT_COMMAND_VALUE         32815
-#define _APS_NEXT_CONTROL_VALUE         1677
+#define _APS_NEXT_RESOURCE_VALUE        310
+#define _APS_NEXT_COMMAND_VALUE         32820
+#define _APS_NEXT_CONTROL_VALUE         1693
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

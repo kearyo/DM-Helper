@@ -79,4 +79,9 @@ public:
 	CButton m_cDebugButton;
 	afx_msg void OnEnChangeHdTypeEdit();
 	CEdit m_cMagicUseLevel;
+	CEdit m_cWeaponSpecializationLevel;
+	CString m_szWeaponSpecializationLevel;
+	afx_msg void OnBnClickedWeaponSpecializationCheck();
+	BOOL m_bWeaponSpecialization;
+	afx_msg void OnEnChangeWeaponSpecializationLevelEdit();
 };

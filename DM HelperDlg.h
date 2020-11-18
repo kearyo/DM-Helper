@@ -226,6 +226,10 @@ public:
 	afx_msg void OnChartsandtablesSavingthrowmatrixformagicalandnon();
 	afx_msg void OnChartsandtablesPotionmiscibilitytable();
 	afx_msg void OnChartsandtablesTreasuretypes();
+	afx_msg void OnChartsandtablesCoinagetypes();
+	afx_msg void OnChartsandtablesNpcspellcastingcosts();
+	afx_msg void OnChartsandtablesDetectionofinvisibility();
+	afx_msg void OnEnablegamewatcherEnabled();
 };
 
 //{{AFX_INSERT_LOCATION}}

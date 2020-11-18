@@ -44,4 +44,6 @@ public:
 	afx_msg void OnBnClickedKoboldButton();
 	afx_msg void OnBnClickedOgreButton();
 	afx_msg void OnBnClickedOrcButton();
+	afx_msg void OnBnClickedOk();
+	CString m_szCopiedNote;
 };

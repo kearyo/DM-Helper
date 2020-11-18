@@ -16,6 +16,7 @@ cDMRandomNameGeneratorDialog::cDMRandomNameGeneratorDialog(CWnd* pParent /*=NULL
 	, m_szGeneratedName(_T(""))
 	, m_bMaleCheck(TRUE)
 	, m_bFemaleCheck(FALSE)
+	, m_szCopiedNote(_T(""))
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();
 }
@@ -31,6 +32,7 @@ void cDMRandomNameGeneratorDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT1, m_GeneratedNameEdit);
 	DDX_Check(pDX, IDC_MALE_CHECK, m_bMaleCheck);
 	DDX_Check(pDX, IDC_FEMALE_CHECK, m_bFemaleCheck);
+	DDX_Text(pDX, IDC_COPIED_STATIC, m_szCopiedNote);
 }
 
 
@@ -50,6 +52,7 @@ BEGIN_MESSAGE_MAP(cDMRandomNameGeneratorDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_KOBOLD_BUTTON, &cDMRandomNameGeneratorDialog::OnBnClickedKoboldButton)
 	ON_BN_CLICKED(IDC_OGRE_BUTTON, &cDMRandomNameGeneratorDialog::OnBnClickedOgreButton)
 	ON_BN_CLICKED(IDC_ORC_BUTTON, &cDMRandomNameGeneratorDialog::OnBnClickedOrcButton)
+	ON_BN_CLICKED(IDOK, &cDMRandomNameGeneratorDialog::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 
@@ -91,6 +94,19 @@ void cDMRandomNameGeneratorDialog::GenerateName(DND_CHARACTER_RACES nRace)
 
 	m_szGeneratedName = m_pApp->GetRandomName(nRace, nGender);
 	UpdateData(FALSE);
+
+	const char* output = m_szGeneratedName.GetBuffer(0);
+	const size_t len = strlen(output) + 1;
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+	memcpy(GlobalLock(hMem), output, len);
+	GlobalUnlock(hMem);
+	OpenClipboard();
+	EmptyClipboard();
+	SetClipboardData(CF_TEXT, hMem);
+	CloseClipboard();
+
+	m_szCopiedNote.Format("\"%s\" copied to clipboard !", m_szGeneratedName);
+	UpdateData(FALSE);
 }
 
 // cDMRandomNameGeneratorDialog message handlers
@@ -106,7 +122,6 @@ BOOL cDMRandomNameGeneratorDialog::OnInitDialog()
 
 void cDMRandomNameGeneratorDialog::OnBnClickedCancel()
 {
-	// TODO: Add your control notification handler code here
 	CDialogEx::OnCancel();
 }
 
@@ -199,4 +214,10 @@ void cDMRandomNameGeneratorDialog::OnBnClickedOrcButton()
 {
 	DND_CHARACTER_RACES nRace = GetMonsterRaceFromName("Orc");
 	GenerateName(nRace);
+}
+
+
+void cDMRandomNameGeneratorDialog::OnBnClickedOk()
+{
+	CDialogEx::OnOK();
 }

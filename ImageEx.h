@@ -9,6 +9,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#define USE_GIF_BUFFER	TRUE
 
 class ImageEx : public Image
 {
@@ -26,7 +27,7 @@ public:
 	bool	IsAnimatedGIF() { return m_nFrameCount > 1; }
 	void	SetPause(bool bPause);
 	bool	IsPaused() { return m_bPause; }
-	bool	InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, float fAlpha);
+	bool	InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, BOOL bDrawUnder, float fAlpha, BOOL bColorize, float fRed, float fGreen, float fBlue);
 	void	Position(int nX, int nY, float fScreenScale, float fSpriteScale);
 	void	ResetBackground();
 	void	Destroy();
@@ -67,8 +68,16 @@ protected:
 	int				m_nCycles;
 	BOOL			m_bColorKeyed;
 	BOOL			m_bTranslucent;
+	BOOL			m_bDrawUnder; // draw under a map mask, like water
 	float			m_fAlpha;
+	BOOL m_bColorize;
+	float m_fRed;
+	float m_fGreen;
+	float m_fBlue;
 
+	#if USE_GIF_BUFFER
+	Gdiplus::Bitmap			*m_pBufferBitmap;
+	#endif
 	Gdiplus::Bitmap			*m_pBackGroundBitmap;
 
 	BOOL					m_bCycleAnimation;

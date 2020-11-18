@@ -116,6 +116,12 @@ public:
 	int m_nTileHeight;
 	CEdit m_cTileHeightEdit;
 	CString m_szTileHeight;
+	afx_msg void OnBnClickedDefineLegendButton();
+	CEdit m_cMapMusicEdit;
+	CString m_szMapMusic;
+	CStatic m_cMusicLabel;
+	afx_msg void OnBnClickedOpenTrackListButton();
+	CButton m_cTrackListButton;
 };
 
 //{{AFX_INSERT_LOCATION}}

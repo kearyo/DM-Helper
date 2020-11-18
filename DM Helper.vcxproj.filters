@@ -258,6 +258,18 @@
     <ClCompile Include="cDMChartLookupDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cMusicMoodDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cMiniatureSelectionDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMMapLegendDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cDMMusicTrackListDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DM Helper.rc">
@@ -514,6 +526,18 @@
     <ClInclude Include="cDMChartLookupDialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cMusicMoodDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cMiniatureSelectionDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMMapLegendDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cDMMusicTrackListDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\bitmap2.bmp">
@@ -694,6 +718,21 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\center_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\music-note.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\music-note-select.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\music-note-alert.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\legend_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\music_ambience_button.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

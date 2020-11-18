@@ -158,6 +158,8 @@ void DMCastSpellDialog::Refresh()
 						szComponents.Replace("*", pSpell->m_szSpellComponents);
 						szTemp += szComponents;
 
+						szTemp += pSpell->m_szSpellCastingTime;
+
 						m_cSpellList.InsertString(nSpellCount, szTemp);
 
 						PSPELLSLOT pSpellSlot = new cDNDSpellSlot(pSpell, &m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell], 1, m_pCharacter->m_nCastingLevels[nSpellClass], FALSE);
@@ -331,6 +333,7 @@ void DMCastSpellDialog::OnOK()
 					m_pCharacter->CastSpell(pSpellSlot);
 
 					CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
+					DWORD dwSpellAttackedCharacterID = 0;
 
 					if (pApp->SpellIsHealingSpell(pSpellSlot->m_pSpell))
 					{
@@ -344,6 +347,23 @@ void DMCastSpellDialog::OnOK()
 							m_pApp->HealCharacter(dwCharacterID);
 						}
 					}
+					else if (pApp->SpellIsDirectDamageSpell(pSpellSlot->m_pSpell))
+					{
+						if (m_pBaseCharViewDialog->m_pTargetBaseDlg != NULL)
+						{
+							dwSpellAttackedCharacterID = m_pBaseCharViewDialog->m_pTargetBaseDlg->m_dwCharacterID;
+						}
+
+						if (dwSpellAttackedCharacterID == 0 || dwSpellAttackedCharacterID == m_pCharacter->m_dwCharacterID)
+						{
+							DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwSpellAttackedCharacterID, 0, DND_SELECTOR_CHARACTER);
+							pDlg->DoModal();
+							delete pDlg;
+						}
+
+					}
+
+					DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
 
 					// delayed blast
 					BOOL bPlaySounds = TRUE;
@@ -353,7 +373,7 @@ void DMCastSpellDialog::OnOK()
 						if (pApp->m_bSpellFXOnMaps)
 						{
 							int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
-							pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->m_szCharacterFirstName, m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_bCastFromDevice, nSoundRepeats);
+							pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->m_szCharacterFirstName, m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_nCastLevel, pSpellSlot->m_bCastFromDevice, nSoundRepeats, pPartyDlg, dwSpellAttackedCharacterID);
 							AfxBeginThread(DMInstantMapSFXThreadProc, (LPVOID)pApp);
 							if (pApp->m_pDMReminderSFXDialog == NULL)
 							{
@@ -365,6 +385,11 @@ void DMCastSpellDialog::OnOK()
 					}
 					#endif
 
+					if (pPartyDlg != NULL)
+					{
+						pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_CAST_SPELL, m_pCharacter->m_szCharacterName, pPartyDlg->m_pParty->m_dwPartyID, 0L, pSpellSlot->m_pSpell->m_szSpellName);
+					}
+
 					if (bPlaySounds)
 					{
 						if (pSpellSlot->m_bCastFromDevice == FALSE && pSpellSlot->m_pSpell->HasVerbalComponent())
@@ -374,13 +399,34 @@ void DMCastSpellDialog::OnOK()
 
 						int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
 						pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
-					}
 
-					DMPartyDialog *pPartyDlg = pApp->FindCharacterPartyDialog(m_pCharacter);
-					if (pPartyDlg != NULL)
-					{
-						pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_CHARACTER_CAST_SPELL, m_pCharacter->m_szCharacterName, pPartyDlg->m_pParty->m_dwPartyID, 0L, pSpellSlot->m_pSpell->m_szSpellName);
+						BOOL bKilledTarget = FALSE;
+						if (dwSpellAttackedCharacterID)
+						{
+							int nDamage = 0;
+							bKilledTarget = pApp->WoundCharacter(dwSpellAttackedCharacterID, &nDamage);
+
+							if (pPartyDlg != NULL && pPartyDlg->m_pParty != NULL)
+							{
+								CString szVictim;
+								if (bKilledTarget)
+								{
+									szVictim.Format("%s killed %s with magic", m_pBaseCharViewDialog->m_szCharacterFirstName, pApp->GetCharacterNameFromID(dwSpellAttackedCharacterID));
+
+									LONG lXP = pApp->GetCharacterXPFromID(dwSpellAttackedCharacterID);
+									pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_PARTY_GAINED_XP_COMBAT, pPartyDlg->m_pParty->m_szPartyName, pPartyDlg->m_pParty->m_dwPartyID, lXP, szVictim.GetBuffer(0), FALSE);
+								}
+								else
+								{
+									szVictim.Format("%s hit %s with magic for %d h.p. damage", m_pBaseCharViewDialog->m_szCharacterFirstName, pApp->GetCharacterNameFromID(dwSpellAttackedCharacterID), nDamage);
+									pPartyDlg->LogPartyEvent(FALSE, APPEND_TO_LOG, DND_LOG_EVENT_TYPE_MISC, pPartyDlg->m_pParty->m_szPartyName, pPartyDlg->m_pParty->m_dwPartyID, 0, szVictim.GetBuffer(0), FALSE);
+								}
+
+								pPartyDlg->PostMessage(DND_DIRTY_WINDOW_MESSAGE, 1, 0);
+							}
+						}
 					}
+	
 
 					m_pBaseCharViewDialog->m_nCastSpellCursorPos = -1;
 

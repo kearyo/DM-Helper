@@ -41,8 +41,9 @@ using namespace Gdiplus;
 #include <gdiplusbitmap.h>
 #include "ImageEx.h"
 
-
+#include <memory>
 #include <vector>
+#include <map>
 
 #include "DM Helper Common.h"
 #include "ColoredListCtrl.h"

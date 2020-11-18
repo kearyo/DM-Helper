@@ -25,6 +25,16 @@ cDMMapSFXDialog::cDMMapSFXDialog(CWnd* pParent, int nSFXIndex, int nX, int nY, f
 	, m_bColorKeyed(FALSE)
 	, m_bTranslucent(FALSE)
 	, m_szAlpha(_T("0.70"))
+	, m_bLightSource(FALSE)
+	, m_szLightSourceRange(_T("0"))
+	, m_szInfoText1(_T("Special Effects are images that can be added to a map, and hidden or displayed as the DM wishes.  The supported image formats are JPG, PNG, BMP and GIF.  GIF images can be animated images and triggered to only display once (for example an explosion) or set to cycle the animation in a loop.  A sound effect can be specified to be played when the special effect is triggered."))
+	, m_szInfoText2(_T("Default Activated - The GIF is activated when the map is loaded\n\nDraw Under Map - The GIF is drawn under the map, and will be seen through a transparent hole in the map\n\nCycle - the GIF image should cycle through its animation frames\n\nColor Keyed - the color of the top left corner pixel of the image is considered to be transparent\n\nTranslucent - the image is displayed semi-transparently based on the ALPHA value (note an ALPHA value of 0.0 will make the image invisible).  Translucent must be set if the image has an alpha channel. (GIF and PNG images with an alpha channel are supported.)\n\nAlpha - the value of the image transparency 0.0 - 1.0"))
+	, m_szRed(_T("1.0"))
+	, m_szGreen(_T("1.0"))
+	, m_szBlue(_T("1.0"))
+	, m_bColorize(FALSE)
+	, m_bDefaultActivated(FALSE)
+	, m_bDrawUnder(FALSE)
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();
 
@@ -59,6 +69,20 @@ void cDMMapSFXDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_SFX_COLOR_KEYED_CHECK, m_bColorKeyed);
 	DDX_Check(pDX, IDC_SFX_TRANSLUCENT_CHECK, m_bTranslucent);
 	DDX_Text(pDX, IDC_ALPHA_EDIT, m_szAlpha);
+	DDX_Check(pDX, IDC_LIGHT_SOURCE_CHECK, m_bLightSource);
+	DDX_Text(pDX, IDC_LIGHT_RANGE_EDIT, m_szLightSourceRange);
+	DDX_Control(pDX, IDC_LIGHT_RANGE_EDIT, m_cLightSourceRangeEdit);
+	DDX_Text(pDX, IDC_INFO_TEXT_1, m_szInfoText1);
+	DDX_Text(pDX, IDC_INFO_TEXT_2, m_szInfoText2);
+	DDX_Control(pDX, IDC_RED_EDIT, m_cRedEdit);
+	DDX_Control(pDX, IDC_GREEN_EDIT, m_cGreenEdit);
+	DDX_Control(pDX, IDC_BLUE_EDIT, m_cBlueEdit);
+	DDX_Text(pDX, IDC_RED_EDIT, m_szRed);
+	DDX_Text(pDX, IDC_GREEN_EDIT, m_szGreen);
+	DDX_Text(pDX, IDC_BLUE_EDIT, m_szBlue);
+	DDX_Check(pDX, IDC_SFX_COLORIZE_CHECK, m_bColorize);
+	DDX_Check(pDX, IDC_DEFAULT_ACTIVE_CHECK, m_bDefaultActivated);
+	DDX_Check(pDX, IDC_DRAW_UNDER_CHECK, m_bDrawUnder);
 }
 
 
@@ -82,6 +106,11 @@ BEGIN_MESSAGE_MAP(cDMMapSFXDialog, CDialog)
 	ON_BN_CLICKED(IDC_SFX_COLOR_KEYED_CHECK, &cDMMapSFXDialog::OnBnClickedSfxColorKeyedCheck)
 	ON_BN_CLICKED(IDC_SFX_TRANSLUCENT_CHECK, &cDMMapSFXDialog::OnBnClickedSfxTranslucentCheck)
 	ON_EN_CHANGE(IDC_ALPHA_EDIT, &cDMMapSFXDialog::OnEnChangeAlphaEdit)
+	ON_BN_CLICKED(IDC_LIGHT_SOURCE_CHECK, &cDMMapSFXDialog::OnBnClickedLightSourceCheck)
+	ON_EN_CHANGE(IDC_LIGHT_RANGE_EDIT, &cDMMapSFXDialog::OnEnChangeLightRangeEdit)
+	ON_BN_CLICKED(IDC_SFX_COLORIZE_CHECK, &cDMMapSFXDialog::OnBnClickedSfxColorizeCheck)
+	ON_BN_CLICKED(IDC_DEFAULT_ACTIVE_CHECK, &cDMMapSFXDialog::OnBnClickedDefaultActiveCheck)
+	ON_BN_CLICKED(IDC_DRAW_UNDER_CHECK, &cDMMapSFXDialog::OnBnClickedDrawUnderCheck)
 END_MESSAGE_MAP()
 
 
@@ -153,6 +182,40 @@ BOOL cDMMapSFXDialog::OnInitDialog()
 		m_szAlpha = "0.7";
 		m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha = 0.7f;
 	}
+
+	m_bLightSource = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bLightSource;
+	m_szLightSourceRange.Format("%d", m_pDNDMap->m_MapSFX[m_nSFXIndex].m_nLightSourceRange);
+
+	if (m_bLightSource == FALSE)
+	{
+		m_cLightSourceRangeEdit.EnableWindow(FALSE);
+	}
+
+	m_bColorize = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bColorize;
+
+	if (m_bColorize == FALSE)
+	{
+		m_cRedEdit.EnableWindow(FALSE);
+		m_cGreenEdit.EnableWindow(FALSE);
+		m_cBlueEdit.EnableWindow(FALSE);
+
+		m_szRed = "1.0";
+		m_szGreen = "1.0";
+		m_szBlue = "1.0";
+	}
+	else
+	{
+		m_cRedEdit.EnableWindow(TRUE);
+		m_cGreenEdit.EnableWindow(TRUE);
+		m_cBlueEdit.EnableWindow(TRUE);
+
+		m_szRed.Format("%0.3f", m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fRed);
+		m_szGreen.Format("%0.3f", m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fGreen);
+		m_szBlue.Format("%0.3f", m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fBlue);
+	}
+
+	m_bDefaultActivated = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bDefaultActive;
+	m_bDrawUnder = m_bDrawUnder;
 
 	UpdateData(FALSE);
 
@@ -288,6 +351,24 @@ void cDMMapSFXDialog::OnBnClickedOk()
 		m_pDNDMap->m_MapSFX[nIndex].m_fSpriteScale = m_fScale;
 	}
 
+	if (m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha < 0.0f)
+		m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha = 0.0f;
+
+	if (m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha > 1.0f)
+		m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha = 1.0f;
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_nLightSourceRange = atoi(m_szLightSourceRange.GetBuffer(0));
+	if (m_pDNDMap->m_MapSFX[m_nSFXIndex].m_nLightSourceRange == 0)
+	{
+		m_bLightSource = FALSE;
+	}
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bLightSource = m_bLightSource;
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fRed = atof(m_szRed.GetBuffer(0));
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fGreen = atof(m_szGreen.GetBuffer(0));
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fBlue = atof(m_szBlue.GetBuffer(0));
+
 	m_pMapViewDialog->UpdateDetachedMaps();
 
 	m_pMapViewDialog->m_pDNDMap->MarkChanged();
@@ -384,3 +465,69 @@ void cDMMapSFXDialog::OnEnChangeAlphaEdit()
 
 	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_fAlpha = atof(m_szAlpha.GetBuffer(0));
 }
+
+
+void cDMMapSFXDialog::OnBnClickedDefaultActiveCheck()
+{
+	UpdateData(TRUE);
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bDefaultActive = m_bDefaultActivated;
+}
+
+void cDMMapSFXDialog::OnBnClickedDrawUnderCheck()
+{
+	UpdateData(TRUE);
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bDrawUnder = m_bDrawUnder;
+}
+
+
+void cDMMapSFXDialog::OnBnClickedLightSourceCheck()
+{
+	UpdateData(TRUE);
+
+	if (m_bLightSource == FALSE)
+	{
+		m_cLightSourceRangeEdit.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_cLightSourceRangeEdit.EnableWindow(TRUE);
+	}
+}
+
+
+void cDMMapSFXDialog::OnEnChangeLightRangeEdit()
+{
+	UpdateData(TRUE);
+}
+
+
+void cDMMapSFXDialog::OnBnClickedSfxColorizeCheck()
+{
+	UpdateData(TRUE);
+
+	m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bColorize = m_bColorize;
+
+	if (m_bColorize == FALSE)
+	{
+		m_cRedEdit.EnableWindow(FALSE);
+		m_cGreenEdit.EnableWindow(FALSE);
+		m_cBlueEdit.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_cRedEdit.EnableWindow(TRUE);
+		m_cGreenEdit.EnableWindow(TRUE);
+		m_cBlueEdit.EnableWindow(TRUE);
+
+		m_szRed = "1.0";
+		m_szGreen = "1.0";
+		m_szBlue = "1.0";
+
+		UpdateData(FALSE);
+	}
+}
+
+
+

@@ -21,6 +21,8 @@
 #include "DMNPCPortraitSelectDialog.h"
 #include "cDMMapSizingDialog.h"
 #include "cDMMapSFXDialog.h"
+#include "cMiniatureSelectionDialog.h"
+#include "cDMMapLegendDialog.h"
 
 
 /* Notes for weather generation
@@ -125,6 +127,7 @@ int _MapControlStater[][2] =
 #if ISOMETRIC_MAPS
 	IDC_ISOMETRIC_CHECK,				TRUE,
 #endif
+
 	IDC_FOG_OF_WAR_CHECK,				TRUE,
 
 	IDC_LABELS_CHECK,					TRUE,
@@ -137,8 +140,11 @@ int _MapControlStater[][2] =
 
 	IDC_RAIN_CHECK,						TRUE,
 	IDC_SNOW_CHECK,						TRUE,
-
 	IDC_25MM_BUTTON,					TRUE,
+
+#if GAMETABLE_BUILD
+	IDC_SET_CHARACTER_MINI_BUTTON,		TRUE,
+#endif
 
 	-1,									TRUE
 };
@@ -271,6 +277,12 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 
 	m_nWindowTimerID = 0;
 
+	#if GAMETABLE_BUILD
+	m_dwMiniUpdateFlag = 0;
+	#endif
+
+	m_pMapLegendDialog = nullptr;
+
 	Create(cDMMapViewDialog::IDD, pParent);
 }
 
@@ -331,6 +343,9 @@ void cDMMapViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_SEL_PARTY_CHECK, m_bShowSelectedPartyCheck);
 	DDX_Control(pDX, IDC_CENTER_BUTTON, m_cCenterButton);
 	DDX_Control(pDX, IDC_25MM_BUTTON, m_c25mmButton);
+	DDX_Control(pDX, IDC_SET_CHARACTER_MINI_BUTTON, m_cSetCharacterMiniButton);
+	DDX_Control(pDX, IDC_LEGEND_BUTTON, m_cLegendButton);
+	DDX_Control(pDX, IDC_MUSIC_BUTTON, m_cMusicButton);
 }
 
 
@@ -407,6 +422,9 @@ BEGIN_MESSAGE_MAP(cDMMapViewDialog, CDialog)
 	ON_BN_CLICKED(IDC_CENTER_BUTTON, &cDMMapViewDialog::OnBnClickedCenterButton)
 	ON_BN_CLICKED(IDC_25MM_BUTTON, &cDMMapViewDialog::OnBnClicked25mmButton)
 	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, OnDirtyWindow)
+	ON_BN_CLICKED(IDC_SET_CHARACTER_MINI_BUTTON, &cDMMapViewDialog::OnBnClickedSetCharacterMiniButton)
+	ON_BN_CLICKED(IDC_LEGEND_BUTTON, &cDMMapViewDialog::OnBnClickedLegendButton)
+	ON_BN_CLICKED(IDC_MUSIC_BUTTON, &cDMMapViewDialog::OnBnClickedMusicButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -490,11 +508,18 @@ BOOL cDMMapViewDialog::OnInitDialog()
 	m_pSFXButtonBitmap = ResourceToBitmap(AfxGetInstanceHandle(), IDB_SFX_BUTTON_BITMAP);
 
 	m_cCenterButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_CENTER_BUTTON_BITMAP))));
+	m_cLegendButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_LEGEND_BUTTON_BITMAP))));
+	m_cMusicButton.SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_MUSIC_AMBIENCE_BITMAP))));
 
 	if (m_pDNDMap->m_szMapName[0] == 0 && m_pDNDMap->m_szLoadedFilename[0] == 0)
 	{
 		// OnEditButton();
 	}
+
+	#if !GAMETABLE_BUILD
+	m_cSetCharacterMiniButton.ShowWindow(SW_HIDE);
+	m_cMusicButton.ShowWindow(SW_HIDE);
+	#endif
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -628,6 +653,16 @@ void cDMMapViewDialog::Refresh()
 		}
 	}
 
+	if (m_pDNDMap->m_szMapLegendPath[0])
+	{
+		m_cLegendButton.ShowWindow(SW_SHOW);
+	}
+	else
+	{
+		m_cLegendButton.ShowWindow(SW_HIDE);
+	}
+
+
 	UpdateData(TRUE);
 	OnSelchangePartyCombo();
 
@@ -703,14 +738,51 @@ void cDMMapViewDialog::OnPaint()
 		//m_cDetachButton.MoveWindow(rect.left+10, rect.bottom - 90, rect.left+80, 20, TRUE);
 		m_cDetachButton.MoveWindow(rect.left + 10, rect.bottom - 65, rect.left + 80, 20, TRUE);
 
-		if (m_bDetachedWindow == FALSE)
+		if (m_pDNDMap->m_szMapAmbienceMusicName[0] > 32)
 		{
-			m_cCenterButton.MoveWindow(rect.right - 36, rect.bottom - 65, 30, 20, TRUE);
+			m_cMusicButton.ShowWindow(SW_SHOW);
 		}
 		else
 		{
-			m_cCenterButton.MoveWindow(rect.left + 10, rect.bottom - 65, 30, 20, TRUE);
+			m_cMusicButton.ShowWindow(SW_HIDE);
 		}
+
+		if (m_bDetachedWindow == FALSE)
+		{
+			int nPos = 36;
+			m_cCenterButton.MoveWindow(rect.right - nPos, rect.bottom - 65, 30, 20, TRUE);
+			nPos += 40;
+
+			if (m_cLegendButton.IsWindowVisible())
+			{
+				m_cLegendButton.MoveWindow(rect.right - nPos, rect.bottom - 65, 30, 20, TRUE);
+				nPos += 40;
+			}
+
+			if (m_cMusicButton.IsWindowVisible())
+			{
+				m_cMusicButton.MoveWindow(rect.right - nPos, rect.bottom - 65, 30, 20, TRUE);
+			}
+		}
+		else
+		{
+			int nPos = 10;
+			m_cCenterButton.MoveWindow(rect.left + nPos, rect.bottom - 65, 30, 20, TRUE);
+			nPos += 40;
+
+			if (m_cLegendButton.IsWindowVisible())
+			{
+				m_cLegendButton.MoveWindow(rect.left + nPos, rect.bottom - 65, 30, 20, TRUE);
+				nPos += 40;
+			}
+
+			if (m_cMusicButton.IsWindowVisible())
+			{
+				m_cMusicButton.MoveWindow(rect.left + nPos, rect.bottom - 65, 30, 20, TRUE);
+			}
+		}
+
+		
 		
 		m_cTravelButton.MoveWindow(rect.right-153, rect.top+2, 150, 35, TRUE);
 		m_cTravelMountedButton.MoveWindow(rect.right-153, rect.top+45, 150, 35, TRUE);
@@ -967,7 +1039,13 @@ void cDMMapViewDialog::OnPaint()
 			}
 			else
 			{
-				graphics.DrawImage(pCell->m_pBitmap, x1, y1, nPixelSizeX, nPixelSizeY);
+				ImageAttributes imAttr;
+				imAttr.SetColorKey(Color(m_pDNDMap->m_nTransRed, m_pDNDMap->m_nTransGreen, m_pDNDMap->m_nTransBlue), Color(m_pDNDMap->m_nTransRed, m_pDNDMap->m_nTransGreen, m_pDNDMap->m_nTransBlue), ColorAdjustTypeBitmap);
+
+				Rect destRect(x1, y1, nPixelSizeX, nPixelSizeY);
+				graphics.DrawImage(pCell->m_pBitmap, destRect, 0, 0, m_pDNDMap->m_nPixelSizeX, m_pDNDMap->m_nPixelSizeY, Gdiplus::UnitPixel, &imAttr);
+
+				//graphics.DrawImage(pCell->m_pBitmap, x1, y1, nPixelSizeX, nPixelSizeY);
 				
 				if(m_pMapEditDlg != NULL)
 				{
@@ -1009,6 +1087,7 @@ void cDMMapViewDialog::OnPaint()
 	Pen pen3(Color(255, 128, 128, 0), 3);
 	Pen pen4(Color(255, 255, 255, 255), 2);
 	Pen pen5(Color(255, 255, 0, 0), 2);
+	Pen pen6(Color(255, 0, 255, 255), 2);
 
 
 	//////////////////////////////////
@@ -1132,74 +1211,6 @@ void cDMMapViewDialog::OnPaint()
 
 	//////////////////////////////////
 
-	if (NULL != m_pLightingAlphaBitmap && m_fLightingAlpha > 0.0f)
-	{
-		//nighttime ?
-		CRect rect;
-		GetClientRect(&rect);
-
-		#if 0
-		DrawTransparentBitmap(&graphics, m_pLightingAlphaBitmap, 0, 0, rect.right, rect.bottom, 127, 127, m_fLightingAlpha);
-		#else
-		int nSizeX = rect.right - rect.left;
-		int nSizeY = rect.bottom - rect.top;
-
-		Bitmap *largeImage = new Bitmap(nSizeX, nSizeY, PixelFormat32bppARGB);
-
-		if (largeImage != NULL)
-		{
-			Graphics g(largeImage);
-			DrawTransparentBitmap(&g, m_pLightingAlphaBitmap, 0, 0, rect.right, rect.bottom, 127, 127, 1.0f);
-
-			// torches !
-			SolidBrush *bLightBrush = new SolidBrush(Color(255, 0, 255));
-			SolidBrush *bInfraBrush = new SolidBrush(Color(20, 0, 0));
-			for (int i = 0; i < m_nMapCharacters; ++i)
-			{
-				if (m_CharacterHotSpots[i].m_VisionType > DND_CHARACTER_VISION_STANDARD && m_CharacterHotSpots[i].m_nLightRange == 0)
-				{
-					int nRange = 0;
-
-					switch (m_CharacterHotSpots[i].m_VisionType)
-					{
-						case DND_CHARACTER_VISION_30_INF:		nRange = 30;	break;
-						case DND_CHARACTER_VISION_60_INF:		nRange = 60;	break;
-						case DND_CHARACTER_VISION_120_INF:		nRange = 120;	break;
-						case DND_CHARACTER_VISION_120_INF_UV:	nRange = 120;	break;
-						case DND_CHARACTER_VISION_UV:			nRange = 120;	break;
-					}
-
-					if (nRange)
-					{
-						nRange = nRange / m_pDNDMap->m_fScaleX * m_fViewScale * 2.0f;
-						int nLX = m_CharacterHotSpots[i].m_nX - nRange / 2;
-						int nLY = m_CharacterHotSpots[i].m_nY - nRange / 2;
-						g.FillEllipse(bInfraBrush, nLX, nLY, nRange, nRange);
-					}
-
-				}
-			}
-			for (int i = 0; i < m_nMapCharacters; ++i)
-			{
-				if (m_CharacterHotSpots[i].m_nLightRange)
-				{
-					int nLX = m_CharacterHotSpots[i].m_nX - m_CharacterHotSpots[i].m_nLightRange / 2;
-					int nLY = m_CharacterHotSpots[i].m_nY - m_CharacterHotSpots[i].m_nLightRange / 2;
-					g.FillEllipse(bLightBrush, nLX, nLY, m_CharacterHotSpots[i].m_nLightRange, m_CharacterHotSpots[i].m_nLightRange);
-				}
-
-			}
-
-			DrawTransparentAlphaBitmap(&graphics, largeImage, 0, 0, 0, 0, nSizeX, nSizeY, nSizeX, nSizeY, m_fLightingAlpha, TRUE);
-
-			delete bInfraBrush;
-			delete bLightBrush;
-			delete largeImage;
-		}
-		#endif
-	}
-
-	//////////////////////////////////
 
 	m_nMapParties = 0;
 	memset(m_PartyHotSpots, 0, MAX_HOTSPOTS * sizeof(CDMPartyHotSpot));
@@ -1320,6 +1331,7 @@ void cDMMapViewDialog::OnPaint()
 	BOOL bFoundSelectedCharacter = FALSE;
 	BOOL bFoundMapCenteredCharacter = FALSE;
 
+	//SolidBrush *bMiniBrush = new SolidBrush(Color(128, 128, 128));
 	for (pos = m_pApp->m_CharacterViewMap.GetStartPosition();  pos != NULL; )
 	{
 		WORD wID;
@@ -1341,8 +1353,34 @@ void cDMMapViewDialog::OnPaint()
 			float fX = 0.0f;
 			float fY = 0.0f;
 
+			BOOL bCharacterHasMiniPosition = FALSE;
+
 			if(m_pDNDMap->m_bMapScaleFeet)
 			{
+				#if GAMETABLE_BUILD
+				if (m_pApp->m_bEnableGameWatcher)
+				{
+					RECT rect;
+					GetClientRect(&rect);
+					int nSizeX = rect.right - rect.left;
+					int nSizeY = rect.bottom - rect.top;
+
+					float fMiniX = 0.0f;
+					float fMiniY = 0.0f;
+					if (m_pApp->GetServerMiniPosition(pCharDlg->m_pCharacter->m_szMiniName, &fMiniX, &fMiniY))
+					{
+						fMiniX = fMiniX * nSizeX;
+						fMiniY = fMiniY * nSizeY;
+
+						//pixels to feet
+						pCharDlg->m_pCharacter->m_fLocalLocationX = (float)(fMiniX - m_nCornerX) * m_pDNDMap->m_fScaleX / m_fViewScale;
+						pCharDlg->m_pCharacter->m_fLocalLocationY = (float)(fMiniY - m_nCornerY) * m_pDNDMap->m_fScaleY / m_fViewScale;
+
+						bCharacterHasMiniPosition = TRUE;
+					}
+				}
+				#endif
+
 				//feet to pixels
 				fX = pCharDlg->m_pCharacter->m_fLocalLocationX / m_pDNDMap->m_fScaleX * m_fViewScale;
 				fY = pCharDlg->m_pCharacter->m_fLocalLocationY / m_pDNDMap->m_fScaleY * m_fViewScale;
@@ -1387,9 +1425,21 @@ void cDMMapViewDialog::OnPaint()
 				//if (m_bShowPartiesCheck || (pCharDlg->m_pCharacter->m_nLightSourceRange || pCharDlg->m_pCharacter == m_pMapCenteredCharacter))
 				if (m_bShowPartiesCheck || pCharDlg->m_pCharacter == m_pMapCenteredCharacter || bShowAnyway)
 				{
-					graphics.DrawLine(&pen, nX, nY - 7, nX + 7, nY + 7);
-					graphics.DrawLine(&pen, nX - 7, nY + 7, nX + 7, nY + 7);
-					graphics.DrawLine(&pen, nX, nY - 7, nX - 7, nY + 7);
+					if (bCharacterHasMiniPosition)
+					{
+						graphics.DrawLine(&pen6, nX, nY - 7, nX + 7, nY + 7);
+						graphics.DrawLine(&pen6, nX - 7, nY + 7, nX + 7, nY + 7);
+						graphics.DrawLine(&pen6, nX, nY - 7, nX - 7, nY + 7);
+
+						//float fRadius = 50 * m_fViewScale;
+						//graphics.FillEllipse(bMiniBrush, nX - fRadius / 2.0f, nY - fRadius / 2.0f, fRadius, fRadius);
+					}
+					else
+					{
+						graphics.DrawLine(&pen, nX, nY - 7, nX + 7, nY + 7);
+						graphics.DrawLine(&pen, nX - 7, nY + 7, nX + 7, nY + 7);
+						graphics.DrawLine(&pen, nX, nY - 7, nX - 7, nY + 7);
+					}
 
 					szTemp.Format("AC: %d HP: %d", pCharDlg->m_pCharacter->m_nCurrentArmorClass, pCharDlg->m_pCharacter->m_nHitPoints - pCharDlg->m_pCharacter->m_nCurrentDamage);
 
@@ -1403,10 +1453,18 @@ void cDMMapViewDialog::OnPaint()
 					{
 						SetTextColor(pmDC, 0x000000);
 						DrawMapText(pCharDlg->m_pCharacter->m_szCharacterName, nX + 5, nY + 5, pmDC);
-						DrawMapText(szTemp.GetBuffer(0), nX + 5, nY + 5 + 15, pmDC);
-						SetTextColor(pmDC, 0x0000FF);
+						DrawMapText(szTemp.GetBuffer(0), nX + 10, nY + 9 + 15, pmDC);
+
+						if (bCharacterHasMiniPosition)
+						{
+							SetTextColor(pmDC, 0xFFFF00);
+						}
+						else
+						{
+							SetTextColor(pmDC, 0x0000FF);
+						}
 						DrawMapText(pCharDlg->m_pCharacter->m_szCharacterName, nX + 6, nY + 6, pmDC);
-						DrawMapText(szTemp.GetBuffer(0), nX + 6, nY + 6 + 15, pmDC);
+						DrawMapText(szTemp.GetBuffer(0), nX + 11, nY + 10 + 15, pmDC);
 					}
 				}
 			}
@@ -1432,6 +1490,7 @@ void cDMMapViewDialog::OnPaint()
 	
 		}
 	}
+	//delete bMiniBrush;
 
 	if (bFoundSelectedCharacter == FALSE && m_pSelectedCharacter != NULL)
 	{
@@ -1619,6 +1678,8 @@ void cDMMapViewDialog::OnPaint()
 
 		} //if(m_pTreasureCaches != NULL)
 	}
+
+	DrawMapLighting(&graphics);
 
 	TRACE("KEO DRAG %d\n", m_bMouseDrag);
 	if(m_bMouseDrag)
@@ -2468,8 +2529,8 @@ void cDMMapViewDialog::OnLButtonUp(UINT nFlags, CPoint point)
 		if (m_pDNDMap->m_bMapScaleFeet)
 		{
 			//pixels to feet
-			float fX = (float)(point.x - m_nCornerX) * m_pDNDMap->m_fScaleX / m_fViewScale;
-			float fY = (float)(point.y - m_nCornerY) * m_pDNDMap->m_fScaleY / m_fViewScale;
+			float fX = (float)(point.x - m_nCornerX)  / m_fViewScale;
+			float fY = (float)(point.y - m_nCornerY)  / m_fViewScale;
 
 			if (m_bIsometricCheck)
 			{
@@ -3221,6 +3282,17 @@ void cDMMapViewDialog::OnTimer(UINT_PTR nIDEvent)
 				TRACE("CONSTIPATED!\m");
 			}
 		}
+
+		#if GAMETABLE_BUILD
+		if (m_pApp->m_bEnableGameWatcher)
+		{
+			if (m_dwMiniUpdateFlag != m_pApp->m_dwMiniUpdateFlag)
+			{
+				m_dwMiniUpdateFlag = m_pApp->m_dwMiniUpdateFlag;
+				InvalidateRect(NULL);
+			}
+		}
+		#endif
 	}
 
 	CDialog::OnTimer(nIDEvent);
@@ -3282,9 +3354,9 @@ void cDMMapViewDialog::UpdateMapLegend()
 	{
 		UpdateData(FALSE);
 
-		RECT Rect;
-		m_cMapLegend.GetWindowRect(&Rect);
-		InvalidateRect(&Rect);
+		//RECT Rect;
+		//m_cMapLegend.GetWindowRect(&Rect);
+		//InvalidateRect(&Rect);
 	}
 }
 
@@ -3721,6 +3793,10 @@ void cDMMapViewDialog::LoadMapFromFile(char *szFileName)
 		for (int i = 0; i < MAX_MAP_SFX; ++i)
 		{
 			m_pDNDMap->m_MapSFX[i].m_pDataPtr = NULL;
+			if (m_pDNDMap->m_MapSFX[i].m_bDefaultActive)
+			{
+				m_pDNDMap->m_MapSFX[i].m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+			}
 		}
 		
 		m_pDNDMap->MarkSaved();
@@ -4023,7 +4099,7 @@ void cDMMapViewDialog::CleanUp()
 			m_pDNDMap = NULL;
 		}
 
-		if (m_pMapEditDlg != NULL)
+		if (m_pMapEditDlg != NULL && m_pMapEditDlg->m_hWnd != NULL)
 		{
 			m_pMapEditDlg->PostMessageA(WM_CLOSE);
 			m_pMapEditDlg = NULL;
@@ -4752,6 +4828,7 @@ void cDMMapViewDialog::ProcessMapModes()
 
 			break;
 		}
+
 	}
 
 }
@@ -5221,6 +5298,17 @@ void cDMMapViewDialog::OnBnClickedSetCharacterIconButton()
 	}
 
 
+}
+
+void cDMMapViewDialog::OnBnClickedSetCharacterMiniButton()
+{
+	if (m_pSelectedCharacter != NULL)
+	{
+		cMiniatureSelectionDialog *pDlg = new cMiniatureSelectionDialog(m_pSelectedCharacter->m_szMiniName);
+		pDlg->DoModal();
+		delete pDlg;
+		m_pSelectedCharacter->MarkChanged();
+	}
 }
 
 
@@ -6732,6 +6820,13 @@ void cDMMapViewDialog::OnBnClickedDetachButton()
 
 void cDMMapViewDialog::OnBnClickedCenterButton()
 {
+
+	if (GetKeyState(VK_SHIFT) != 1)
+	{
+		OnBnClicked25mmButton();
+		return;
+	}
+
 	float fCenterX = (m_pDNDMap->m_nPixelSizeX * m_pDNDMap->m_nColumns) / 2;
 	float fCenterY = (m_pDNDMap->m_nPixelSizeY * m_pDNDMap->m_nRows) / 2;
 
@@ -6766,6 +6861,35 @@ void cDMMapViewDialog::OnBnClickedCenterButton()
 
 	InvalidateRect(NULL);
 }
+
+void cDMMapViewDialog::OnBnClickedLegendButton()
+{
+	if (m_pDNDMap->m_szMapLegendPath[0])
+	{
+		if (nullptr == m_pMapLegendDialog)
+		{
+			m_pMapLegendDialog = std::shared_ptr<cDMMapLegendDialog>(new cDMMapLegendDialog(this));
+		}
+	}
+	else
+	{
+		AfxMessageBox("This map has no LEGEND defined !", MB_OK);
+	}
+}
+
+
+void cDMMapViewDialog::OnBnClickedMusicButton()
+{
+	if (m_pDNDMap->m_szMapAmbienceMusicName[0])
+	{
+		CString szCMD;
+		szCMD.Format("MUSICPLAYTRACKBYNAME %s", m_pDNDMap->m_szMapAmbienceMusicName);
+
+		m_pApp->SendRemoteMusicCommand(szCMD);
+	}
+}
+
+
 
 void cDMMapViewDialog::OnBnClicked25mmButton()
 {
@@ -7003,6 +7127,98 @@ void cDMMapViewDialog::CleanupMapSFX()
 	}
 }
 
+void cDMMapViewDialog::DrawMapLighting(Graphics* graphics)
+{
+	if (NULL != m_pLightingAlphaBitmap && m_fLightingAlpha > 0.0f)
+	{
+		//nighttime ?
+		CRect rect;
+		GetClientRect(&rect);
+
+		#if 0
+		DrawTransparentBitmap(&graphics, m_pLightingAlphaBitmap, 0, 0, rect.right, rect.bottom, 127, 127, m_fLightingAlpha);
+		#else
+		int nSizeX = rect.right - rect.left;
+		int nSizeY = rect.bottom - rect.top;
+
+		Bitmap *largeImage = new Bitmap(nSizeX, nSizeY, PixelFormat32bppARGB);
+
+		if (largeImage != NULL)
+		{
+			Graphics g(largeImage);
+			DrawTransparentBitmap(&g, m_pLightingAlphaBitmap, 0, 0, rect.right, rect.bottom, 127, 127, 1.0f);
+
+			// torches !
+			SolidBrush *bLightBrush = new SolidBrush(Color(255, 0, 255));
+			SolidBrush *bInfraBrush = new SolidBrush(Color(20, 0, 0));
+			for (int i = 0; i < m_nMapCharacters; ++i)
+			{
+				if (m_CharacterHotSpots[i].m_VisionType > DND_CHARACTER_VISION_STANDARD && m_CharacterHotSpots[i].m_nLightRange == 0)
+				{
+					int nRange = 0;
+
+					switch (m_CharacterHotSpots[i].m_VisionType)
+					{
+						case DND_CHARACTER_VISION_30_INF:		nRange = 30;	break;
+						case DND_CHARACTER_VISION_60_INF:		nRange = 60;	break;
+						case DND_CHARACTER_VISION_120_INF:		nRange = 120;	break;
+						case DND_CHARACTER_VISION_120_INF_UV:	nRange = 120;	break;
+						case DND_CHARACTER_VISION_UV:			nRange = 120;	break;
+					}
+
+					if (nRange)
+					{
+						nRange = nRange / m_pDNDMap->m_fScaleX * m_fViewScale * 2.0f;
+						int nLX = m_CharacterHotSpots[i].m_nX - nRange / 2;
+						int nLY = m_CharacterHotSpots[i].m_nY - nRange / 2;
+						g.FillEllipse(bInfraBrush, nLX, nLY, nRange, nRange);
+					}
+
+				}
+			}
+			for (int i = 0; i < m_nMapCharacters; ++i)
+			{
+				if (m_CharacterHotSpots[i].m_nLightRange)
+				{
+
+					int nLX = m_CharacterHotSpots[i].m_nX - m_CharacterHotSpots[i].m_nLightRange / 2;
+					int nLY = m_CharacterHotSpots[i].m_nY - m_CharacterHotSpots[i].m_nLightRange / 2;
+					g.FillEllipse(bLightBrush, nLX, nLY, m_CharacterHotSpots[i].m_nLightRange, m_CharacterHotSpots[i].m_nLightRange);
+				}
+
+			}
+
+			for (int i = 0; i < MAX_MAP_SFX; ++i) 
+			{
+				if (m_pDNDMap->m_MapSFX[i].m_nLightSourceRange && m_pDNDMap->m_MapSFX[i].m_SFXState == DND_SFX_STATE_TRIGGERED)
+				{
+					float fX = m_pDNDMap->m_MapSFX[i].m_nMapX / 1.0f * m_fViewScale;
+					float fY = m_pDNDMap->m_MapSFX[i].m_nMapY / 1.0f * m_fViewScale;
+
+					int nX = (int)fX;
+					int nY = (int)fY;
+
+					nX += m_nCornerX;
+					nY += m_nCornerY;
+					
+					int nSFXLightRange = m_pDNDMap->m_MapSFX[i].m_nLightSourceRange / m_pDNDMap->m_fScaleX * m_fViewScale * 2.0f;
+
+					int nLX = nX - nSFXLightRange / 2;
+					int nLY = nY - nSFXLightRange / 2;
+					g.FillEllipse(bLightBrush, nLX, nLY, nSFXLightRange, nSFXLightRange);
+				}
+			}
+
+			DrawTransparentAlphaBitmap(graphics, largeImage, 0, 0, 0, 0, nSizeX, nSizeY, nSizeX, nSizeY, m_fLightingAlpha, TRUE);
+
+			delete bInfraBrush;
+			delete bLightBrush;
+			delete largeImage;
+		}
+	}
+	#endif
+}
+
 void cDMMapViewDialog::DrawMapSFX(Graphics* g)
 {
 	int nIndex = -1;
@@ -7029,6 +7245,13 @@ void cDMMapViewDialog::DrawMapSFX(Graphics* g)
 		{
 			ASSERT(nIndex >= 0);
 			pSFX = &m_pDNDMap->m_MapSFX[nIndex];
+		}
+
+		if (pSFX->m_nCreationRound && m_pApp->m_nGlobalRound - pSFX->m_nCreationRound > pSFX->m_nDurationRounds)  // check for spell SFX that have expired
+		{
+			pSFX->m_SFXState = DND_SFX_STATE_READY;
+			pSFX->m_nCreationRound = 0;
+			pSFX->m_nDurationRounds = 0;
 		}
 
 		if (pSFX->m_SFXState != DND_SFX_STATE_UNDEF) // find an open slot
@@ -7114,7 +7337,7 @@ void cDMMapViewDialog::DrawMapSFX(Graphics* g)
 							CString szPath = pSFX->m_szGFXFileName;
 							LPWSTR wcsFile = szPath.AllocSysString();
 							ImageEx* _GIFImage = new ImageEx(wcsFile, FALSE);
-							_GIFImage->InitAnimation(m_hWnd, CPoint(nX, nY), m_fViewScale, pSFX->m_fSpriteScale, pSFX->m_bCycle, &m_bMapPaint, pSFX->m_nCycles, pSFX->m_bColorKeyed, pSFX->m_bTranslucent, pSFX->m_fAlpha);
+							_GIFImage->InitAnimation(m_hWnd, CPoint(nX, nY), m_fViewScale, pSFX->m_fSpriteScale, pSFX->m_bCycle, &m_bMapPaint, pSFX->m_nCycles, pSFX->m_bColorKeyed, pSFX->m_bTranslucent, pSFX->m_bDrawUnder, pSFX->m_fAlpha, pSFX->m_bColorize, pSFX->m_fRed, pSFX->m_fGreen, pSFX->m_fBlue);
 							pSFX->m_pDataPtr = (LPVOID)_GIFImage;
 						}
 						else
@@ -7423,6 +7646,11 @@ BOOL cDMMapViewDialog::MapHasDetachedChildren()
 
 	return FALSE;
 }
+
+
+
+
+
 
 
 

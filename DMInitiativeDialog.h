@@ -27,6 +27,7 @@ public:
 	int m_nMaxRoundTime;
 	int m_nNumAttacksThisRound;
 	int m_nCompletedAttacksThisRound;
+	int m_nTurnSecondsRemaining;
 
 	void Refresh();
 	void RefreshAndSelect();
@@ -83,4 +84,18 @@ public:
 	CButton m_cSpellButton;
 	afx_msg void OnBnClickedSkipButton();
 	afx_msg void OnBnClickedMoveButton();
+	CBitmapButton m_cMusicButton;
+	afx_msg void OnBnClickedMusicButton();
+	CString m_szCombatNote;
+	CStatic m_cCombatNote;
+	CButton m_cWeaponSwapButton;
+	CButton m_cAttackButton;
+	CButton m_cMissButton;
+	CButton m_cMoveButton;
+	CButton m_cSkipButton;
+	CString m_szTurnTimer;
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	CStatic m_cTurnTimerNote;
+	afx_msg void OnStnDblclickTimerNote();
+	afx_msg LRESULT OnDirtyWindow(UINT wParam, LONG lParam);
 };

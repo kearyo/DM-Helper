@@ -311,6 +311,7 @@ void CDMCalendarDialog::OnPaint()
 					{
 						int nLabelLength = szTemp.GetLength();
 						DrawMoon(&graphics, nMoonIcon, nCX+nCellSizeX-55-MOON_OFFSET*nDrawnMoons, nCY+20, MOON_SIZE);
+						//DrawMoon(&graphics, nMoonIcon, nCX + nCellSizeX - 70 - MOON_OFFSET*nDrawnMoons, nCY + 17, MOON_SIZE);
 						++nDrawnMoons;
 					}
 				}
