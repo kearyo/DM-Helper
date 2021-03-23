@@ -8640,6 +8640,33 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
 			break;
 		}
+		case 280:	// magic-user stinking cloudkill
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\white smoke.GIF";
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bTranslucent = TRUE;
+			pDNDMapSFX->m_fAlpha = 0.8f;
+
+			pDNDMapSFX->m_bColorize = TRUE;
+			pDNDMapSFX->m_fRed = 1.0f;
+			pDNDMapSFX->m_fGreen = 1.0f;
+			pDNDMapSFX->m_fBlue = 0.0f;
+
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pInstantMapSFXPlacer->m_fScale = 20.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 40; // 40 feet across, 20 foot radius
+			nDelayTenths = 10;
+			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
 		case 226: // magic-user web
 		{
 			pApp->m_bWaitOnDungeonMaster = TRUE;
@@ -8710,6 +8737,27 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 
 			break;
 		}
+		case 358:	// magic-user gate
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\green ring.gif";
+
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pInstantMapSFXPlacer->m_fScale = 5.0f;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 20;
+			nDelayTenths = 5;
+			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
 		case 110:	// druid call lightning
 		{
 			pApp->m_bWaitOnDungeonMaster = TRUE;
@@ -8777,6 +8825,27 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
 			nDelayTenths = 1;
 			bPermanentSFX = TRUE;
+			break;
+		}
+		case 445:	// illusionist wall of fog
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\white smoke.gif";
+
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_bCycle = TRUE;
+			pInstantMapSFXPlacer->m_fScale = max(10.0f, 10.0f * pInstantMapSFXPlacer->m_nCasterLevel);
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = max(20, 20 * pInstantMapSFXPlacer->m_nCasterLevel);
+			nDelayTenths = 5;
+			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
 			break;
 		}
 		case 451:	// illusionist hypnotic pattern

@@ -567,6 +567,8 @@
 #define IDC_ADD_MEMBER_BUTTON           1132
 #define IDC_ASS_STATIC_8                1132
 #define IDC_MISC_MAGIC_3_CHECK          1132
+#define IDC_SPELLS_REMAINING_SPELLBOOK2 1132
+#define IDC_SPELLS_PREPARATION_TIME     1132
 #define IDC_LL_STATIC_12                1133
 #define IDC_BUTTON5                     1133
 #define IDC_DELETE_MEMBER_BUTTON        1133
@@ -668,6 +670,7 @@
 #define IDC_ROUTES_CHECK                1165
 #define IDC_TURN_UNDEAD_BUTTON          1165
 #define IDC_CHILD_MAPS_CHECK            1166
+#define IDC_FREE_CAST_SPELL_BUTTON      1166
 #define IDC_SHOW_STATIC                 1167
 #define IDC_CACHE_COMBO                 1168
 #define IDC_HINT_STATIC                 1169
@@ -1385,7 +1388,6 @@
 #define IDC_INFO_TEXT_2                 1691
 #define IDC_COPIED_STATIC               1692
 #define IDC_DEFAULT_ACTIVE_CHECK        1692
-#define IDC_DEFAULT_ACTIVE_CHECK2       1693
 #define IDC_DRAW_UNDER_CHECK            1693
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772

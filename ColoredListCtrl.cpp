@@ -27,6 +27,9 @@ CColoredListCtrl::CColoredListCtrl()
 	m_nSelectedColumn = -1;
 	m_nSubSelectedColumn = -1;
 	m_nSubSubSelectedColumn = -1;
+
+	m_nRowStateColumn = -1;
+	m_RowState.clear();
 }
 
 CColoredListCtrl::~CColoredListCtrl()
@@ -96,6 +99,17 @@ void CColoredListCtrl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 			}
 
 			lplvcd->clrText = RGB(255,255,255);
+
+			if (iCol == m_nRowStateColumn)
+			{
+				switch (m_RowState[iRow])
+				{
+					case 0:	lplvcd->clrText = RGB(255, 255, 255); break;
+					case 1:	lplvcd->clrText = RGB(0, 255, 0); break;
+					case 2:	lplvcd->clrText = RGB(255, 255, 0); break;
+					case 3:	lplvcd->clrText = RGB(255, 0, 0); break;
+				}
+			}
 		}
 		else
 		{
@@ -106,6 +120,21 @@ void CColoredListCtrl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 			else
 			{
 				lplvcd->clrTextBk = m_colRow1;
+			}
+
+			if (iCol == m_nRowStateColumn)
+			{
+				switch (m_RowState[iRow])
+				{
+					case 0:	lplvcd->clrText = RGB(0, 0, 0); break;
+					case 1:	lplvcd->clrText = RGB(0, 128, 0); break;
+					case 2:	lplvcd->clrText = RGB(128, 128, 0); break;
+					case 3:	lplvcd->clrText = RGB(200, 0, 0); break;
+				}
+			}
+			else
+			{
+				lplvcd->clrText = RGB(0, 0, 0);
 			}
 		}
 		

@@ -66,6 +66,8 @@ public:
 	int m_nSpellChartListTopIndex;
 	DWORD m_dwMasterSpellListHash;
 
+	int m_nSpellPreparationTime;
+
 // Dialog Data
 	//{{AFX_DATA(DMCharSpellsDialog)
 	enum { IDD = IDD_CHAR_SPELLS_DIALOG };
@@ -129,6 +131,7 @@ public:
 	afx_msg void OnBnClickedMaterialComponents();
 	afx_msg void OnBnClickedTranscribeSpell();
 	CButton m_cTranscribeSpellButton;
+	CString m_szSpellPreparationTime;
 };
 
 //{{AFX_INSERT_LOCATION}}

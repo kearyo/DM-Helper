@@ -455,7 +455,7 @@ void cDMBaseNPCViewDialog::ProcessCharStats()
 			m_szNumAttacks.Format("%s", CalculateAttacksPerRound(m_pNPC));
 		}
 
-		m_szHPDesc.Format("%d", m_pNPC->m_nHitPoints - m_pNPC->m_nCurrentDamage);
+		m_szHPDesc.Format("%d", m_pNPC->m_nHitPoints - m_pNPC->m_nCurrentDamage);	
 	
 	}
 }
@@ -492,6 +492,23 @@ void cDMBaseNPCViewDialog::Refresh()
 	else
 	{
 		m_szBaseCharName = m_pNPC->m_szCharacterName;
+	}
+
+	if (m_pNPC->m_nHitPoints && m_pNPC->m_nCurrentDamage)
+	{
+		float fHPPerc = (float)m_pNPC->m_nCurrentDamage / (float)m_pNPC->m_nHitPoints;
+		fHPPerc *= 100.0f;
+
+		if (fHPPerc >= 75.0f)
+			m_pNPC->m_HP_State = DND_HP_STATE_CRITICAL;
+		else if (fHPPerc >= 50.0f)
+			m_pNPC->m_HP_State = DND_HP_STATE_WOUNDED;
+		else
+			m_pNPC->m_HP_State = DND_HP_STATE_INJURED;
+	}
+	else
+	{
+		m_pNPC->m_HP_State = DND_HP_STATE_OK;
 	}
 
 

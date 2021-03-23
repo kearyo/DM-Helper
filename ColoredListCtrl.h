@@ -28,6 +28,9 @@ public:
 	int m_nSubSelectedColumn;
 	int m_nSubSubSelectedColumn;
 
+	int m_nRowStateColumn;
+	std::vector<int> m_RowState;
+
 // Operations
 public:
 

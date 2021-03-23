@@ -346,6 +346,7 @@ void DMPartyDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_RECOVER_AMMO_BUTTON, m_cRecoverAmmoButton);
 	DDX_Control(pDX, IDC_MUSIC_BUTTON, m_cMusicButton);
 	DDX_Control(pDX, IDC_TURN_UNDEAD_BUTTON, m_cTurnUndeadButton);
+	DDX_Control(pDX, IDC_FREE_CAST_SPELL_BUTTON, m_cFreeCastSpellButton);
 }
 
 
@@ -415,6 +416,7 @@ BEGIN_MESSAGE_MAP(DMPartyDialog, CDialog)
 	
 	ON_BN_CLICKED(IDC_MUSIC_BUTTON, &DMPartyDialog::OnBnClickedMusicButton)
 	ON_BN_CLICKED(IDC_TURN_UNDEAD_BUTTON, &DMPartyDialog::OnBnClickedTurnUndeadButton)
+	ON_BN_CLICKED(IDC_FREE_CAST_SPELL_BUTTON, &DMPartyDialog::OnBnClickedFreeCastSpellButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -433,9 +435,11 @@ BOOL DMPartyDialog::OnInitDialog()
 	#if GAMETABLE_BUILD
 	m_cMusicButton.LoadBitmaps(IDB_MUSIC_NOTE_BITMAP, IDB_MUSIC_NOTE_SELECT_BITMAP);
 	m_cMusicButton.ShowWindow(SW_SHOW);
+	m_cFreeCastSpellButton.ShowWindow(SW_SHOW);
 	#endif
 
 	int nCount = 0;
+	m_cPartyList.m_nRowStateColumn = 2;
 	m_cPartyList.InsertColumn( nCount++, "Member", LVCFMT_LEFT, 100, -1 );
 	m_cPartyList.InsertColumn( nCount++, "AC", LVCFMT_LEFT, 32, -1 );
 	m_cPartyList.InsertColumn( nCount++, "HP", LVCFMT_LEFT, 50, -1 );
@@ -470,6 +474,7 @@ BOOL DMPartyDialog::OnInitDialog()
 
 
 	nCount = 0;
+	m_cPartyList2.m_nRowStateColumn = 2;
 	m_cPartyList2.InsertColumn( nCount++, "Member", LVCFMT_LEFT, 100, -1 );
 	m_cPartyList2.InsertColumn( nCount++, "AC", LVCFMT_LEFT, 32, -1 );
 	m_cPartyList2.InsertColumn( nCount++, "HP", LVCFMT_LEFT, 50, -1 );
@@ -670,6 +675,7 @@ void DMPartyDialog::UpdateSelections()
 	int nWvACType = -1;
 	int nWvACAdj = 0;
 
+	m_cPartyList.m_RowState.clear();
 	for(int nSegment = nStartSegment; nSegment <= nEndSegment; ++nSegment)
 	{
 		for(int i = 0; i < MAX_PARTY_MEMBERS; ++i)
@@ -761,6 +767,8 @@ void DMPartyDialog::UpdateSelections()
 
 				szTemp.Format("%d", pChar->m_nHitPoints - pChar->m_nCurrentDamage);
 				m_cPartyList.SetItemText(nRow, nCol++,szTemp);
+
+				m_cPartyList.m_RowState.push_back((int)pChar->m_HP_State);
 
 				CString szPlus = _T("");
 				if(pChar->m_SelectedWeapons[0].m_nMagicAdj)
@@ -1082,6 +1090,8 @@ void DMPartyDialog::UpdateSelections()
 		m_cPartyList2.m_nSubSelectedColumn = -1;
 		nWvACAdj = 0;
 
+		m_cPartyList2.m_RowState.clear();
+
 		for(int nSegment = nStartSegment; nSegment <= nEndSegment; ++nSegment)
 		{
 			for(int i = 0; i < MAX_PARTY_MEMBERS; ++i)
@@ -1166,6 +1176,8 @@ void DMPartyDialog::UpdateSelections()
 						szTemp.Format("%d", pChar->m_nCurrentArmorClass);
 
 					m_cPartyList2.SetItemText(nRow, nCol++, szTemp);
+
+					m_cPartyList2.m_RowState.push_back((int)pChar->m_HP_State);
 
 					szTemp.Format("%d", pChar->m_nHitPoints - pChar->m_nCurrentDamage);
 					m_cPartyList2.SetItemText(nRow, nCol++,szTemp);
@@ -6418,3 +6430,54 @@ void DMPartyDialog::OnBnClickedMusicButton()
 }
 
 
+void DMPartyDialog::OnBnClickedFreeCastSpellButton()
+{
+	BOOL bUseMaterialComponents = g_bUseMaterialComponents;
+
+	g_bUseMaterialComponents = FALSE;
+
+	CDMBaseCharViewDialog *pCharacterDialog = new CDMBaseCharViewDialog(DND_CHAR_VIEW_TYPE_NPC, 0, NULL);
+	cDNDCharacter _Character;
+
+	_Character.m_SpellClasses[0] = DND_CHARACTER_CLASS_MAGE;
+	_Character.m_SpellClasses[1] = DND_CHARACTER_CLASS_ILLUSIONIST;
+	_Character.m_SpellClasses[2] = DND_CHARACTER_CLASS_CLERIC;
+	_Character.m_SpellClasses[3] = DND_CHARACTER_CLASS_DRUID;
+
+	_Character.m_nCastingLevels[0] = 1;
+	_Character.m_nCastingLevels[1] = 1;
+	_Character.m_nCastingLevels[2] = 1;
+	_Character.m_nCastingLevels[3] = 1;
+
+	// mages
+	_Character.m_nSpellsMemorized[0][1][14] = 1;	// light
+	_Character.m_nSpellsMemorized[0][1][15] = 1;	// magic missile
+	_Character.m_nSpellsMemorized[0][2][2] = 1;		// darkness
+	_Character.m_nSpellsMemorized[0][2][20] = 1;	// stinking cloud
+	_Character.m_nSpellsMemorized[0][2][22] = 1;	// web
+	_Character.m_nSpellsMemorized[0][3][6] = 1;		// fireball
+	_Character.m_nSpellsMemorized[0][3][15] = 1;	// lightning bolt
+	_Character.m_nSpellsMemorized[0][5][4] = 1;		// cloudkill
+	_Character.m_nSpellsMemorized[0][9][2] = 1;		// gate
+
+	//illusionists
+	_Character.m_nSpellsMemorized[1][1][3] = 1;		// dancing lights
+	_Character.m_nSpellsMemorized[1][1][10] = 1;	// phantasmal force
+	_Character.m_nSpellsMemorized[1][1][11] = 1;	// wall of fog
+	_Character.m_nSpellsMemorized[1][2][5] = 1;		// hypnotic pattern
+
+
+	// clerics
+	_Character.m_nSpellsMemorized[2][2][7] = 1;		// silence
+
+	//_Character.m_nSpellsMemorized[1][4][1] = 1;
+	
+	DMCastSpellDialog *pDlg = new DMCastSpellDialog(this, pCharacterDialog, &_Character);
+	pDlg->DoModal();
+	delete pDlg;
+
+	delete pCharacterDialog;
+
+	g_bUseMaterialComponents = bUseMaterialComponents;
+	
+}

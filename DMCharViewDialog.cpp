@@ -1186,6 +1186,23 @@ void CDMCharViewDialog::Refresh()
 		m_szHPByLevel = _T("");
 	}
 
+	if (m_pCharacter->m_nHitPoints && m_pCharacter->m_nCurrentDamage)
+	{
+		float fHPPerc = (float)m_pCharacter->m_nCurrentDamage / (float)m_pCharacter->m_nHitPoints;
+		fHPPerc *= 100.0f;
+
+		if (fHPPerc >= 75.0f)
+			m_pCharacter->m_HP_State = DND_HP_STATE_CRITICAL;
+		else if (fHPPerc >= 50.0f)
+			m_pCharacter->m_HP_State = DND_HP_STATE_WOUNDED;
+		else
+			m_pCharacter->m_HP_State = DND_HP_STATE_INJURED;
+	}
+	else
+	{
+		m_pCharacter->m_HP_State = DND_HP_STATE_OK;
+	}
+
 	m_szSTRComment = m_szSTRCommentBuffer;
 	m_szINTComment = m_szINTCommentBuffer;
 	m_szWISComment = m_szWISCommentBuffer;

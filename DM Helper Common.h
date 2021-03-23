@@ -10,7 +10,7 @@
 #endif
 
 #define DMH_CURRENT_VERSION 10040
-#define DMH_BUILD_NUMBER	(22714)
+#define DMH_BUILD_NUMBER	(22720)
 
 #define USE_CANTRIPS	TRUE
 
@@ -263,7 +263,8 @@
 	* Fix for inventory caches on maps not being saved properly
 	* Fixed bug in stat block spell display
 	* 'under' map SFX capability added, allows sfx to be drawn under a map mask for stuff like animated water etc.
-	
+	* fixed hoykeys to only be active if main app window is in focus
+	* spell memorization time calcualtion added to character spell screen
 
 */
 
@@ -504,6 +505,15 @@ typedef enum
 	DND_CHART_DETECTION_OF_INVISIBILITY
 
 } DND_CHART_TYPES;
+
+typedef enum
+{
+	DND_HP_STATE_OK = 0,
+	DND_HP_STATE_INJURED,
+	DND_HP_STATE_WOUNDED,
+	DND_HP_STATE_CRITICAL
+
+} DND_HP_STATE_TYPES;
 
 
 #define CUSTOM_CLASSES_EXPAMSION_BUFFER_SIZE  1022
@@ -2431,7 +2441,9 @@ public:
 
 	char m_szMiniName[64];
 
-	int m_nReserved_1[6401];  // remember to divide by 4 dummy was 6417 before m_szMiniName
+	DND_HP_STATE_TYPES m_HP_State;
+
+	int m_nReserved_1[6400];  // remember to divide by 4 dummy was 6417 before m_szMiniName
 
 	cDNDCharacter()
 	{
@@ -2576,7 +2588,9 @@ public:
 		memset(m_nClericTurnModifiers, 0, 13 * sizeof(int));
 		memset(m_szMiniName, 0, 64 * sizeof(char));
 
-		memset(m_nReserved_1,0,6401*sizeof(int));
+		m_HP_State = DND_HP_STATE_OK;
+
+		memset(m_nReserved_1,0,6400*sizeof(int));
 
 	}
 

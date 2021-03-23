@@ -266,6 +266,8 @@ public:
 	afx_msg void OnBnClickedMusicButton();
 	CButton m_cTurnUndeadButton;
 	afx_msg void OnBnClickedTurnUndeadButton();
+	CButton m_cFreeCastSpellButton;
+	afx_msg void OnBnClickedFreeCastSpellButton();
 };
 
 //{{AFX_INSERT_LOCATION}}

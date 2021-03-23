@@ -121,6 +121,7 @@ BOOL CDMInitiativeDialog::OnInitDialog()
 	#endif
 
 	int nCount = 0;
+	m_cCharacterList.m_nRowStateColumn = 8;
 	m_cCharacterList.InsertColumn( nCount++, "Character", LVCFMT_LEFT, 150, -1 );
 	m_cCharacterList.InsertColumn( nCount++, "Roll", LVCFMT_LEFT, 50, -1 );
 	m_cCharacterList.InsertColumn( nCount++, "Seg/Rnd", LVCFMT_LEFT, 70, -1 );
@@ -158,6 +159,7 @@ void CDMInitiativeDialog::Refresh()
 
 	int nRow = 0;
 	BOOL bRemove = m_cCharacterList.DeleteAllItems();
+	m_cCharacterList.m_RowState.clear();
 
 	CString szTemp;
 	WORD wID;
@@ -165,7 +167,8 @@ void CDMInitiativeDialog::Refresh()
 	int nPlayerViewCount = 0;
 	int nMonsterViewCount = 0;
 
-	for(int nSegment = 20; nSegment >= -10; --nSegment)
+	//for(int nSegment = 20; nSegment >= -10; --nSegment)
+	for (int nSegment = -10; nSegment <= 20; ++nSegment)
 	{
 		for (POSITION pos = m_pApp->m_CharacterViewMap.GetStartPosition(); pos != NULL; )
 		{
@@ -354,6 +357,10 @@ void CDMInitiativeDialog::Refresh()
 				m_cCharacterList.SetItemText(nRow, nCol++, pCharDlg->m_szHPDesc);
 
 				m_cCharacterList.SetItemData(nRow, (DWORD)pCharDlg);
+
+				m_cCharacterList.m_RowState.push_back(pCharDlg->m_pCharacter->m_HP_State);
+
+				++nRow;
 			}
 		}
 
@@ -469,7 +476,6 @@ void CDMInitiativeDialog::Refresh()
 
 				m_cCharacterList.InsertItem(nRow, szTemp);
 
-
 				szTemp.Format("%d", pNPCDlg->m_nInitiativeRoll);
 				m_cCharacterList.SetItemText(nRow, nCol++, szTemp);
 
@@ -501,6 +507,10 @@ void CDMInitiativeDialog::Refresh()
 				m_cCharacterList.SetItemText(nRow, nCol++, pNPCDlg->m_szHPDesc);
 
 				m_cCharacterList.SetItemData(nRow, (DWORD)pNPCDlg);
+
+				m_cCharacterList.m_RowState.push_back(pNPCDlg->m_pNPC->m_HP_State);
+
+				++nRow;
 			}
 		}
 	}

@@ -62,6 +62,7 @@ BEGIN_MESSAGE_MAP(DMCastSpellDialog, CDialog)
 	ON_LBN_DBLCLK(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnDblclkSpellList)
 	ON_LBN_SELCHANGE(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnSelchangeSpellList)
 	ON_BN_CLICKED(ID_FAIL_CAST, &DMCastSpellDialog::OnBnClickedFailCast)
+	ON_BN_CLICKED(IDCANCEL, &DMCastSpellDialog::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -630,3 +631,7 @@ void DMCastSpellDialog::OnLbnSelchangeSpellList()
 }
 
 
+void DMCastSpellDialog::OnBnClickedCancel()
+{
+	CDialog::OnCancel();
+}

@@ -2876,6 +2876,26 @@ BOOL CDMHelperDlg::PreTranslateMessage(MSG* pMsg)
 LRESULT CDMHelperDlg::OnHotKey(WPARAM wParam, LPARAM lParam)
 {
 
+	//this->m_hWnd;
+	if (IsIconic())
+	{
+		return 0;
+	}
+
+	CWnd *pCwndActiveWindow = GetActiveWindow();
+
+	if (pCwndActiveWindow == NULL)
+	{
+		return 0;
+	}
+
+	HWND hActiveWindow = pCwndActiveWindow->m_hWnd;
+	if (hActiveWindow != m_hWnd) // Then your current window has focus
+	{
+		return 0;
+	}
+
+
 	switch(wParam)
 	{
 		case 100:  // CTRL+R

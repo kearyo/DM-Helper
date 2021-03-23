@@ -24,6 +24,7 @@ static char THIS_FILE[] = __FILE__;
 
 DMCharSpellsDialog::DMCharSpellsDialog(cDNDCharacter *_Character, CDMCharViewDialog *_SiblingWindow, CWnd* pParent /*=NULL*/)
 	: CDialog(DMCharSpellsDialog::IDD, pParent)
+	, m_szSpellPreparationTime(_T(""))
 {
 	//{{AFX_DATA_INIT(DMCharSpellsDialog)
 	m_szSpellsRemaining = _T("");
@@ -56,6 +57,8 @@ DMCharSpellsDialog::DMCharSpellsDialog(cDNDCharacter *_Character, CDMCharViewDia
 
 	m_nSpellChartListTopIndex = -1;
 
+	m_nSpellPreparationTime = 0;
+
 
 	ClearSpellList(m_nSelectedSpellLists[DND_SPELL_LIST]);
 	ClearSpellList(m_nSelectedSpellLists[DND_SPELLBOOK_LIST]);
@@ -87,6 +90,7 @@ void DMCharSpellsDialog::DoDataExchange(CDataExchange* pDX)
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDC_MATERIAL_COMPONENTS, m_cMaterialComponentsButton);
 	DDX_Control(pDX, IDC_TRANSCRIBE_SPELL, m_cTranscribeSpellButton);
+	DDX_Text(pDX, IDC_SPELLS_PREPARATION_TIME, m_szSpellPreparationTime);
 }
 
 
@@ -342,6 +346,28 @@ void DMCharSpellsDialog::Refresh()
 				break;
 			}
 		}
+	}
+
+	if (m_nSpellPreparationTime)
+	{
+		int nHours = m_nSpellPreparationTime / 60;
+		int nMins = m_nSpellPreparationTime % 60;
+		CString szPrepHours;
+
+		szPrepHours.Format("%d hours + %d minutes", nHours, nMins);
+
+		if (m_bMageDisplay)
+		{
+			m_szSpellPreparationTime.Format("Spell Memorization Time: %s", szPrepHours);
+		}
+		else
+		{
+			m_szSpellPreparationTime.Format("Spell Preparation Time: %s", szPrepHours);
+		}
+	}
+	else
+	{
+		m_szSpellPreparationTime = _T("");
 	}
 
 	if(m_ViewSpellMode == DND_VIEW_SPELL_MODE_UNDEF)
@@ -1046,6 +1072,8 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 				{
 					m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] += 1;
 					nTotalMemorizedSpellsInLevel = CountSpellsInLevel(m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel]);	
+
+					m_nSpellPreparationTime += m_nSelectedSpellLevel * 15;
 				}
 			}
 
@@ -1061,6 +1089,8 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 				{
 					m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] += 1;
 					nTotalMemorizedSpellsInLevel = CountSpellsInLevel(m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel]);	
+
+					m_nSpellPreparationTime += m_nSelectedSpellLevel * 15;
 				}
 			}
 			break;
@@ -1207,6 +1237,12 @@ void DMCharSpellsDialog::OnForgetSpell()
 					if(m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] < 0)
 					{
 						m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] = 0;
+					}
+
+					m_nSpellPreparationTime -= m_nSelectedSpellLevel * 15;
+					if (m_nSpellPreparationTime < 0)
+					{
+						m_nSpellPreparationTime = 0;
 					}
 
 					m_nMultipleSpells = m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i];

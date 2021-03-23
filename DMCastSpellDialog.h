@@ -62,6 +62,7 @@ public:
 	afx_msg void OnLbnSelchangeSpellList();
 	CString m_szSpellDesc;
 	afx_msg void OnBnClickedFailCast();
+	afx_msg void OnBnClickedCancel();
 };
 
 //{{AFX_INSERT_LOCATION}}
