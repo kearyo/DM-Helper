@@ -187,6 +187,17 @@
 #define IDB_LEGEND_BUTTON_BITMAP        307
 #define IDB_MUSIC_AMBIENCE_BITMAP       308
 #define IDD_TRACK_LIST_DIALOG           309
+#define IDB_MAGE_ICON_BITMAP            310
+#define IDB_CLERIC_ICON_BITMAP          311
+#define IDB_DRUID_ICON_BITMAP           312
+#define IDB_ILLUSIONIST_ICON_BITMAP     313
+#define IDB_GIVE_TO_BUTTON_BITMAP       314
+#define IDB_DROP_BUTTON_BITMAP          315
+#define IDB_DROP_ALL_BUTTON_BITMAP      316
+#define IDB_GIVE_BUTTON_BITMAP          317
+#define IDB_BUY_BUTTON_BITMAP           318
+#define IDB_BITMAP3                     319
+#define IDB_TINY_LEFT_ARROW_BITMAP      319
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
 #define IDC_PARTY_VIEW                  1001
@@ -1389,6 +1400,13 @@
 #define IDC_COPIED_STATIC               1692
 #define IDC_DEFAULT_ACTIVE_CHECK        1692
 #define IDC_DRAW_UNDER_CHECK            1693
+#define IDC_MAGE_ICON                   1694
+#define IDC_CLERIC_ICON                 1695
+#define IDC_MAGE_ICON2                  1696
+#define IDC_DRUID_ICON                  1696
+#define IDC_ILLUSIONIST_ICON            1697
+#define IDC_FALSE_BUTTON                1698
+#define IDC_NAME_TRANSFER_BUTTON        1699
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1443,9 +1461,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        310
+#define _APS_NEXT_RESOURCE_VALUE        320
 #define _APS_NEXT_COMMAND_VALUE         32820
-#define _APS_NEXT_CONTROL_VALUE         1693
+#define _APS_NEXT_CONTROL_VALUE         1700
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

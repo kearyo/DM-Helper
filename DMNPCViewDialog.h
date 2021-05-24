@@ -231,6 +231,7 @@ public:
 	CString m_szDebugCharID;
 	afx_msg void OnStnDblclickTtComment();
 	afx_msg LRESULT OnDirtyWindow(UINT wParam, LONG lParam);
+	afx_msg void OnBnClickedNameTransferButton();
 };
 
 //{{AFX_INSERT_LOCATION}}

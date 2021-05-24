@@ -138,12 +138,22 @@ void DMCastSpellDialog::Refresh()
 
 		if(pSpellBook != NULL)
 		{
+			int nCastLevel = m_pCharacter->m_nCastingLevels[nSpellClass];
+
 			#if USE_CANTRIPS
 			for(int nLevel = 0;  nLevel <= MAX_SPELL_LEVELS; ++nLevel)
 			#else
 			for(int nLevel = 1;  nLevel <= MAX_SPELL_LEVELS; ++nLevel)
 			#endif
 			{
+				int nCastingLevel = -1;
+				int nSpellLevel = GetLevelCanCastSpell(m_pCharacter, m_pCharacter->m_SpellClasses[nSpellClass], nLevel, &nCastingLevel);
+
+				if (m_pCharacter->m_nCastingLevels[nSpellClass] < nSpellLevel)
+				{
+					continue; // can this character cast this spell ?  some NPCs have spells memorized that might be higher than they can cast if they were generated and then their level was later reduced
+				}
+
 				for(int nSpell = 0; nSpell < MAX_SPELLS_PER_LEVEL; ++nSpell)
 				{
 					if(m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell])

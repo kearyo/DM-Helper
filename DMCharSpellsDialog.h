@@ -132,6 +132,11 @@ public:
 	afx_msg void OnBnClickedTranscribeSpell();
 	CButton m_cTranscribeSpellButton;
 	CString m_szSpellPreparationTime;
+	CStatic m_cScrollIcon;
+	CStatic m_cSpellbookIcon;
+	CStatic m_cDruidIcon;
+	CStatic m_cIllusionistIcon;
+	CButton m_cFalseButton;
 };
 
 //{{AFX_INSERT_LOCATION}}

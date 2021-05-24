@@ -8737,6 +8737,51 @@ UINT DMInstantMapSFXThreadProc(LPVOID pData)
 
 			break;
 		}
+		case 143:	// druid wall of fire
+		case 273:	// magic-user wall of fire
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\fire_ring_2.gif";
+
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_bCycle = TRUE;
+			int nCasterLevel = min(pInstantMapSFXPlacer->m_nCasterLevel, 10);
+			pInstantMapSFXPlacer->m_fScale = 1.5f * (float)nCasterLevel;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 5 * nCasterLevel;
+			nDelayTenths = 30;
+			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
+		case 274:	// magic-user wall of ice
+		{
+			pApp->m_bWaitOnDungeonMaster = TRUE;
+			pDNDMapSFX = new cDNDMapSFX();
+
+			szSFXGFXName = pApp->m_szEXEPath + "DATA\\MAPS\\SFX\\ADD_SPELLS\\grey_ring.gif";
+
+			pDNDMapSFX->m_bColorKeyed = TRUE;
+			pDNDMapSFX->m_bAnimated = TRUE;
+			pDNDMapSFX->m_SFXState = DND_SFX_STATE_READY;
+			pDNDMapSFX->m_bCycle = TRUE;
+			int nCasterLevel = min(pInstantMapSFXPlacer->m_nCasterLevel, 10);
+			pInstantMapSFXPlacer->m_fScale = 1.5f * (float)nCasterLevel;
+			strcpy(pDNDMapSFX->m_szGFXFileName, szSFXGFXName);
+			nRangeCircle = 5 * nCasterLevel;
+			nDelayTenths = 30;
+			bPermanentSFX = TRUE;
+
+			pDNDMapSFX->m_nCreationRound = pApp->m_nGlobalRound;
+			pDNDMapSFX->m_nDurationRounds = pInstantMapSFXPlacer->m_nCasterLevel;
+			break;
+		}
 		case 358:	// magic-user gate
 		{
 			pApp->m_bWaitOnDungeonMaster = TRUE;
@@ -9405,12 +9450,12 @@ void ProcessMiniDataUpdate(std::string sBuffer)
 						}
 						case 1:
 						{
-							pMini->m_fOffsetX = atof(sSubToken.GetBuffer(0));
+							pMini->m_fOffsetX = (float)atof(sSubToken.GetBuffer(0));
 							break;
 						}
 						case 2:
 						{
-							pMini->m_fOffsetY = atof(sSubToken.GetBuffer(0));
+							pMini->m_fOffsetY = (float)atof(sSubToken.GetBuffer(0));
 							break;
 						}
 						case 3:

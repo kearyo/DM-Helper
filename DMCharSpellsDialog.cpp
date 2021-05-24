@@ -91,6 +91,11 @@ void DMCharSpellsDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MATERIAL_COMPONENTS, m_cMaterialComponentsButton);
 	DDX_Control(pDX, IDC_TRANSCRIBE_SPELL, m_cTranscribeSpellButton);
 	DDX_Text(pDX, IDC_SPELLS_PREPARATION_TIME, m_szSpellPreparationTime);
+	DDX_Control(pDX, IDC_CLERIC_ICON, m_cScrollIcon);
+	DDX_Control(pDX, IDC_MAGE_ICON, m_cSpellbookIcon);
+	DDX_Control(pDX, IDC_DRUID_ICON, m_cDruidIcon);
+	DDX_Control(pDX, IDC_ILLUSIONIST_ICON, m_cIllusionistIcon);
+	DDX_Control(pDX, IDC_FALSE_BUTTON, m_cFalseButton);
 }
 
 
@@ -136,6 +141,12 @@ BOOL DMCharSpellsDialog::OnInitDialog()
 	m_cSpellChartList.InsertColumn( nCount++, "Duration", LVCFMT_LEFT, 100, -1 );
 	m_cSpellChartList.InsertColumn( nCount++, "Save", LVCFMT_LEFT, 50, -1 );
 	m_cSpellChartList.InsertColumn( nCount++, "Area of Effect", LVCFMT_LEFT, 100, -1 );
+
+	m_cScrollIcon.ShowWindow(SW_HIDE);
+	m_cSpellbookIcon.ShowWindow(SW_HIDE);
+	m_cDruidIcon.ShowWindow(SW_HIDE);
+	m_cIllusionistIcon.ShowWindow(SW_HIDE);
+	m_cFalseButton.ShowWindow(SW_HIDE);
 
 
 	ClearSelectedListCtrlItems(&m_cSpellChartList);
@@ -235,6 +246,12 @@ void DMCharSpellsDialog::Refresh()
 	m_cSaveSpellsButton.ShowWindow(SW_SHOW);
 	m_cRecoverSpellsButton.ShowWindow(SW_SHOW);
 
+	m_cScrollIcon.ShowWindow(SW_HIDE);
+	m_cSpellbookIcon.ShowWindow(SW_HIDE);
+	m_cDruidIcon.ShowWindow(SW_HIDE);
+	m_cIllusionistIcon.ShowWindow(SW_HIDE);
+	m_cFalseButton.ShowWindow(SW_HIDE);
+
 	CString szTemp;
 
 	CDMHelperApp *pApp = (CDMHelperApp *)AfxGetApp();
@@ -287,6 +304,7 @@ void DMCharSpellsDialog::Refresh()
 			case DND_CHARACTER_CLASS_DRUID:
 			case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
 			{
+
 				m_nTabSpellIndexes[nTopTabs] = i;
 				m_nSpellTabIndexes[i] = nTopTabs;
 				m_cSpellsTopTab.InsertItem(nTopTabs++, "Druid");
@@ -635,6 +653,35 @@ void DMCharSpellsDialog::Refresh()
 	if(m_pSiblingWindow != NULL)
 	{
 		m_pSiblingWindow->m_nSelectedSpellViewClass = m_nTabSpellIndexes[m_nSelectedSpellClass];
+	}
+
+	switch (m_pCharacter->m_SpellClasses[m_nTabSpellIndexes[m_nSelectedSpellClass]])
+	{
+		case DND_CHARACTER_CLASS_CLERIC:
+		case DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC:
+		{
+			m_cScrollIcon.ShowWindow(SW_SHOW);
+			m_cFalseButton.ShowWindow(SW_SHOW);
+			break;
+		}
+		case DND_CHARACTER_CLASS_DRUID:
+		case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
+		{
+			m_cDruidIcon.ShowWindow(SW_SHOW);
+			m_cFalseButton.ShowWindow(SW_SHOW);
+			break;
+		}
+		case DND_CHARACTER_CLASS_MAGE:
+		case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+		{
+			m_cSpellbookIcon.ShowWindow(SW_SHOW);
+			break;
+		}
+		case DND_CHARACTER_CLASS_ILLUSIONIST:
+		{
+			m_cIllusionistIcon.ShowWindow(SW_SHOW);
+			break;
+		}
 	}
 
 	UpdateData(FALSE);

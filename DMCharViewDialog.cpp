@@ -3424,6 +3424,11 @@ void CDMCharViewDialog::OnRollStats()  //also grant earned XP
 		Refresh();
 
 		m_pCharacter->MarkChanged();
+
+		if (bLeveled)
+		{
+			m_pApp->PlaySoundFX("Level Up");
+		}
 	}
 }
 

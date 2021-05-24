@@ -735,6 +735,45 @@
     <Image Include="res\music_ambience_button.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\little_spellbook.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\little_scroll.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\druid_symbol.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\mage_icon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\cleric_icon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\druid_icon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\illusionist_icon.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\give_to_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\drop_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\drop_all_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\give_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\buy_button.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\tiny_left_arrow.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\DM Helper.rc2">

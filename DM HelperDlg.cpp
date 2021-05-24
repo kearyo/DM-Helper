@@ -2462,6 +2462,8 @@ void CDMHelperDlg::OnEnablegamewatcherEnabled()
 
 void CDMHelperDlg::OnOpenParty() 
 {
+	CWaitCursor myWaitCursor;
+
 	DMPartyDialog *pDlg = new DMPartyDialog(this, NULL, &m_cMainTab);
 
 	pDlg->ShowWindow(SW_HIDE);

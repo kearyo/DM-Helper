@@ -10,7 +10,7 @@
 #endif
 
 #define DMH_CURRENT_VERSION 10040
-#define DMH_BUILD_NUMBER	(22720)
+#define DMH_BUILD_NUMBER	(22726)
 
 #define USE_CANTRIPS	TRUE
 
@@ -264,7 +264,7 @@
 	* Fixed bug in stat block spell display
 	* 'under' map SFX capability added, allows sfx to be drawn under a map mask for stuff like animated water etc.
 	* fixed hoykeys to only be active if main app window is in focus
-	* spell memorization time calcualtion added to character spell screen
+	* spell memorization time calculation added to character spell screen
 
 */
 

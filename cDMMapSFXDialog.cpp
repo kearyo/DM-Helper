@@ -149,6 +149,8 @@ BOOL cDMMapSFXDialog::OnInitDialog()
 
 	m_szSFXName = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_szSFXName;
 	m_szSFXGFXFileName = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_szGFXFileName;
+	m_szSFXGFXFileName.MakeUpper();
+	m_szSFXGFXFileName.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
 
 
 	int nCount = 0;
@@ -311,7 +313,18 @@ void cDMMapSFXDialog::OnBnClickedOk()
 
 	int nIndex = m_nSFXIndex;
 
-	m_pDNDMap->m_MapSFX[nIndex].m_SFXState = DND_SFX_STATE_READY;
+	if (m_bDefaultActivated)
+	{
+		m_pDNDMap->m_MapSFX[nIndex].m_SFXState = DND_SFX_STATE_TRIGGERED;
+	}
+	else
+	{
+		m_pDNDMap->m_MapSFX[nIndex].m_SFXState = DND_SFX_STATE_READY;
+	}
+
+	m_szSFXGFXFileName.MakeUpper();
+
+	m_szSFXGFXFileName.Replace(m_pApp->m_szEXEPath, "<$DMAPATH>");
 
 	strcpy(m_pDNDMap->m_MapSFX[nIndex].m_szSFXName, m_szSFXName.Left(31));
 	strcpy(m_pDNDMap->m_MapSFX[nIndex].m_szGFXFileName, m_szSFXGFXFileName.Left(255));
@@ -330,7 +343,7 @@ void cDMMapSFXDialog::OnBnClickedOk()
 		memset(m_pDNDMap->m_MapSFX[nIndex].m_szSFXFileName, 0, sizeof(char));
 	}
 
-	m_szSFXGFXFileName.MakeUpper();
+	
 
 	if(m_szSFXGFXFileName.Find(".GIF") >= 0)
 	{

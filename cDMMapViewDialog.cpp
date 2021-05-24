@@ -7335,6 +7335,8 @@ void cDMMapViewDialog::DrawMapSFX(Graphics* g)
 						if (pSFX->m_pDataPtr == NULL)
 						{
 							CString szPath = pSFX->m_szGFXFileName;
+							szPath.MakeUpper();
+							szPath.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
 							LPWSTR wcsFile = szPath.AllocSysString();
 							ImageEx* _GIFImage = new ImageEx(wcsFile, FALSE);
 							_GIFImage->InitAnimation(m_hWnd, CPoint(nX, nY), m_fViewScale, pSFX->m_fSpriteScale, pSFX->m_bCycle, &m_bMapPaint, pSFX->m_nCycles, pSFX->m_bColorKeyed, pSFX->m_bTranslucent, pSFX->m_bDrawUnder, pSFX->m_fAlpha, pSFX->m_bColorize, pSFX->m_fRed, pSFX->m_fGreen, pSFX->m_fBlue);
@@ -7358,6 +7360,8 @@ void cDMMapViewDialog::DrawMapSFX(Graphics* g)
 						if (pSFX->m_pDataPtr == NULL)
 						{
 							CString szPath = pSFX->m_szGFXFileName;
+							szPath.MakeUpper();
+							szPath.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
 							LPWSTR wcsFile = szPath.AllocSysString();
 
 							Bitmap* pSFXBitmap = new Bitmap(wcsFile, FALSE);

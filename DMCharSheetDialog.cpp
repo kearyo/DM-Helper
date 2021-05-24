@@ -2247,7 +2247,7 @@ void DMCharSheetDialog::OnPortraitButton()
 	
 }
 
-
+#if 1
 void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap, int nPrintPages)
 {
 	CString szFileName; // = "c:/dword.bmp";
@@ -2322,7 +2322,7 @@ void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap, int nPrintPage
 	  // You can also use a resource here
 	  // by using MAKEINTRESOURCE() ... etc. 
 	  if(!bitmap.Attach(::LoadImage(
-	   ::GetModuleHandle(NULL), szFileName, IMAGE_BITMAP, 0, 0, 
+	   ::GetModuleHandle(NULL), szFileName, IMAGE_BITMAP, 0, 0,
 	   LR_LOADFROMFILE | LR_CREATEDIBSECTION | LR_DEFAULTSIZE))) {
 		AfxMessageBox(_T("Error loading bitmap!")); return;
 	   } 
@@ -2332,44 +2332,59 @@ void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *_bitmap, int nPrintPage
 	   int h = bm.bmHeight; 
 	   // create memory device context
 	   CDC memDC; 
-	   memDC.CreateCompatibleDC(&dc);
+	   BOOL bCreateCompatibleDC = memDC.CreateCompatibleDC(&dc);
 	   CBitmap *pBmp = memDC.SelectObject(&bitmap);
-	   memDC.SetMapMode(dc.GetMapMode());
-	   dc.SetStretchBltMode(HALFTONE);
-	   // now stretchblt to maximum width on page
 
-	   if (nPrintPages == 1)
+	   if (pBmp != NULL)
 	   {
-		   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, 0, w, h, SRCCOPY);
+		   memDC.SetMapMode(dc.GetMapMode());
+		   dc.SetStretchBltMode(HALFTONE);
+
+		   // now stretchblt to maximum width on page
+
+		   BOOL bStretchBlt = false;
+		   if (nPrintPages == 1)
+		   {
+			   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, 0, w, h, SRCCOPY);
+		   }
+		   else
+		   {
+			   if (page == 1)
+			   {
+				   bStretchBlt = dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, 0, w, h / 2, SRCCOPY);
+			   }
+			   else  if (page == 2)
+			   {
+				   bStretchBlt = dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, h / 2, w, h / 2, SRCCOPY);
+			   }
+		   }
+
+		   // clean up
+		   memDC.SelectObject(pBmp);
+		   bPrintingOK = (dc.EndPage() > 0);   // end page
 	   }
 	   else
 	   {
-		   if (page == 1)
-		   {
-			   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, 0, w, h/2, SRCCOPY);
-		   }
-		   else  if (page == 2)
-		   {
-			   dc.StretchBlt(0, 0, maxw, maxh, &memDC, 0, h/2, w, h / 2, SRCCOPY);
-		   }
+		   bPrintingOK = FALSE;
+		   AfxMessageBox("Not enough resource for the bitmap. Either reduce the bitmap dimension or switch to lower screen setting (e.g. 256-color mode), and try again.");
 	   }
-
-
-	   // clean up
-	   memDC.SelectObject(pBmp);
-	   bPrintingOK = (dc.EndPage() > 0);   // end page
 	 } 
 	 if (bPrintingOK)
-	   dc.EndDoc(); // end a print job
-	 else dc.AbortDoc();           // abort job. 
+	 {
+		 dc.EndDoc(); // end a print job
+	 }
+	 else
+	 {
+		 dc.AbortDoc();           // abort job. 
+	 }
 
 	DeleteFile(szFileName); 
 
 }
 
 
-#if 0
-void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *bitmap)
+#else
+void DMCharSheetDialog::PrintBitmap(CDC *memDC, CBitmap *bitmap, int nPrintPages)
 {
 	int bmpWidth = 1600;
 	int bmpHeight = 500;

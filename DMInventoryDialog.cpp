@@ -308,6 +308,12 @@ BOOL DMInventoryDialog::OnInitDialog()
 	m_cInventoryList.SetFont(&m_ListFont);
 	m_cInventoryList.SetHorizontalExtent(1000);
 
+	((CButton *)(GetDlgItem(IDC_GIVE_BUTTON)))->SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_GIVE_BUTTON_BITMAP))));
+	((CButton *)(GetDlgItem(IDC_BUY_BUTTON)))->SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BUY_BUTTON_BITMAP))));
+	((CButton *)(GetDlgItem(IDC_GIVE_TO_BUTTON)))->SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_GIVE_TO_BUTTON_BITMAP))));
+	((CButton *)(GetDlgItem(IDC_DROP_BUTTON)))->SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_DROP_BUTTON_BITMAP))));
+	((CButton *)(GetDlgItem(IDC_DROP_ALL_BUTTON)))->SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_DROP_ALL_BUTTON_BITMAP))));
+
 	((CButton *)(GetDlgItem( IDC_WEAPONS_CHECK )))->SetCheck(1);
 	((CButton *)(GetDlgItem( IDC_ARMOR_CHECK )))->SetCheck(1);
 	((CButton *)(GetDlgItem( IDC_SHIELDS_CHECK )))->SetCheck(1);
@@ -1423,6 +1429,10 @@ void DMInventoryDialog::OnBuyButton()
 void DMInventoryDialog::OnGiveToButton() 
 {
 	UpdateData(TRUE);
+
+	CString szLine;
+	szLine.Format("OUTPUT : %c %c %c\n", 175, 175, 175);
+	TRACE(szLine);
 
 	int nCursor = m_cGiveToCombo.GetCurSel();
 

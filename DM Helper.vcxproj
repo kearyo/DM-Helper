@@ -341,11 +341,13 @@
   <ItemGroup>
     <Image Include="res\bitmap2.bmp" />
     <Image Include="res\bitmap3.bmp" />
+    <Image Include="res\buy_button.bmp" />
     <Image Include="res\calendar_cell.bmp" />
     <Image Include="res\camera_icon.bmp" />
     <Image Include="res\center_button.bmp" />
     <Image Include="res\char_sheet_base.bmp" />
     <Image Include="res\cleric.bmp" />
+    <Image Include="res\cleric_icon.bmp" />
     <Image Include="res\d100_button.bmp" />
     <Image Include="res\d10_button.bmp" />
     <Image Include="res\d12_button.bmp" />
@@ -358,6 +360,10 @@
     <Image Include="res\DMGuide.bmp" />
     <Image Include="res\down_arrow.bmp" />
     <Image Include="res\down_arrow_pressed.bmp" />
+    <Image Include="res\drop_all_button.bmp" />
+    <Image Include="res\drop_button.bmp" />
+    <Image Include="res\druid_icon.bmp" />
+    <Image Include="res\druid_symbol.bmp" />
     <Image Include="res\dX_button.bmp" />
     <Image Include="res\expand_down.bmp" />
     <Image Include="res\expand_up.bmp" />
@@ -365,6 +371,9 @@
     <Image Include="res\fog_of_war.bmp" />
     <Image Include="res\folder_icon.bmp" />
     <Image Include="res\Furyondy.bmp" />
+    <Image Include="res\give_button.bmp" />
+    <Image Include="res\give_to_button.bmp" />
+    <Image Include="res\illusionist_icon.bmp" />
     <Image Include="res\inventory.bmp" />
     <Image Include="res\Keoland.bmp" />
     <Image Include="res\large_left_black_button.bmp" />
@@ -374,6 +383,9 @@
     <Image Include="res\left_icon.bmp" />
     <Image Include="res\legend_button.bmp" />
     <Image Include="res\lighting_alpha.bmp" />
+    <Image Include="res\little_scroll.bmp" />
+    <Image Include="res\little_spellbook.bmp" />
+    <Image Include="res\mage_icon.bmp" />
     <Image Include="res\magicuser.bmp" />
     <Image Include="res\mini_portrait_backdrop.bmp" />
     <Image Include="res\moon_cells.bmp" />
@@ -397,6 +409,7 @@
     <Image Include="res\swap_icon.bmp" />
     <Image Include="res\sword_icon.bmp" />
     <Image Include="res\thief.bmp" />
+    <Image Include="res\tiny_left_arrow.bmp" />
     <Image Include="res\up_arrow.bmp" />
     <Image Include="res\up_arrow_pressed.bmp" />
     <Image Include="res\up_folder_bitmap.bmp" />

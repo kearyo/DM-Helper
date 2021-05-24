@@ -762,6 +762,7 @@ BEGIN_MESSAGE_MAP(DMNPCViewDialog, CDialog)
 	ON_STN_DBLCLK(IDC_DESC_COMMENT, &DMNPCViewDialog::OnStnDblclickDescComment)
 	ON_STN_DBLCLK(IDC_TT_COMMENT, &DMNPCViewDialog::OnStnDblclickTtComment)
 	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, &DMNPCViewDialog::OnDirtyWindow)
+	ON_BN_CLICKED(IDC_NAME_TRANSFER_BUTTON, &DMNPCViewDialog::OnBnClickedNameTransferButton)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -772,6 +773,8 @@ BOOL DMNPCViewDialog::OnInitDialog()
 	CDialog::OnInitDialog();
 	
 	SetWindowText("New NPC");
+
+	((CButton *)(GetDlgItem(IDC_NAME_TRANSFER_BUTTON)))->SetBitmap((::LoadBitmap(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_TINY_LEFT_ARROW_BITMAP))));
 
 	int nCount = 0;
 
@@ -895,7 +898,7 @@ void DMNPCViewDialog::OnPaint()
 		{
 			try
 			{
-				graphics.DrawImage(m_pNPCPortraitBitmap, 645, 35, 192, 192);
+				graphics.DrawImage(m_pNPCPortraitBitmap, 660, 35, 192, 192);
 			}
 			catch (...)
 			{
@@ -907,7 +910,7 @@ void DMNPCViewDialog::OnPaint()
 		{
 			try
 			{
-				graphics.DrawImage(m_pNPCPortraitBackdropBitmap, 645, 35, 192, 192);
+				graphics.DrawImage(m_pNPCPortraitBackdropBitmap, 660, 35, 192, 192);
 			}
 			catch (...)
 			{
@@ -3169,4 +3172,32 @@ LRESULT DMNPCViewDialog::OnDirtyWindow(UINT wParam, LONG lParam)
 	ProcessCharStats();
 	Refresh();
 	return 0; // I handled this message
+}
+
+
+
+void DMNPCViewDialog::OnBnClickedNameTransferButton()
+{
+	UpdateData(TRUE);
+
+	int nCursor = m_cCharTypeCombo.GetCurSel();
+
+	m_pNPC->m_nMonsterIndex = m_cCharTypeCombo.GetItemData(nCursor);
+
+	PDNDMONSTERMANUALENTRY pMonster = NULL;
+
+	m_pApp->m_MonsterManualIndexedMap.Lookup(m_pNPC->m_nMonsterIndex, pMonster);
+
+	if (pMonster != NULL)
+	{
+		m_szCharacterName = pMonster->m_szMMName;
+		UpdateData(FALSE);
+		OnChangeCharNameEdit();
+	}
+
+
+	if (m_pInventoryDialog != NULL)
+	{
+		m_pInventoryDialog->Refresh();
+	}
 }
