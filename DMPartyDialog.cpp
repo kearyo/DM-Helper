@@ -1971,8 +1971,20 @@ void DMPartyDialog::OnEnChangePartyXpEdit()
 
 void DMPartyDialog::OnAddMemberButton() 
 {
+	// shatner
 	DWORD dwReturnedID = 0;
-	DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_dwParentPartyID, DND_SELECTOR_CHARACTER);
+
+	DMCharacterSelectorDialog *pDlg = NULL;
+
+	if (m_dwSubPartyID)
+	{
+		pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_dwParentPartyID, m_dwSubPartyID, DND_SELECTOR_SUBPARTY_MEMBER);
+	}
+	else
+	{
+		pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_pParty->m_dwPartyID, 0, DND_SELECTOR_PARTY_MEMBER);
+	}
+
 	pDlg->DoModal();
 	delete pDlg;
 
@@ -2161,7 +2173,17 @@ void DMPartyDialog::OnDeleteMemberButton()
 	}
 	else
 	{
-		DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_dwSubPartyID, DND_SELECTOR_CHARACTER);
+		DMCharacterSelectorDialog *pDlg = NULL;
+
+		if (m_dwSubPartyID)
+		{
+			pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_pParty->m_dwPartyID, m_dwSubPartyID, DND_SELECTOR_SUBPARTY_REMOVE_MEMBER);
+		}
+		else
+		{
+			pDlg = new DMCharacterSelectorDialog(&dwReturnedID, m_pParty->m_dwPartyID, 0, DND_SELECTOR_CHARACTER);
+		}
+
 		pDlg->DoModal();
 		delete pDlg;
 	}
@@ -2431,6 +2453,8 @@ void DMPartyDialog::LoadPartyExternal()
 
 void DMPartyDialog::OnLoadPartyButton() 
 {
+	DWORD dwStartTime = GetUniversalTime();
+
 	DMLoadFileDescriptor FileDesc;
 	FileDesc.m_szLabel = "Load DM Party File:";
 	FileDesc.m_szInitialPath = m_pApp->m_szEXEPath;
@@ -2454,6 +2478,8 @@ void DMPartyDialog::OnLoadPartyButton()
 
 	if(FileDesc.m_bSuccess)
 	{
+		dwStartTime = GetUniversalTime();
+
 		LoadPartyFromFile(FileDesc.m_szReturnedPath.GetBuffer(0));
 		m_szPartySaveFilePath = FileDesc.m_szReturnedPath;
 
@@ -2522,12 +2548,16 @@ void DMPartyDialog::OnLoadPartyButton()
 				}
 			}
 
+			TRACE("LOADED PARTY IN %ld s\n", GetUniversalTime() - dwStartTime);
+
 			if(m_pParty->m_dwPartyMapID)
 			{
 				CString szFilePath;
 				szFilePath.Format("%sdata\\maps\\", m_pApp->m_szEXEPath);
 				SearchAndLoadMaps(szFilePath, _T(""));
 			}
+
+			TRACE("LOADED MAPS IN %ld s\n", GetUniversalTime() - dwStartTime);
 
 			m_pParty->MarkSaved();
 		}
@@ -2556,6 +2586,8 @@ void DMPartyDialog::OnLoadPartyButton()
 			}
 		}
 	}
+
+	TRACE("LOADED SUBPARTIES IN %ld s\n", GetUniversalTime() - dwStartTime);
 
 	#if GAMETABLE_BUILD
 	if (m_pParty->m_dwCalendarID)
@@ -2828,26 +2860,28 @@ void DMPartyDialog::SearchAndLoadPartyMembers(CString szPath)
 				{
 					cDNDCharacter *pCharacter = new cDNDCharacter();
 				
-					fread(pCharacter, sizeof(cDNDCharacter), 1, pInFile);
-
-					fclose(pInFile);
-
-					if(pCharacter->m_Version < 10009)
-					{
-						memset(pCharacter->m_nLanguages, 0, MAX_CHARACTER_LANGUAGES * sizeof(int));
-					}
+					fread(pCharacter, sizeof(UINT)+sizeof(DWORD), 1, pInFile);
 
 					if(m_pParty->CharacterIsPartyMember(pCharacter) && !CharacterIsLoaded(pCharacter))
 					{
-						if (strcmp(pCharacter->m_szCharacterName, "Elric") == 0)
+						fseek(pInFile, 0, 0);
+						fread(pCharacter, sizeof(cDNDCharacter), 1, pInFile);
+
+						if (pCharacter->m_Version < 10009)
 						{
-							TRACE("!");
+							memset(pCharacter->m_nLanguages, 0, MAX_CHARACTER_LANGUAGES * sizeof(int));
 						}
 
 						m_pMainDialog->RetrieveCharacter(pCharacter, szFileName.GetBuffer(0));
+
+						TRACE(">>>>> LOADING CHARACTER %s (%d)\n", pCharacter->m_szCharacterName, sizeof(cDNDCharacter));
+
+						fclose(pInFile);
 					}
 					else
 					{
+						//TRACE(">>>>> IGNORING CHARACTER %s\n", szFileName);
+						fclose(pInFile);
 						delete pCharacter;
 					}
 				}
@@ -2878,6 +2912,8 @@ void DMPartyDialog::SearchAndLoadMaps(CString szFilePath, CString szSubDir)
 	BOOL bSuccess = FALSE;
 
 	strFile.Format("%s%s*.*", szFilePath, szSubDir);
+
+	//TRACE(">>>>> SEARCHING MAPS %s\n", szFilePath);
 
 	BOOL bFound = find.FindFile(strFile);
 	int nIndex = 0;
@@ -2919,41 +2955,47 @@ void DMPartyDialog::SearchAndLoadMaps(CString szFilePath, CString szSubDir)
 				if(pInFile != NULL)
 				{
 					cDNDMap *pMap = new cDNDMap();
-				
-					fread(pMap, sizeof(cDNDMap), 1, pInFile);
 
-					fclose(pInFile);
-
-					
-					if(pMap->m_Version < 10009)
-					{
-						pMap->m_bTiles = FALSE;
-						memset(pMap->m_Tiles, 0, MAX_MAP_TILES * sizeof(cDNDMapTile));
-					}
-
-					if (pMap->m_Version < 10026)
-					{
-						pMap->m_bDisplayLayer[0] = FALSE;
-						pMap->m_bDisplayLayer[1] = FALSE;
-						pMap->m_bDisplayLayer[2] = FALSE;
-						pMap->m_bDisplayLayer[3] = FALSE;
-
-						pMap->m_nTransRed = 255;
-						pMap->m_nTransGreen = 255;
-						pMap->m_nTransBlue = 255;
-					}
-
-					for (int i = 0; i < MAX_MAP_SFX; ++i)
-					{
-						pMap->m_MapSFX[i].m_pDataPtr = NULL;
-						if (pMap->m_MapSFX[i].m_bDefaultActive)
-						{
-							pMap->m_MapSFX[i].m_SFXState = DND_SFX_STATE_TRIGGERED_START;
-						}
-					}
+					// just read enough of the file to get the map ID
+					fread(pMap, sizeof(UINT) + sizeof(DWORD), 1, pInFile);
 
 					if(m_pParty->m_dwPartyMapID == pMap->m_dwMapID && !MapIsLoaded(pMap))
 					{
+						// go back to the start of the file and read in the whole thing
+						fseek(pInFile, 0, 0);
+						fread(pMap, sizeof(cDNDMap), 1, pInFile);
+
+						TRACE(">>>>> LOADING MAP %s\n", szFileName.GetBuffer(0));
+
+						////
+						if (pMap->m_Version < 10009)
+						{
+							pMap->m_bTiles = FALSE;
+							memset(pMap->m_Tiles, 0, MAX_MAP_TILES * sizeof(cDNDMapTile));
+						}
+
+						if (pMap->m_Version < 10026)
+						{
+							pMap->m_bDisplayLayer[0] = FALSE;
+							pMap->m_bDisplayLayer[1] = FALSE;
+							pMap->m_bDisplayLayer[2] = FALSE;
+							pMap->m_bDisplayLayer[3] = FALSE;
+
+							pMap->m_nTransRed = 255;
+							pMap->m_nTransGreen = 255;
+							pMap->m_nTransBlue = 255;
+						}
+
+						for (int i = 0; i < MAX_MAP_SFX; ++i)
+						{
+							pMap->m_MapSFX[i].m_pDataPtr = NULL;
+							if (pMap->m_MapSFX[i].m_bDefaultActive)
+							{
+								pMap->m_MapSFX[i].m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+							}
+						}
+						////
+
 						if(pMap->m_dwParentMapID)
 						{
 							if (SearchAndLoadParentMap(pMap, szFilePath, _T("")) == FALSE)
@@ -2969,10 +3011,15 @@ void DMPartyDialog::SearchAndLoadMaps(CString szFilePath, CString szSubDir)
 
 						strcpy(pMap->m_szLoadedFilename, szFileName.Left(511));
 
+						TRACE(">>>>> LOADED MAP %s\n", szFileName.GetBuffer(0));
+
 						bSuccess = TRUE;
+						fclose(pInFile);
 					}
 					else
 					{
+						fclose(pInFile);
+						//TRACE(">>>>> DISCARDING MAP %s (%d)\n", szFileName.GetBuffer(0), sizeof(cDNDMap));
 						delete pMap;
 					}
 				}
@@ -2981,6 +3028,8 @@ void DMPartyDialog::SearchAndLoadMaps(CString szFilePath, CString szSubDir)
 			}
 		}
 	}
+
+	//TRACE(">>>>> END SEARCHING MAPS %s\n", szFilePath);
 }
 
 BOOL DMPartyDialog::SearchAndLoadParentMap(cDNDMap *pChildMap, CString szFilePath, CString szSubDir)
@@ -3042,39 +3091,42 @@ BOOL DMPartyDialog::SearchAndLoadParentMap(cDNDMap *pChildMap, CString szFilePat
 				{
 					cDNDMap *pMap = new cDNDMap();
 				
-					fread(pMap, sizeof(cDNDMap), 1, pInFile);
-
-					fclose(pInFile);
-
-					if(pMap->m_Version < 10009)
-					{
-						pMap->m_bTiles = FALSE;
-						memset(pMap->m_Tiles, 0, MAX_MAP_TILES * sizeof(cDNDMapTile));
-					}
-
-					if (pMap->m_Version < 10026)
-					{
-						pMap->m_bDisplayLayer[0] = FALSE;
-						pMap->m_bDisplayLayer[1] = FALSE;
-						pMap->m_bDisplayLayer[2] = FALSE;
-						pMap->m_bDisplayLayer[3] = FALSE;
-
-						pMap->m_nTransRed = 255;
-						pMap->m_nTransGreen = 255;
-						pMap->m_nTransBlue = 255;
-					}
-
-					for (int i = 0; i < MAX_MAP_SFX; ++i)
-					{
-						pMap->m_MapSFX[i].m_pDataPtr = NULL;
-						if (pMap->m_MapSFX[i].m_bDefaultActive)
-						{
-							pMap->m_MapSFX[i].m_SFXState = DND_SFX_STATE_TRIGGERED_START;
-						}
-					}
+					// just read enough of the file to get the map ID
+					fread(pMap, sizeof(UINT) + sizeof(DWORD), 1, pInFile);
 
 					if(pChildMap->m_dwParentMapID == pMap->m_dwMapID)
 					{
+						// go back to the start of the file and read in the whole thing
+						fseek(pInFile, 0, 0);
+						fread(pMap, sizeof(cDNDMap), 1, pInFile);
+
+						if (pMap->m_Version < 10009)
+						{
+							pMap->m_bTiles = FALSE;
+							memset(pMap->m_Tiles, 0, MAX_MAP_TILES * sizeof(cDNDMapTile));
+						}
+
+						if (pMap->m_Version < 10026)
+						{
+							pMap->m_bDisplayLayer[0] = FALSE;
+							pMap->m_bDisplayLayer[1] = FALSE;
+							pMap->m_bDisplayLayer[2] = FALSE;
+							pMap->m_bDisplayLayer[3] = FALSE;
+
+							pMap->m_nTransRed = 255;
+							pMap->m_nTransGreen = 255;
+							pMap->m_nTransBlue = 255;
+						}
+
+						for (int i = 0; i < MAX_MAP_SFX; ++i)
+						{
+							pMap->m_MapSFX[i].m_pDataPtr = NULL;
+							if (pMap->m_MapSFX[i].m_bDefaultActive)
+							{
+								pMap->m_MapSFX[i].m_SFXState = DND_SFX_STATE_TRIGGERED_START;
+							}
+						}
+
 						if(!MapIsLoaded(pMap))
 						{
 							if(pMap->m_dwParentMapID)
@@ -3090,10 +3142,14 @@ BOOL DMPartyDialog::SearchAndLoadParentMap(cDNDMap *pChildMap, CString szFilePat
 						strcpy(pChildMap->m_szLoadedFilename, szFileName.Left(511));
 
 						bSuccess = TRUE;
+
+						fclose(pInFile);
 					}
 					else
 					{
 						delete pMap;
+
+						fclose(pInFile);
 					}
 				}
 
@@ -3112,8 +3168,10 @@ BOOL DMPartyDialog::MapIsLoaded(cDNDMap *pMap)
 	PDNDMAPVIEWDLG pMapDlg = NULL;
 	m_pApp->m_MapViewMap.Lookup((WORD)pMap->m_dwMapID, pMapDlg);
 
-	if(pMapDlg != NULL)
+	if (pMapDlg != NULL)
+	{
 		return TRUE;
+	}
 
 	return FALSE;
 }
@@ -3135,7 +3193,7 @@ void DMPartyDialog::OnSetfocusMapNameEdit()
 	m_cAnchorButton.SetFocus();
 
 	DWORD dwReturnedID = 0;
-	DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, 0, DND_SELECTOR_MAP);
+	DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, 0, 0, DND_SELECTOR_MAP);
 	pDlg->DoModal();
 	delete pDlg;
 
@@ -3771,12 +3829,12 @@ void DMPartyDialog::InitiativeAttack(CDMCharViewDialog *pAttackingCharacterDialo
 		if (pAttackingCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", pAttackingCharacterDialog->GetCharacterSFXName(), "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", pAttackingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", pAttackingCharacterDialog->GetCharacterSFXName(), "Male", FALSE);
 		}
 
 	}
@@ -4021,12 +4079,12 @@ BOOL DMPartyDialog::InitiativeWound(int nDamage, CDMCharViewDialog *pTargetChara
 			if (pTargetCharacterDialog->m_pCharacter->m_nSex)
 			{
 				//m_pApp->PlaySoundFX("Female PC Die");
-				m_pApp->PlayPCSoundFX("* PC Die", pTargetCharacterDialog->m_szCharacterFirstName, "Female");
+				m_pApp->PlayPCSoundFX("* PC Die", pTargetCharacterDialog->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
 				//m_pApp->PlaySoundFX("Male PC Die");
-				m_pApp->PlayPCSoundFX("* PC Die", pTargetCharacterDialog->m_szCharacterFirstName, "Male");
+				m_pApp->PlayPCSoundFX("* PC Die", pTargetCharacterDialog->GetCharacterSFXName(), "Male");
 			}
 
 			pTargetCharacterDialog->m_szInitiativeAction = _T("DEAD");
@@ -4047,11 +4105,11 @@ BOOL DMPartyDialog::InitiativeWound(int nDamage, CDMCharViewDialog *pTargetChara
 		{
 			if (pTargetCharacterDialog->m_pCharacter->m_nSex)
 			{
-				m_pApp->PlayPCSoundFX("* PC Hurt", pTargetCharacterDialog->m_szCharacterFirstName, "Female");
+				m_pApp->PlayPCSoundFX("* PC Hurt", pTargetCharacterDialog->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
-				m_pApp->PlayPCSoundFX("* PC Hurt", pTargetCharacterDialog->m_szCharacterFirstName, "Male");
+				m_pApp->PlayPCSoundFX("* PC Hurt", pTargetCharacterDialog->GetCharacterSFXName(), "Male");
 			}
 		}
 	}
@@ -4150,12 +4208,12 @@ void DMPartyDialog::OnAttackHitButton()
 		if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Male", FALSE);
 		}
 
 		m_pApp->PlaySoundFX("Whiff", FALSE);
@@ -4237,12 +4295,12 @@ void DMPartyDialog::OnAttackMissButton()
 		if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Male", FALSE);
 		}
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
@@ -4455,12 +4513,12 @@ void DMPartyDialog::OnWoundButton()
 			if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
 			{
 				//m_pApp->PlaySoundFX("Female PC Die");
-				m_pApp->PlayPCSoundFX("* PC Die", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
 				//m_pApp->PlaySoundFX("Male PC Die");
-				m_pApp->PlayPCSoundFX("* PC Die", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Male");
 			}
 
 			m_pSelectedCharacterDialog->m_szInitiativeAction = _T("DEAD");
@@ -4470,12 +4528,12 @@ void DMPartyDialog::OnWoundButton()
 			if (m_pSelectedCharacterDialog->m_pCharacter->m_nSex)
 			{
 				//m_pApp->PlaySoundFX("Female PC Hurt");
-				m_pApp->PlayPCSoundFX("* PC Hurt", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Female");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
 				//m_pApp->PlaySoundFX("Male PC Hurt");
-				m_pApp->PlayPCSoundFX("* PC Hurt", m_pSelectedCharacterDialog->m_szCharacterFirstName, "Male");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pSelectedCharacterDialog->GetCharacterSFXName(), "Male");
 			}
 
 		}
@@ -4637,12 +4695,12 @@ void DMPartyDialog::OnAttackHitButton2()
 		if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* War Cry", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Male", FALSE);
 		}
 
 		m_pApp->PlaySoundFX("Whiff", FALSE);
@@ -4724,12 +4782,12 @@ void DMPartyDialog::OnAttackMissButton2()
 		if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
 		{
 			//m_pApp->PlaySoundFX("Female War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Female", FALSE);
 		}
 		else
 		{
 			//m_pApp->PlaySoundFX("Male War Cry", FALSE);
-			m_pApp->PlayPCSoundFX("* PC War Cry", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male", FALSE);
+			m_pApp->PlayPCSoundFX("* PC War Cry", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Male", FALSE);
 		}
 
 		m_pApp->PlayWeaponSFX(nWeapon, 1);
@@ -4936,12 +4994,12 @@ void DMPartyDialog::OnWoundButton2()
 			if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
 			{
 				//m_pApp->PlaySoundFX("Female PC Die");
-				m_pApp->PlayPCSoundFX("* PC Die", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
 				//m_pApp->PlaySoundFX("Male PC Die");
-				m_pApp->PlayPCSoundFX("* PC Die", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male");
+				m_pApp->PlayPCSoundFX("* PC Die", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Male");
 			}
 
 			m_pOpposingCharacterDialog->m_szInitiativeAction = _T("DEAD");
@@ -4954,12 +5012,12 @@ void DMPartyDialog::OnWoundButton2()
 			if (m_pOpposingCharacterDialog->m_pCharacter->m_nSex)
 			{
 				//m_pApp->PlaySoundFX("Female PC Hurt");
-				m_pApp->PlayPCSoundFX("* PC Hurt", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Female");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
 				//m_pApp->PlaySoundFX("Male PC Hurt");
-				m_pApp->PlayPCSoundFX("* PC Hurt", m_pOpposingCharacterDialog->m_szCharacterFirstName, "Male");
+				m_pApp->PlayPCSoundFX("* PC Hurt", m_pOpposingCharacterDialog->GetCharacterSFXName(), "Male");
 			}
 		}
 	}
@@ -6406,7 +6464,7 @@ void DMPartyDialog::OnBnClickedTurnUndeadButton()
 	int nTurnUndeadMatrix[13];
 	GetTurnUndeadMatrix(m_pSelectedCharacterDialog->m_pCharacter, nTurnUndeadMatrix);
 
-	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(m_pSelectedCharacterDialog->m_pCharacter->m_szCharacterName, nTurnUndeadMatrix, FALSE);
+	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(m_pSelectedCharacterDialog->GetCharacterSFXName(), nTurnUndeadMatrix, FALSE);
 	pDlg->DoModal();
 	delete pDlg;
 }
@@ -6444,10 +6502,10 @@ void DMPartyDialog::OnBnClickedFreeCastSpellButton()
 	_Character.m_SpellClasses[2] = DND_CHARACTER_CLASS_CLERIC;
 	_Character.m_SpellClasses[3] = DND_CHARACTER_CLASS_DRUID;
 
-	_Character.m_nCastingLevels[0] = 1;
-	_Character.m_nCastingLevels[1] = 1;
-	_Character.m_nCastingLevels[2] = 1;
-	_Character.m_nCastingLevels[3] = 1;
+	_Character.m_nCastingLevels[0] = 18;
+	_Character.m_nCastingLevels[1] = 18;
+	_Character.m_nCastingLevels[2] = 18;
+	_Character.m_nCastingLevels[3] = 18;
 
 	// mages
 	_Character.m_nSpellsMemorized[0][1][14] = 1;	// light

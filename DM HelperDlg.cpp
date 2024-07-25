@@ -67,6 +67,8 @@ static int _MainTabControls[] =
 	IDC_SMALL_FONT_CHECK,
 	IDC_MONITOR_DPMI_EDIT,
 	IDC_DPMI_STATIC,
+	IDC_MU_SPELL_INT_CHECK,
+	IDC_FREECAST_CANTRIPS_CHECK,
 	-1
 };
 
@@ -139,6 +141,8 @@ CDMHelperDlg::CDMHelperDlg(CWnd* pParent /*=NULL*/)
 	, m_bUseSmallFont(FALSE)
 	, m_szMonitorDPMIEdit(_T(""))
 	, m_bUseMaterialComponents(FALSE)
+	, m_bMagicUserINTSpellBonus(FALSE)
+	, m_bFreecastCantrips(FALSE)
 {
 
 	m_pApp = (CDMHelperApp *)AfxGetApp();
@@ -212,6 +216,8 @@ void CDMHelperDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_MONITOR_DPMI_EDIT, m_szMonitorDPMIEdit);
 	DDV_MaxChars(pDX, m_szMonitorDPMIEdit, 3);
 	DDX_Check(pDX, IDC_SPELL_COMPONENTS_CHECK, m_bUseMaterialComponents);
+	DDX_Check(pDX, IDC_MU_SPELL_INT_CHECK, m_bMagicUserINTSpellBonus);
+	DDX_Check(pDX, IDC_FREECAST_CANTRIPS_CHECK, m_bFreecastCantrips);
 }
 
 BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
@@ -298,6 +304,8 @@ BEGIN_MESSAGE_MAP(CDMHelperDlg, CDialog)
 	ON_COMMAND(ID_CHARTSANDTABLES_NPCSPELLCASTINGCOSTS, &CDMHelperDlg::OnChartsandtablesNpcspellcastingcosts)
 	ON_COMMAND(ID_CHARTSANDTABLES_DETECTIONOFINVISIBILITY, &CDMHelperDlg::OnChartsandtablesDetectionofinvisibility)
 	ON_COMMAND(ID_ENABLEGAMEWATCHER_ENABLED, &CDMHelperDlg::OnEnablegamewatcherEnabled)
+	ON_BN_CLICKED(IDC_MU_SPELL_INT_CHECK, &CDMHelperDlg::OnBnClickedMuSpellIntCheck)
+	ON_BN_CLICKED(IDC_FREECAST_CANTRIPS_CHECK, &CDMHelperDlg::OnBnClickedFreecastCantripsCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -399,6 +407,12 @@ BOOL CDMHelperDlg::OnInitDialog()
 
 	m_bUsed10Initiative = m_pApp->m_Settings.m_bUsed10Initiative;
 	g_bUsed10Initiative = m_bUsed10Initiative;
+
+	m_bMagicUserINTSpellBonus = m_pApp->m_Settings.m_bMagicUserINTSpellBonus;
+	g_bMagicUserINTSpellBonus = m_bMagicUserINTSpellBonus;
+
+	m_bFreecastCantrips = m_pApp->m_Settings.m_bFreecastCantrips;
+	g_bFreecastCantrips = m_bFreecastCantrips;
 
 	m_szEncumbranceFactorEdit.Format("%d", m_pApp->m_Settings.m_nGPEncumbranceFactor);
 	m_szInflationFactor.Format("%d", m_pApp->m_Settings.m_nVendorPriceInflationFactor);
@@ -579,7 +593,7 @@ void CDMHelperDlg::OnPaint()
 			{
 				if(nControl == IDC_BACKGROUND_BITMAP && nShow == SW_SHOW)
 				{
-					(GetDlgItem( nControl ))->SetWindowPos(NULL, 0, 22, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE); 
+					(GetDlgItem(nControl))->SetWindowPos(NULL, 0, 22, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE);
 				}
 				else
 				{
@@ -910,6 +924,22 @@ void CDMHelperDlg::OnBnClickedMonksDexderityCheck()
 	UpdateData(TRUE);
 	m_pApp->m_Settings.m_bMonkDexderityAdjustments = m_bMonkDexderityAdjustments;
 }
+
+void CDMHelperDlg::OnBnClickedMuSpellIntCheck()
+{
+	UpdateData(TRUE);
+	g_bMagicUserINTSpellBonus = m_bMagicUserINTSpellBonus;
+	m_pApp->m_Settings.m_bMagicUserINTSpellBonus = m_bMagicUserINTSpellBonus;
+}
+
+
+void CDMHelperDlg::OnBnClickedFreecastCantripsCheck()
+{
+	UpdateData(TRUE);
+	g_bFreecastCantrips = m_bFreecastCantrips;
+	m_pApp->m_Settings.m_bFreecastCantrips = m_bFreecastCantrips;
+}
+
 
 void CDMHelperDlg::OnBnClickedMonsterManualIiCheck()
 {
@@ -3624,5 +3654,6 @@ void CDMHelperDlg::OnChartsandtablesDetectionofinvisibility()
 	pDlg->DoModal();
 	delete pDlg;
 }
+
 
 

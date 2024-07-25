@@ -230,6 +230,10 @@ public:
 	afx_msg void OnChartsandtablesNpcspellcastingcosts();
 	afx_msg void OnChartsandtablesDetectionofinvisibility();
 	afx_msg void OnEnablegamewatcherEnabled();
+	BOOL m_bMagicUserINTSpellBonus;
+	afx_msg void OnBnClickedMuSpellIntCheck();
+	BOOL m_bFreecastCantrips;
+	afx_msg void OnBnClickedFreecastCantripsCheck();
 };
 
 //{{AFX_INSERT_LOCATION}}

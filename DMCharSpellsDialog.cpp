@@ -435,6 +435,12 @@ void DMCharSpellsDialog::Refresh()
 					int nSpellsAllowedSpellbook = 0;
 
 					CalculateINTAdjustments(m_pCharacter, &nKnowSpell, &nMinSpells, &nSpellsAllowedSpellbook);
+
+					if (g_bFreecastCantrips && kk == 0)
+					{
+						nSpellsAllowedSpellbook = MAX_SPELLS_PER_LEVEL;
+					}
+
 					nTotalSpellsInLevel = CountSpellsInLevel(m_pCharacter->m_nSpellBooks[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel]);
 
 					if(nTotalSpellsInLevel > -1)
@@ -1150,6 +1156,11 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 
 			int nAddLang = CalculateINTAdjustments(m_pCharacter, &nKnowSpell, &nMinSpells, &nMaxSpells);
 
+			if (g_bFreecastCantrips && m_nSelectedSpellLevel == 0)
+			{
+				nMaxSpells = MAX_SPELLS_PER_LEVEL;
+			}
+
 			int nTotalBookSpellsInLevel = CountSpellsInLevel(m_pCharacter->m_nSpellBooks[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel]);
 
 			for(int i = 0; i < MAX_SPELLS_PER_LEVEL && nTotalBookSpellsInLevel < nMaxSpells; ++i)
@@ -1212,7 +1223,7 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 						if (m_pApp->SpellIsHealingSpell(pSelectedSpellSlot->m_pSpell))
 						{
 							DWORD dwCharacterID = 0;
-							DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
+							DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, 0, DND_SELECTOR_CHARACTER);
 							pDlg->DoModal();
 							delete pDlg;
 
@@ -1224,7 +1235,7 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 
 						if (pSelectedSpellSlot->m_pSpell->HasVerbalComponent())
 						{
-							m_pApp->PlayPCSoundFX("* PC Cast Spell", m_pSiblingWindow->m_szCharacterFirstName, "NADA", FALSE, pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier);
+							m_pApp->PlayPCSoundFX("* PC Cast Spell", m_pSiblingWindow->GetCharacterSFXName(), "NADA", FALSE, pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier);
 						}
 
 						int nSoundRepeats = m_pApp->GetSpellRepeats(pSelectedSpellSlot);
@@ -1501,7 +1512,7 @@ void DMCharSpellsDialog::OnBnClickedTranscribeSpell()
 	if (pSelectedBookSpell != NULL)
 	{
 		DWORD dwReturnedID = 0;
-		DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, 0, DND_SELECTOR_CHARACTER_CASTER, pSelectedBookSpell->m_ClassBook, m_pCharacter->m_dwCharacterID);
+		DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwReturnedID, 0, 0, DND_SELECTOR_CHARACTER_CASTER, pSelectedBookSpell->m_ClassBook, m_pCharacter->m_dwCharacterID);
 		pDlg->DoModal();
 		delete pDlg;
 

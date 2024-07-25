@@ -11,7 +11,7 @@
 
 IMPLEMENT_DYNAMIC(cDMModifyClericSkillsDialog, CDialog)
 
-cDMModifyClericSkillsDialog::cDMModifyClericSkillsDialog(CString szCharacterName, int *pnClericTurnModifiers, BOOL bModify, CWnd* pParent /*=NULL*/)
+cDMModifyClericSkillsDialog::cDMModifyClericSkillsDialog(char * szCharacterName, int *pnClericTurnModifiers, BOOL bModify, CWnd* pParent /*=NULL*/)
 	: CDialog(cDMModifyClericSkillsDialog::IDD, pParent)
 {
 	m_pApp = (CDMHelperApp *)AfxGetApp();

@@ -217,7 +217,7 @@ BOOL cDMMapSFXDialog::OnInitDialog()
 	}
 
 	m_bDefaultActivated = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bDefaultActive;
-	m_bDrawUnder = m_bDrawUnder;
+	m_bDrawUnder = m_pDNDMap->m_MapSFX[m_nSFXIndex].m_bDrawUnder;
 
 	UpdateData(FALSE);
 
@@ -398,12 +398,8 @@ void cDMMapSFXDialog::OnBnClickedPreview()
 
 void cDMMapSFXDialog::OnBnClickedCancel()
 {
-	// TODO: Add your control notification handler code here
 	CDialog::OnCancel();
 }
-
-
-
 
 
 void cDMMapSFXDialog::OnBnClickedUp()

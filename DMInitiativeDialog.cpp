@@ -21,7 +21,7 @@ CDMInitiativeDialog::CDMInitiativeDialog(CWnd* pParent /*=NULL*/)
 	: CDialog(CDMInitiativeDialog::IDD, pParent)
 	, m_bRollPCs(FALSE)
 	, m_szDebugText(_T(""))
-	, m_szAttacksText(_T("ATTACK #X of X THIS ROUND"))
+	, m_szAttacksText(_T("ATTACK #X of X THIS ROUND (OH:0)"))
 	, m_szCombatNote(_T(""))
 	, m_szTurnTimer(_T("TIME : 00s"))
 {
@@ -1286,6 +1286,32 @@ BOOL CDMInitiativeDialog::IsSelectedCharacterAlive()
 	return FALSE;
 }
 
+BOOL CDMInitiativeDialog::IsSelectedCharacterDualWielding()
+{
+	int nCursor = GetSelectedListCtrlItem(&m_cCharacterList);
+
+	if (nCursor > -1)
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog *)m_cCharacterList.GetItemData(nCursor);
+
+		switch (pDlg->m_CharViewType)
+		{
+			case DND_CHAR_VIEW_TYPE_PC:
+			{	
+				pDlg->m_bCharIsDualWielding = ((CDMCharViewDialog*)pDlg)->m_pCharacter->m_bIsDualWielding;
+				if (!pDlg->m_bCharIsDualWielding)
+				{
+					pDlg->m_nUsingOffHand = 0;
+				}
+				return ((CDMCharViewDialog*)pDlg)->m_pCharacter->m_bIsDualWielding;
+			}
+		}
+
+	}
+
+	return FALSE;
+}
+
 BOOL CDMInitiativeDialog::IsCharacterAlive(CDMBaseCharViewDialog *pDlg)
 {
 	switch (pDlg->m_CharViewType)
@@ -1335,7 +1361,7 @@ CDMBaseCharViewDialog *CDMInitiativeDialog::GetSelectedCharacterDialog()
 void CDMInitiativeDialog::OnBnClickedHitButton()
 {
 	m_nTurnSecondsRemaining = 0;
-	
+
 	if (FALSE == IsSelectedCharacterAlive())
 	{
 		NextSegment();
@@ -1348,6 +1374,23 @@ void CDMInitiativeDialog::OnBnClickedHitButton()
 
 	++m_nCompletedAttacksThisRound;
 
+	int nOffHand = 0;
+
+	//// DUAL WIELDING
+	if (IsSelectedCharacterDualWielding())
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog*)m_cCharacterList.GetItemData(m_nOldCursor);
+
+		pDlg->m_bCharIsDualWielding = TRUE;
+		pDlg->m_nUsingOffHand = 1 - pDlg->m_nUsingOffHand;
+		nOffHand = pDlg->m_nUsingOffHand;
+
+		m_pParentPartyDialog->ClickWeaponSwapButton(IsSelectedCharacterInOpponentParty());
+
+		SetAttackData(pDlg);
+	}
+	////
+
 	Refresh();
 
 	if (m_nCompletedAttacksThisRound >= m_nNumAttacksThisRound)
@@ -1356,7 +1399,7 @@ void CDMInitiativeDialog::OnBnClickedHitButton()
 	}
 	else
 	{
-		m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
+		m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND (OH:%d)", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound, nOffHand);
 		UpdateData(FALSE);
 	}
 }
@@ -1376,13 +1419,33 @@ void CDMInitiativeDialog::OnBnClickedMissButton()
 
 	++m_nCompletedAttacksThisRound;
 
+	int nOffHand = 0;
+
+	//// DUAL WIELDING
+	if (IsSelectedCharacterDualWielding())
+	{
+		CDMBaseCharViewDialog *pDlg = (CDMBaseCharViewDialog*)m_cCharacterList.GetItemData(m_nOldCursor);
+
+		pDlg->m_bCharIsDualWielding = TRUE;
+		pDlg->m_nUsingOffHand = 1 - pDlg->m_nUsingOffHand;
+
+		nOffHand = pDlg->m_nUsingOffHand;
+
+		m_pParentPartyDialog->ClickWeaponSwapButton(IsSelectedCharacterInOpponentParty());
+
+		SetAttackData(pDlg);
+	}
+	////
+
+	Refresh();
+
 	if (m_nCompletedAttacksThisRound >= m_nNumAttacksThisRound)
 	{
 		NextSegment();
 	}
 	else
 	{
-		m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
+		m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND (OH:%d)", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound, nOffHand);
 		UpdateData(FALSE);
 	}
 }
@@ -1507,6 +1570,7 @@ void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 
 	m_szCombatNote = _T("");
 	CString szTemp = _T("");
+	int nOffHand = 0;
 
 	switch (pDlg->m_CharViewType)
 	{
@@ -1516,6 +1580,8 @@ void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 			
 			if (pCharViewDlg->m_pCharacter != NULL)
 			{
+				nOffHand = pCharViewDlg->m_nUsingOffHand;
+
 				if (IsMissileWeapon(&pCharViewDlg->m_pCharacter->m_SelectedWeapons[0]))
 				{
 					m_szCombatNote = _T("Missiles: -5 at long range, -2 at medium range");
@@ -1547,7 +1613,7 @@ void CDMInitiativeDialog::SetAttackData(CDMBaseCharViewDialog *pDlg)
 		}
 	}
 
-	m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound);
+	m_szAttacksText.Format("ATTACK #%d of %d THIS ROUND (OH:%d)", m_nCompletedAttacksThisRound + 1, m_nNumAttacksThisRound, nOffHand);
 
 	UpdateData(FALSE);
 

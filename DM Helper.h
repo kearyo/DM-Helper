@@ -325,7 +325,11 @@ public:
 
 	BOOL m_bUsed10Initiative;
 
-	BOOL m_bReserved[118];
+	BOOL m_bMagicUserINTSpellBonus;
+
+	BOOL m_bFreecastCantrips;
+
+	BOOL m_bReserved[116];
 
 	int m_nGPEncumbranceFactor;
 	int m_nVendorPriceInflationFactor;
@@ -372,7 +376,7 @@ public:
 
 		m_nMonitorDPMIFactor = 96;
 		
-		memset(m_bReserved, 0, 118*sizeof(BOOL));
+		memset(m_bReserved, 0, 116*sizeof(BOOL));
 
 		memset(m_nReserved, 0, 126*sizeof(int));
 
@@ -641,6 +645,9 @@ public:
 	DWORD m_dwInitiativeCurrentAttackerID;
 
 	CDMReminderSFXDialog *m_pDMReminderSFXDialog;
+
+	double m_dMonitorScaleFactorX;
+	double m_dMonitorScaleFactorY;
 
 	#if GAMETABLE_BUILD
 	CWinThread *m_pGameServerUpdateThread;

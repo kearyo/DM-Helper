@@ -47,7 +47,11 @@ BOOL CDMInputDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	m_szInputEdit = *m_pszRetVal;
+
 	m_cInputEdit.SetFocus();
+
+	UpdateData(FALSE);
 
 	return FALSE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE

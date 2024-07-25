@@ -9,7 +9,7 @@ class cDMModifyClericSkillsDialog : public CDialog
 	DECLARE_DYNAMIC(cDMModifyClericSkillsDialog)
 
 public:
-	cDMModifyClericSkillsDialog(CString szCharacterName, int *pnClericTurnModifiers, BOOL bModify, CWnd* pParent = NULL);   // standard constructor
+	cDMModifyClericSkillsDialog(char * szCharacterName, int *pnClericTurnModifiers, BOOL bModify, CWnd* pParent = NULL);   // standard constructor
 	virtual ~cDMModifyClericSkillsDialog();
 
 	void Refresh();

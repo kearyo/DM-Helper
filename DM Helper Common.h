@@ -9,8 +9,8 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
-#define DMH_CURRENT_VERSION 10040
-#define DMH_BUILD_NUMBER	(22726)
+#define DMH_CURRENT_VERSION 10041
+#define DMH_BUILD_NUMBER	(23024)
 
 #define USE_CANTRIPS	TRUE
 
@@ -257,7 +257,7 @@
 	* Added level titles to character view screen
 	* Clicking on "XP:" label on character view will display experience points required to reach next level 
 
-- 1.0.040.XXXX XX/XX/20
+- 1.0.040.22567 XX/XX/XX
 	* Added weapon specialization option to custom characters
 	* Added commonly used tables to DM Library menu 
 	* Fix for inventory caches on maps not being saved properly
@@ -265,6 +265,11 @@
 	* 'under' map SFX capability added, allows sfx to be drawn under a map mask for stuff like animated water etc.
 	* fixed hoykeys to only be active if main app window is in focus
 	* spell memorization time calculation added to character spell screen
+
+- 1.0.041.23024 XX/XX/XX
+	* Modifications made to fix graphical issues on high DPI monitors/resolutions
+	* Scaling of bitmap cells in maps to reduce memory footprint of very large maps
+	* Barbarian base movement rate corrected
 
 */
 
@@ -285,6 +290,8 @@ extern BOOL g_bReRollLessHalfOnHitDie;
 extern BOOL g_bMaxHitPointsAtFirstLevel;
 extern BOOL g_bUsed10Initiative;
 extern BOOL g_bUseSoundEffects;
+extern BOOL g_bMagicUserINTSpellBonus;
+extern BOOL g_bFreecastCantrips;
 
 #define ATTRIB_STR		0
 #define ATTRIB_INT		1
@@ -2386,7 +2393,9 @@ public:
 	int m_nLightSourceID;
 	int m_nLightSourceRange;
 
-	int m_nReserved_0[969];
+	BOOL m_bIsDualWielding;
+
+	int m_nReserved_0[968];
 
 	DND_CHARACTER_CLASSES		m_SpellClasses[4];
 	int m_nCastingLevels[4];
@@ -2440,10 +2449,11 @@ public:
 	int m_nClericTurnModifiers[13];
 
 	char m_szMiniName[64];
+	char m_szSFXName[64];
 
 	DND_HP_STATE_TYPES m_HP_State;
 
-	int m_nReserved_1[6400];  // remember to divide by 4 dummy was 6417 before m_szMiniName
+	int m_nReserved_1[6384];  // remember to divide by 4 dummy was 6417 before m_szMiniName 6400 before m_szSFXName
 
 	cDNDCharacter()
 	{
@@ -2529,6 +2539,7 @@ public:
 
 		m_bKeenEar = FALSE;
 		m_bVeryKeenEar = FALSE;
+		m_bIsDualWielding = FALSE;
 
 		memset(m_szSecondarySkill, 0, 64 * sizeof(char));
 
@@ -2536,7 +2547,7 @@ public:
 		m_nClimbingMove = 0;
 		m_nSpecialMove = 0;
 
-		memset(m_nReserved_0,0,969*sizeof(int));
+		memset(m_nReserved_0,0,968*sizeof(int));
 
 		m_SpellClasses[0] = DND_CHARACTER_CLASS_UNDEF;
 		m_SpellClasses[1] = DND_CHARACTER_CLASS_UNDEF;
@@ -2587,10 +2598,11 @@ public:
 		memset(m_nAssassinSkillModifiers, 0, 10 * sizeof(int));
 		memset(m_nClericTurnModifiers, 0, 13 * sizeof(int));
 		memset(m_szMiniName, 0, 64 * sizeof(char));
+		memset(m_szSFXName, 0, 64 * sizeof(char));
 
 		m_HP_State = DND_HP_STATE_OK;
 
-		memset(m_nReserved_1,0,6400*sizeof(int));
+		memset(m_nReserved_1, 0, 6384 * sizeof(int));
 
 	}
 
@@ -3061,6 +3073,7 @@ int CalculateExperienceBonus(cDNDCharacter *pCharacter, int nClass = -1, int *pn
 int CalculateEncumbrance(cDNDCharacter *pCharacter, int *pnMaxWeight);
 int IsMonkClass(cDNDCharacter *pCharacter);
 char * GetMonkWeaponDamageAdj(cDNDCharacter *pCharacter, int nWeaponSlot);
+int IsBarbarianClass(cDNDCharacter *pCharacter);
 int CalculateBaseArmorClass(cDNDCharacter *pCharacter);
 int CalculateBaseMovement(cDNDCharacter *pCharacter);
 char *CalculateAttacksPerRound(cDNDCharacter *pCharacter, BOOL bBase = FALSE);
@@ -3393,13 +3406,21 @@ class cDNDMapCell
 public:
 
 	char m_szBitmapPath[MAX_PATH];
-	int m_nReserved[128];
+	BOOL m_bLoading;
+	int m_nCellSizeX;
+	int m_nCellSizeY;
+	float m_fCellScale;
+	int m_nReserved[124];
 	Bitmap* m_pBitmap;
 
 	cDNDMapCell()
 	{
 		memset(m_szBitmapPath, 0, MAX_PATH * sizeof(char)); 
-		memset(m_nReserved, 0, 128 * sizeof(int)); 
+		m_bLoading = FALSE;
+		m_nCellSizeX = 0;
+		m_nCellSizeY = 0;
+		m_fCellScale = 1.0f;
+		memset(m_nReserved, 0, 124 * sizeof(int)); 
 		m_pBitmap = NULL;
 	}
 

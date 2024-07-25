@@ -24,6 +24,8 @@ BOOL g_bReRollLessHalfOnHitDie;
 BOOL g_bMaxHitPointsAtFirstLevel;
 BOOL g_bUsed10Initiative;
 BOOL g_bUseSoundEffects;
+BOOL g_bMagicUserINTSpellBonus;
+BOOL g_bFreecastCantrips;
 
 
 cDNDCustomClass _gCustomClass[12];	// yep global, so sue me
@@ -5748,6 +5750,14 @@ int CalculateDEXAdjustments(cDNDCharacter *pCharacter, int *pnDefenseAdj)
 		}
 	}
 
+	if (IsBarbarianClass(pCharacter) >= 0 && *pnDefenseAdj < 0)
+	{
+		if (pCharacter->m_ArmorWorn.m_nArmorClass > 4)
+		{
+			*pnDefenseAdj *= 2;
+		}
+	}
+
 	return nRetVal;
 }
 
@@ -6931,7 +6941,6 @@ int GetLevelCanCastSpell(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpel
 
 int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass, int _nCastLevel, int _nSpellLevel)
 {
-
 	int nRetSpells = 0;
 
 	int _ClericMatrix[30][8] = 
@@ -7142,7 +7151,20 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 		{
 			_nCastLevel = min(_nCastLevel, 29);
 
-			if(_nSpellLevel == 0 && g_bUseUnearthedArcana)
+			if (_nSpellLevel == 0 && g_bUseUnearthedArcana && g_bFreecastCantrips)
+			{
+				nRetSpells = _ClericMatrix[_nCastLevel][1] + _nCastLevel;
+
+				switch (pCharacter->m_nDisplayStats[ATTRIB_WIS])
+				{
+					case 15: nRetSpells += 1; break;
+					case 16: nRetSpells += 2; break;
+					case 17: nRetSpells += 3; break;
+					case 18: nRetSpells += 4; break;
+					case 19: nRetSpells += 5; break;
+				}
+			}
+			else if (_nSpellLevel == 0 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _ClericMatrix[_nCastLevel][1];
@@ -7156,7 +7178,7 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 				nRetSpells = _ClericMatrix[_nCastLevel][_nSpellLevel];
 				#endif
 			}
-			else if(_nSpellLevel == 1 && g_bUseUnearthedArcana)
+			else if (_nSpellLevel == 1 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _ClericMatrix[_nCastLevel][1];
@@ -7210,7 +7232,20 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 		{
 			_nCastLevel = min(_nCastLevel, 14);
 
-			if(_nSpellLevel == 0 && g_bUseUnearthedArcana)
+			if (_nSpellLevel == 0 && g_bUseUnearthedArcana && g_bFreecastCantrips)
+			{
+				nRetSpells = _ClericMatrix[_nCastLevel][1] + _nCastLevel;
+
+				switch (pCharacter->m_nDisplayStats[ATTRIB_WIS])
+				{
+				case 15: nRetSpells += 1; break;
+				case 16: nRetSpells += 2; break;
+				case 17: nRetSpells += 3; break;
+				case 18: nRetSpells += 4; break;
+				case 19: nRetSpells += 5; break;
+				}
+			}
+			else if (_nSpellLevel == 0 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _DruidMatrix[_nCastLevel][1];
@@ -7224,7 +7259,7 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 				nRetSpells = _DruidMatrix[_nCastLevel][_nSpellLevel];
 				#endif
 			}
-			else if(_nSpellLevel == 1 && g_bUseUnearthedArcana)
+			else if (_nSpellLevel == 1 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _DruidMatrix[_nCastLevel][1];
@@ -7278,7 +7313,20 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 		{
 			_nCastLevel = min(_nCastLevel, 29);
 
-			if(_nSpellLevel == 0 && g_bUseUnearthedArcana)
+			if (_nSpellLevel == 0 && g_bUseUnearthedArcana && g_bFreecastCantrips)
+			{
+				nRetSpells = _ClericMatrix[_nCastLevel][1] + _nCastLevel;
+
+				switch (pCharacter->m_nDisplayStats[ATTRIB_INT])
+				{
+				case 15: nRetSpells += 1; break;
+				case 16: nRetSpells += 2; break;
+				case 17: nRetSpells += 3; break;
+				case 18: nRetSpells += 4; break;
+				case 19: nRetSpells += 5; break;
+				}
+			}
+			else if (_nSpellLevel == 0 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _MagicUserMatrix[_nCastLevel][1];
@@ -7292,7 +7340,7 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 				nRetSpells = _MagicUserMatrix[_nCastLevel][_nSpellLevel];
 				#endif
 			}
-			else if(_nSpellLevel == 1 && g_bUseUnearthedArcana)
+			else if (_nSpellLevel == 1 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _MagicUserMatrix[_nCastLevel][1];
@@ -7322,13 +7370,44 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 				nRetSpells = _MagicUserMatrix[_nCastLevel][_nSpellLevel];
 			}
 
+			if (nRetSpells && g_bMagicUserINTSpellBonus)
+			{
+				int nIntelligence = pCharacter->m_nDisplayStats[ATTRIB_INT];
+
+				if (_nSpellLevel == 1 && nIntelligence >= 13)
+					++nRetSpells;
+				if (_nSpellLevel == 1 && nIntelligence >= 14)
+					++nRetSpells;
+				if (_nSpellLevel == 2 && nIntelligence >= 15)
+					++nRetSpells;
+				if (_nSpellLevel == 2 && nIntelligence >= 16)
+					++nRetSpells;
+				if (_nSpellLevel == 3 && nIntelligence >= 17)
+					++nRetSpells;
+				if (_nSpellLevel == 4 && nIntelligence >= 18)
+					++nRetSpells;
+			}
+
 			break;
 		}
 		case DND_CHARACTER_CLASS_ILLUSIONIST:
 		{
 			_nCastLevel = min(_nCastLevel, 26);
 
-			if(_nSpellLevel == 0 && g_bUseUnearthedArcana)
+			if (_nSpellLevel == 0 && g_bUseUnearthedArcana && g_bFreecastCantrips)
+			{
+				nRetSpells = _ClericMatrix[_nCastLevel][1] + _nCastLevel;
+
+				switch (pCharacter->m_nDisplayStats[ATTRIB_INT])
+				{
+				case 15: nRetSpells += 1; break;
+				case 16: nRetSpells += 2; break;
+				case 17: nRetSpells += 3; break;
+				case 18: nRetSpells += 4; break;
+				case 19: nRetSpells += 5; break;
+				}
+			}
+			else if (_nSpellLevel == 0 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _IllusionistMatrix[_nCastLevel][1];
@@ -7342,7 +7421,7 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 				nRetSpells = _IllusionistMatrix[_nCastLevel][_nSpellLevel];
 				#endif
 			}
-			else if(_nSpellLevel == 1 && g_bUseUnearthedArcana)
+			else if (_nSpellLevel == 1 && g_bUseUnearthedArcana && !g_bFreecastCantrips)
 			{
 				#if USE_CANTRIPS
 				nRetSpells = _IllusionistMatrix[_nCastLevel][1];
@@ -7370,6 +7449,24 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 			else
 			{
 				nRetSpells = _IllusionistMatrix[_nCastLevel][_nSpellLevel];
+			}
+
+			if (nRetSpells && g_bMagicUserINTSpellBonus)
+			{
+				int nIntelligence = pCharacter->m_nDisplayStats[ATTRIB_INT];
+
+				if (_nSpellLevel == 1 && nIntelligence >= 13)
+					++nRetSpells;
+				if (_nSpellLevel == 1 && nIntelligence >= 14)
+					++nRetSpells;
+				if (_nSpellLevel == 2 && nIntelligence >= 15)
+					++nRetSpells;
+				if (_nSpellLevel == 2 && nIntelligence >= 16)
+					++nRetSpells;
+				if (_nSpellLevel == 3 && nIntelligence >= 17)
+					++nRetSpells;
+				if (_nSpellLevel == 4 && nIntelligence >= 18)
+					++nRetSpells;
 			}
 
 			break;
@@ -7739,6 +7836,19 @@ int IsMonkClass(cDNDCharacter *pCharacter)
 	return -1;
 }
 
+int IsBarbarianClass(cDNDCharacter *pCharacter)
+{
+	for (int i = 0; i < 3; ++i)
+	{
+		if (pCharacter->m_Class[i] == DND_CHARACTER_CLASS_BARBARIAN)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 char * GetMonkWeaponDamageAdj(cDNDCharacter *pCharacter, int nWeaponSlot)
 {
 	static char szRetVal[10];
@@ -7821,6 +7931,12 @@ int CalculateBaseMovement(cDNDCharacter *pCharacter)
 
 			break;
 		}
+		if (pCharacter->m_Class[i] == DND_CHARACTER_CLASS_BARBARIAN)
+		{
+			nMove = 15;
+
+			break;
+		}
 	}
 
 	return nMove;
@@ -7846,6 +7962,8 @@ char *CalculateAttacksPerRound(cDNDCharacter *pCharacter, BOOL bBase)
 	int nSpecializedToHitBonus = 0;
 	int nSpecializedDamageBonus = 0;
 	int nSpecializationLevel = pCharacter->GetWeaponSpecializationLevel();
+
+	BOOL bIsMissileWeapon = IsMissileWeapon(&pCharacter->m_SelectedWeapons[0]);
 
 	if(bBase == FALSE && nSpecializationLevel && pCharacter->m_SelectedWeapons[0].m_dwObjectID && pCharacter->IsProficientWithWeapon(&pCharacter->m_SelectedWeapons[0], &nSpecializedToHitBonus, &nSpecializedDamageBonus) && nSpecializedToHitBonus != 0)
 	{
@@ -8015,21 +8133,25 @@ char *CalculateAttacksPerRound(cDNDCharacter *pCharacter, BOOL bBase)
 			
 		}
 
-		if(bBase == FALSE && IsMissileWeapon(&pCharacter->m_SelectedWeapons[0]))
+		if (bBase == FALSE && bIsMissileWeapon)
 		{
 			char *szSpd = pCharacter->m_SelectedWeapons[0].m_szSpeed;
 
-			if(strcmp(szSpd, "1/2") == 0)
+			if (strcmp(szSpd, "1/2") == 0)
 			{
 				nDem *= 2;
-			} 
+			}
 			else
 			{
 				int nVal = atoi(szSpd);
 				nNum *= nVal;
 			}
 		}
+	}
 
+	if (bIsMissileWeapon == FALSE && pCharacter->m_bIsDualWielding)
+	{
+		nNum *= 2;
 	}
 
 	if(nNum % nDem == 0)

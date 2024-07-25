@@ -150,6 +150,29 @@ public:
 	};
 };
 
+class cDMMapCellLoader
+{
+public:
+
+	cDMMapCellLoader()
+	{
+		m_szPath = _T("");
+		m_pCell = NULL;
+		m_pMapViewDialog = NULL;
+	};
+
+	cDMMapCellLoader(CString szPath, cDNDMapCell *pCell, cDMMapViewDialog *pMapViewDialog)
+	{
+		m_szPath = szPath;
+		m_pCell = pCell;
+		m_pMapViewDialog = pMapViewDialog;
+	}
+
+	CString m_szPath;
+	cDNDMapCell *m_pCell;
+	cDMMapViewDialog *m_pMapViewDialog;
+};
+
 #define MAX_HOTSPOTS	MAX_MAP_CACHES
 
 class DMMapEditDialog;
@@ -199,6 +222,11 @@ public:
 	#endif
 
 	pMapLegendDialog m_pMapLegendDialog;
+
+	int m_nCellLoadingThreads;
+
+	CMutex m_MapCellMutex;
+	CSingleLock *m_pMapCellSingleLock;
 
 	BOOL m_bCatchMe;	//this is a debugging variable
 

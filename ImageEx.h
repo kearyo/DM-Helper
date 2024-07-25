@@ -27,7 +27,7 @@ public:
 	bool	IsAnimatedGIF() { return m_nFrameCount > 1; }
 	void	SetPause(bool bPause);
 	bool	IsPaused() { return m_bPause; }
-	bool	InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, BOOL bDrawUnder, float fAlpha, BOOL bColorize, float fRed, float fGreen, float fBlue);
+	bool	InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, BOOL bDrawUnder, float fAlpha, BOOL bColorize, float fRed, float fGreen, float fBlue, double dMonitorScaleFactorX, double dMonitorScaleFactorY);
 	void	Position(int nX, int nY, float fScreenScale, float fSpriteScale);
 	void	ResetBackground();
 	void	Destroy();
@@ -83,6 +83,9 @@ protected:
 	BOOL					m_bCycleAnimation;
 	BOOL					m_bCycled;
 	BOOL					*m_pbRenderingFlag;
+
+	double m_dMonitorScaleFactorX;
+	double m_dMonitorScaleFactorY;
 
 };
 

@@ -526,7 +526,12 @@ void DMInventoryDialog::InitDisplay()
 				continue;
 			}
 
-			if(pObjBase->m_wTypeId == 12100)
+			if (pObjBase->m_wTypeId == 5023)
+			{
+				TRACE("HOOHA!\n");
+			}
+
+			if(pObjBase->m_wTypeId == 5028)
 			{
 				TRACE("HOOHA!\n");
 			}

@@ -51,6 +51,8 @@ public:
 
 	int m_nAttackMatrix[21];
 	CString m_szNumAttacks;
+	BOOL m_bCharIsDualWielding;
+	int m_nUsingOffHand;
 
 	int m_nInitiativeRoll;
 	int m_nInitiativeSegment;
@@ -73,6 +75,7 @@ public:
 
 	CString m_szCharacterFirstName;
 	CString m_szMonsterManualName;
+	CString m_szSFXName;
 
 	BOOL m_bHasBreathWeapon;
 	
@@ -100,6 +103,9 @@ public:
 		m_szInitiativeAction = _T("");
 		m_szBaseCharName = _T("");
 
+		m_bCharIsDualWielding = FALSE;
+		m_nUsingOffHand = 0;
+
 		m_nInitiativeRoll = 9;
 		m_nInitiativeSegment = 0;
 
@@ -117,6 +123,7 @@ public:
 		m_szMonsterPortraitPath = _T("");
 
 		m_szCharacterFirstName = _T("");
+		m_szSFXName = _T("");
 		m_szMonsterManualName = _T("");
 
 		m_bHasBreathWeapon = FALSE;
@@ -130,6 +137,8 @@ public:
 	~CDMBaseCharViewDialog();
 
 	DND_SPELL_MATERIAL_RETURN_CODES CharacterCanCastSpell(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bCheckComponents, BOOL bGetInfo);
+
+	char * GetCharacterSFXName();
 
 	DND_CHAR_VIEW_TYPES	GetType()
 	{
@@ -530,6 +539,9 @@ public:
 	CString m_szLevelTitle2;
 	CString m_szLevelTitle3;
 	afx_msg LRESULT OnDirtyWindow(UINT wParam, LONG lParam);
+	afx_msg void OnStnClickedVoiceNameButton();
+	afx_msg void OnBnClickedDualWieldCheck();
+	BOOL m_bIsDualWielding;
 };
 
 //{{AFX_INSERT_LOCATION}}

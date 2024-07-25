@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include "DM Helper.h"
+#include "DM Helper Common.h"
+#include "DMPartyDialog.h"
 #include "DMInventoryDialog.h"
 #include "DMCharSpellsDialog.h"
 #include "DMCharViewDialog.h"
@@ -20,7 +22,7 @@ static char THIS_FILE[] = __FILE__;
 // DMCharacterSelectorDialog dialog
 
 
-DMCharacterSelectorDialog::DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DND_SELECTOR_TYPES _SelectorType, DND_CHARACTER_CLASSES _SelectorClass, DWORD dwExcludeID, CWnd* pParent /*=NULL*/)
+DMCharacterSelectorDialog::DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DWORD _dwSubPartyID, DND_SELECTOR_TYPES _SelectorType, DND_CHARACTER_CLASSES _SelectorClass, DWORD dwExcludeID, CWnd* pParent /*=NULL*/)
 	: CDialog(DMCharacterSelectorDialog::IDD, pParent)
 	, m_szComment(_T("* Note: New characters must be saved before they will appear in this list !"))
 {
@@ -32,6 +34,8 @@ DMCharacterSelectorDialog::DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD
 
 	m_dwParentPartyID = _dwParentPartyID;
 
+	m_dwSubPartyID = _dwSubPartyID;
+
 	m_SelectorType = _SelectorType;
 
 	m_SelectorClass = _SelectorClass;
@@ -39,6 +43,7 @@ DMCharacterSelectorDialog::DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD
 	m_dwExcludeID = dwExcludeID;
 
 	m_pdwReturnedID = pdwReturnedID;
+
 }
 
 
@@ -93,10 +98,19 @@ BOOL DMCharacterSelectorDialog::OnInitDialog()
 
 	DND_CHARACTER_CLASSES _SelectorClass = m_SelectorClass;
 
+	DMPartyDialog *pPartyDlg = NULL;
+	if (FALSE == m_pApp->m_PartyViewMap.Lookup((WORD)m_dwParentPartyID, pPartyDlg))
+	{
+		pPartyDlg = NULL;
+	}
+
 	switch(m_SelectorType)
 	{
 		case DND_SELECTOR_CHARACTER:
 		case DND_SELECTOR_CHARACTER_CASTER:
+		case DND_SELECTOR_PARTY_MEMBER:
+		case DND_SELECTOR_SUBPARTY_MEMBER:
+		case DND_SELECTOR_SUBPARTY_REMOVE_MEMBER:
 		{
 			SetWindowText("Select Character:");
 
@@ -117,6 +131,32 @@ BOOL DMCharacterSelectorDialog::OnInitDialog()
 					{
 						continue;
 					}
+
+					if (m_SelectorType == DND_SELECTOR_PARTY_MEMBER && pPartyDlg != NULL)
+					{
+						if (pPartyDlg->m_pParty->CharacterIsPartyMember(pCharDlg->m_pCharacter->m_dwCharacterID))
+						{
+							continue;
+						}
+					}
+
+					if (m_SelectorType == DND_SELECTOR_SUBPARTY_MEMBER && pPartyDlg != NULL)
+					{
+						if (pCharDlg->m_pCharacter->m_dwSubPartyID == m_dwSubPartyID)
+						{
+							continue;
+						}
+					}
+
+					if (m_SelectorType == DND_SELECTOR_SUBPARTY_REMOVE_MEMBER)
+					{
+						if (pCharDlg->m_pCharacter->m_dwSubPartyID != m_dwSubPartyID)
+						{
+							continue;
+						}
+					}
+
+					// pCharDlg->m_pCharacter->m_dwSubPartyID = 0;
 
 					if (m_SelectorType == DND_SELECTOR_CHARACTER_CASTER)
 					{
@@ -167,6 +207,28 @@ BOOL DMCharacterSelectorDialog::OnInitDialog()
 
 						if (pNPCDlg != NULL)
 						{
+							if (m_SelectorType == DND_SELECTOR_PARTY_MEMBER && pPartyDlg != NULL)
+							{
+								if (pPartyDlg->m_pParty->CharacterIsPartyMember(pNPCDlg->m_pNPC->m_dwCharacterID))
+								{
+									continue;
+								}
+							}
+							if (m_SelectorType == DND_SELECTOR_SUBPARTY_MEMBER && pPartyDlg != NULL)
+							{
+								if (pNPCDlg->m_pNPC->m_dwSubPartyID == m_dwSubPartyID)
+								{
+									continue;
+								}
+							}
+							if (m_SelectorType == DND_SELECTOR_SUBPARTY_REMOVE_MEMBER && pPartyDlg != NULL)
+							{
+								if (pNPCDlg->m_pNPC->m_dwSubPartyID != m_dwSubPartyID)
+								{
+									continue;
+								}
+							}
+
 							m_cCharacterList.InsertString(nRow, pNPCDlg->m_pNPC->m_szCharacterName);
 							m_cCharacterList.SetItemData(nRow, pNPCDlg->m_pNPC->m_dwCharacterID);
 							++nRow;
@@ -179,6 +241,7 @@ BOOL DMCharacterSelectorDialog::OnInitDialog()
 		}
 		case DND_SELECTOR_MAP:
 		{
+			m_szComment = _T("");
 			SetWindowText("Select Map:");
 			for (POSITION pos = m_pApp->m_MapViewMap.GetStartPosition(); pos != NULL; )
 			{

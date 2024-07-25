@@ -57,6 +57,7 @@ imagemagick command to chunk up Anna's big maps:
 convert Flanaess_576.jpg -crop 1024x1024 .\Flanaess_576\Flanaess-%d.png
 
 */
+#define LOAD_CELLS_THREADED	TRUE
 
 #define MAX_RAND_ROOMS	200
 #define MAX_RAND_OCCUPIED_ROOMS	30
@@ -148,6 +149,101 @@ int _MapControlStater[][2] =
 
 	-1,									TRUE
 };
+
+
+#if LOAD_CELLS_THREADED
+UINT DMLoadMapCellThread(LPVOID pData)
+{
+	cDMMapCellLoader *pCellLoader = (cDMMapCellLoader *)pData;
+
+	#if 0
+	if (pCellLoader->m_pMapViewDialog->m_pMapCellSingleLock->IsLocked())
+	{
+		do
+		{
+			Sleep(500);
+		} while (pCellLoader->m_pMapViewDialog->m_pMapCellSingleLock->IsLocked());
+	}
+
+	pCellLoader->m_pMapViewDialog->m_pMapCellSingleLock->Lock();
+	#endif
+
+	++pCellLoader->m_pMapViewDialog->m_nCellLoadingThreads;
+
+	if (pCellLoader->m_pCell->m_bLoading == FALSE)
+	{
+		pCellLoader->m_pCell->m_bLoading = TRUE;
+		LPWSTR wcsFile = pCellLoader->m_szPath.AllocSysString();
+		Bitmap*pBitMap = new Bitmap(wcsFile, FALSE);
+
+		Bitmap*pOldBitMap = pCellLoader->m_pCell->m_pBitmap;
+
+		if (pBitMap != NULL)
+		{
+			if (pCellLoader->m_pMapViewDialog->m_fViewScale >= 1.0)
+			{
+				pCellLoader->m_pCell->m_nCellSizeX = pCellLoader->m_pMapViewDialog->m_pDNDMap->m_nPixelSizeX;
+				pCellLoader->m_pCell->m_nCellSizeY = pCellLoader->m_pMapViewDialog->m_pDNDMap->m_nPixelSizeY;
+				pCellLoader->m_pCell->m_pBitmap = pBitMap;
+			}
+			else
+			{
+				int nSizeX = pCellLoader->m_pMapViewDialog->m_pDNDMap->m_nPixelSizeX * pCellLoader->m_pMapViewDialog->m_fViewScale;
+				int nSizeY = pCellLoader->m_pMapViewDialog->m_pDNDMap->m_nPixelSizeY * pCellLoader->m_pMapViewDialog->m_fViewScale;
+
+				Rect destRect(0, 0, nSizeX, nSizeY);
+
+				Bitmap *pSmallImage = new Bitmap(nSizeX, nSizeY, PixelFormat32bppARGB);
+				Graphics g(pSmallImage);
+				g.DrawImage(pBitMap, destRect, 0, 0, pCellLoader->m_pMapViewDialog->m_pDNDMap->m_nPixelSizeX, pCellLoader->m_pMapViewDialog->m_pDNDMap->m_nPixelSizeY, Gdiplus::UnitPixel, NULL);
+
+				delete pBitMap;
+				pCellLoader->m_pCell->m_pBitmap = pSmallImage;
+				pCellLoader->m_pCell->m_nCellSizeX = nSizeX;
+				pCellLoader->m_pCell->m_nCellSizeY = nSizeY;
+			}
+
+			pCellLoader->m_pCell->m_fCellScale = pCellLoader->m_pMapViewDialog->m_fViewScale;
+			pCellLoader->m_pMapViewDialog->CheckLayer(pCellLoader->m_pMapViewDialog->m_bLayer1, 1, pCellLoader->m_pCell->m_szBitmapPath, pCellLoader->m_pCell->m_pBitmap);
+			pCellLoader->m_pMapViewDialog->CheckLayer(pCellLoader->m_pMapViewDialog->m_bLayer2, 2, pCellLoader->m_pCell->m_szBitmapPath, pCellLoader->m_pCell->m_pBitmap);
+			pCellLoader->m_pMapViewDialog->CheckLayer(pCellLoader->m_pMapViewDialog->m_bLayer3, 3, pCellLoader->m_pCell->m_szBitmapPath, pCellLoader->m_pCell->m_pBitmap);
+			pCellLoader->m_pMapViewDialog->CheckLayer(pCellLoader->m_pMapViewDialog->m_bLayer4, 4, pCellLoader->m_pCell->m_szBitmapPath, pCellLoader->m_pCell->m_pBitmap);
+
+			pCellLoader->m_pCell->m_bLoading = FALSE;
+			pCellLoader->m_pMapViewDialog->InvalidateRect(NULL);
+		}
+		else
+		{
+			TRACE("UHOH !");
+		}
+
+		if (pOldBitMap != NULL)
+		{
+			delete pOldBitMap;
+		}
+	}
+	else
+	{
+		TRACE("DMLoadMapCellThread THREAD COLLISION\n");
+	}
+
+
+	--pCellLoader->m_pMapViewDialog->m_nCellLoadingThreads;
+
+	#if 0
+	pCellLoader->m_pMapViewDialog->m_pMapCellSingleLock->Unlock();
+	#endif
+	
+
+	TRACE("DMLoadMapCellThread ACTIVE THREADS : %d\n", pCellLoader->m_pMapViewDialog->m_nCellLoadingThreads);
+
+	delete pCellLoader;
+
+	AfxEndThread(0, TRUE);
+
+	return 0;
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // cDMMapViewDialog dialog
@@ -282,6 +378,9 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	#endif
 
 	m_pMapLegendDialog = nullptr;
+
+	m_nCellLoadingThreads = 0;
+	m_pMapCellSingleLock = new CSingleLock(&m_MapCellMutex);
 
 	Create(cDMMapViewDialog::IDD, pParent);
 }
@@ -969,8 +1068,13 @@ void cDMMapViewDialog::OnPaint()
 				bInRegion = TRUE;
 			}
 
+			BOOL bScaledOut = FALSE;
+			if (pCell->m_fCellScale != m_fViewScale && pCell->m_fCellScale < 1.0f)
+			{
+				bScaledOut = TRUE;
+			}
 
-			if(bInRegion == FALSE)
+			if (bInRegion == FALSE)
 			{
 				if(pCell->m_pBitmap != NULL)
 				{
@@ -980,13 +1084,20 @@ void cDMMapViewDialog::OnPaint()
 				}
 			}
 
-			if(pCell->m_szBitmapPath[0] && pCell->m_pBitmap == NULL && bInRegion == TRUE)
+			BOOL bLoadingCellImage = FALSE;
+			if(pCell->m_szBitmapPath[0] && (pCell->m_pBitmap == NULL || bScaledOut) && bInRegion == TRUE)
 			{
 				CString szPath;
 				szPath.Format("%s", pCell->m_szBitmapPath);
 				szPath.MakeUpper();
 				szPath.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
 
+				bLoadingCellImage = TRUE;
+				#if LOAD_CELLS_THREADED
+				cDMMapCellLoader *pCellLoader = new cDMMapCellLoader(szPath, pCell, this);
+				AfxBeginThread(DMLoadMapCellThread, (LPVOID)pCellLoader);
+				#else
+				//load new bitmap
 				LPWSTR wcsFile = szPath.AllocSysString();
 				pCell->m_pBitmap = new Bitmap(wcsFile , FALSE);	
 
@@ -994,6 +1105,10 @@ void cDMMapViewDialog::OnPaint()
 				CheckLayer(m_bLayer2, 2, pCell->m_szBitmapPath, pCell->m_pBitmap);
 				CheckLayer(m_bLayer3, 3, pCell->m_szBitmapPath, pCell->m_pBitmap);
 				CheckLayer(m_bLayer4, 4, pCell->m_szBitmapPath, pCell->m_pBitmap);
+
+				pCell->m_fCellScale = m_fViewScale;
+				pCell->m_nCellSizeX = m_pDNDMap->m_nPixelSizeX;
+				pCell->m_nCellSizeY = m_pDNDMap->m_nPixelSizeY;
 				
 				#if 0
 				//ADD A LAYER ?
@@ -1021,21 +1136,25 @@ void cDMMapViewDialog::OnPaint()
 					
 				}
 				#endif
+				#endif
 			}
 			
 			if(pCell->m_pBitmap == NULL)
 			{
-				Pen pen(Color(255, 255, 0, 0));
+				if (bLoadingCellImage == FALSE)
+				{
+					Pen pen(Color(255, 255, 0, 0));
 
-				graphics.DrawLine(&pen, x1, y1, x2, y1);
-				graphics.DrawLine(&pen, x2, y1, x2, y2);
-				graphics.DrawLine(&pen, x1, y1, x1, y2);
-				graphics.DrawLine(&pen, x1, y2, x2, y2);
+					graphics.DrawLine(&pen, x1, y1, x2, y1);
+					graphics.DrawLine(&pen, x2, y1, x2, y2);
+					graphics.DrawLine(&pen, x1, y1, x1, y2);
+					graphics.DrawLine(&pen, x1, y2, x2, y2);
 
-				szTemp.Format("CELL %d", xx + yy * m_pDNDMap->m_nColumns);
+					szTemp.Format("CELL %d", xx + yy * m_pDNDMap->m_nColumns);
 
-				SetTextColor(pmDC, 0x0000FF);
-				DrawMapText(szTemp.GetBuffer(0), x1+6, y1+6, pmDC);
+					SetTextColor(pmDC, 0x0000FF);
+					DrawMapText(szTemp.GetBuffer(0), x1 + 6, y1 + 6, pmDC);
+				}
 			}
 			else
 			{
@@ -1043,7 +1162,10 @@ void cDMMapViewDialog::OnPaint()
 				imAttr.SetColorKey(Color(m_pDNDMap->m_nTransRed, m_pDNDMap->m_nTransGreen, m_pDNDMap->m_nTransBlue), Color(m_pDNDMap->m_nTransRed, m_pDNDMap->m_nTransGreen, m_pDNDMap->m_nTransBlue), ColorAdjustTypeBitmap);
 
 				Rect destRect(x1, y1, nPixelSizeX, nPixelSizeY);
-				graphics.DrawImage(pCell->m_pBitmap, destRect, 0, 0, m_pDNDMap->m_nPixelSizeX, m_pDNDMap->m_nPixelSizeY, Gdiplus::UnitPixel, &imAttr);
+
+				
+				graphics.DrawImage(pCell->m_pBitmap, destRect, 0, 0, pCell->m_nCellSizeX, pCell->m_nCellSizeY, Gdiplus::UnitPixel, &imAttr);
+				//graphics.DrawImage(pCell->m_pBitmap, destRect, 0, 0, m_pDNDMap->m_nPixelSizeX, m_pDNDMap->m_nPixelSizeY, Gdiplus::UnitPixel, &imAttr);
 
 				//graphics.DrawImage(pCell->m_pBitmap, x1, y1, nPixelSizeX, nPixelSizeY);
 				
@@ -1681,7 +1803,7 @@ void cDMMapViewDialog::OnPaint()
 
 	DrawMapLighting(&graphics);
 
-	TRACE("KEO DRAG %d\n", m_bMouseDrag);
+	//TRACE("KEO DRAG %d\n", m_bMouseDrag);
 	if(m_bMouseDrag)
 	{
 		float fMouseDistance = GetDistance((float)m_DragPoint.x, (float)m_DragPoint.y, (float)m_MousePoint.x, (float)m_MousePoint.y);
@@ -4136,6 +4258,8 @@ void cDMMapViewDialog::CleanUp()
 		{
 			delete m_pSFXButtonBitmap;
 		}
+
+		delete m_pMapCellSingleLock;;
 	}
 
 }
@@ -5686,6 +5810,8 @@ BOOL cDMMapViewDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 #define MAX_MSCALE 16.0f
 #endif
 
+#define MIN_MAP_SCALE 0.1f
+
 BOOL cDMMapViewDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	float fOldScale = m_fViewScale;
@@ -5693,9 +5819,9 @@ BOOL cDMMapViewDialog::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 	if(zDelta < 0)
 	{
 		m_fViewScale -= 0.1f;
-		if(m_fViewScale < 0.125f)
+		if (m_fViewScale < MIN_MAP_SCALE)
 		{
-			m_fViewScale = 0.125f;
+			m_fViewScale = MIN_MAP_SCALE;
 
 			if (fOldScale == m_fViewScale)
 			{
@@ -7339,7 +7465,7 @@ void cDMMapViewDialog::DrawMapSFX(Graphics* g)
 							szPath.Replace("<$DMAPATH>", m_pApp->m_szEXEPath);
 							LPWSTR wcsFile = szPath.AllocSysString();
 							ImageEx* _GIFImage = new ImageEx(wcsFile, FALSE);
-							_GIFImage->InitAnimation(m_hWnd, CPoint(nX, nY), m_fViewScale, pSFX->m_fSpriteScale, pSFX->m_bCycle, &m_bMapPaint, pSFX->m_nCycles, pSFX->m_bColorKeyed, pSFX->m_bTranslucent, pSFX->m_bDrawUnder, pSFX->m_fAlpha, pSFX->m_bColorize, pSFX->m_fRed, pSFX->m_fGreen, pSFX->m_fBlue);
+							_GIFImage->InitAnimation(m_hWnd, CPoint(nX, nY), m_fViewScale, pSFX->m_fSpriteScale, pSFX->m_bCycle, &m_bMapPaint, pSFX->m_nCycles, pSFX->m_bColorKeyed, pSFX->m_bTranslucent, pSFX->m_bDrawUnder, pSFX->m_fAlpha, pSFX->m_bColorize, pSFX->m_fRed, pSFX->m_fGreen, pSFX->m_fBlue, m_pApp->m_dMonitorScaleFactorX, m_pApp->m_dMonitorScaleFactorY);
 							pSFX->m_pDataPtr = (LPVOID)_GIFImage;
 						}
 						else

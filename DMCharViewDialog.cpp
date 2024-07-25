@@ -22,6 +22,7 @@
 #include "cDMModifyThiefSkillsDialog.h"
 #include "cDMModifyAssassinSkillsDialog.h"
 #include "cDMModifyClericSkillsDialog.h"
+#include "DMInputDialog.h"
 
 
 #ifdef _DEBUG
@@ -165,6 +166,16 @@ BOOL CDMBaseCharViewDialog::GetMonsterPortraitPath(CString szMonster)
 	return FALSE;
 }
 
+char * CDMBaseCharViewDialog::GetCharacterSFXName()
+{
+	if (m_szSFXName != _T(""))
+	{
+		return m_szSFXName.GetBuffer(0);
+	}
+
+	return m_szCharacterFirstName.GetBuffer(0);
+}
+
 
 DND_SPELL_MATERIAL_RETURN_CODES CDMBaseCharViewDialog::CharacterCanCastSpell(PSPELL pSpell, int nMultiples, BOOL bCast, BOOL bCheckComponents, BOOL bGetInfo)
 {
@@ -222,6 +233,7 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 	, m_szLevelTitle1(_T(""))
 	, m_szLevelTitle2(_T(""))
 	, m_szLevelTitle3(_T(""))
+	, m_bIsDualWielding(FALSE)
 {
 	//{{AFX_DATA_INIT(CDMCharViewDialog)
 	m_szCharacterName = _T("");
@@ -508,6 +520,7 @@ void CDMCharViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LEVEL_TITLE_3, m_cLevelTitle3);
 	DDX_Text(pDX, IDC_LEVEL_TITLE_2, m_szLevelTitle2);
 	DDX_Text(pDX, IDC_LEVEL_TITLE_3, m_szLevelTitle3);
+	DDX_Check(pDX, IDC_DUAL_WIELD_CHECK, m_bIsDualWielding);
 }
 
 
@@ -609,6 +622,8 @@ BEGIN_MESSAGE_MAP(CDMCharViewDialog, CDialog)
 	ON_STN_CLICKED(IDC_XP2_LABEL, &CDMCharViewDialog::OnStnClickedXp2Label)
 	ON_STN_CLICKED(IDC_XP3_LABEL, &CDMCharViewDialog::OnStnClickedXp3Label)
 	ON_MESSAGE(DND_DIRTY_WINDOW_MESSAGE, OnDirtyWindow)
+	ON_STN_CLICKED(IDC_VOICE_NAME_BUTTON, &CDMCharViewDialog::OnStnClickedVoiceNameButton)
+	ON_BN_CLICKED(IDC_DUAL_WIELD_CHECK, &CDMCharViewDialog::OnBnClickedDualWieldCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1079,6 +1094,7 @@ void CDMCharViewDialog::Refresh()
 		m_szRaceStatic = _T("Race:");
 
 	m_szCharacterName = m_pCharacter->m_szCharacterName;
+	m_szSFXName = m_pCharacter->m_szSFXName;
 
 	m_szBaseCharName = m_szCharacterName;
 
@@ -2292,6 +2308,8 @@ void CDMCharViewDialog::Refresh()
 
 	m_bKeenEar = m_pCharacter->m_bKeenEar;
 	m_bVeryKeenEar = m_pCharacter->m_bVeryKeenEar;
+	m_bIsDualWielding = m_pCharacter->m_bIsDualWielding;
+	m_bCharIsDualWielding = m_pCharacter->m_bIsDualWielding;
 
 	//if (strcmp(m_pCharacter->m_szCharacterName, "Elric") == 0)
 	//{
@@ -3151,14 +3169,31 @@ void CDMCharViewDialog::ProcessCharStats()
 			nToHitAdj += nMagicAdj;
 			nDamageAdj += nMagicAdj;
 
+			int nDualWieldingPenalty = 0;
+			if (IsMissileWeapon(&m_pCharacter->m_SelectedWeapons[j]))  // dexterity adjustment to to-hit for missile weapons
+			{
+				nToHitAdj+=m_nDexAdjToInitiative;
+			}
+			else
+			{
+				if ((m_bCharIsDualWielding || m_pCharacter->m_bIsDualWielding) && m_pCharacter->m_nDisplayStats[ATTRIB_DEX] < 19)
+				{
+					nDualWieldingPenalty = 18 - m_pCharacter->m_nDisplayStats[ATTRIB_DEX];
+					if (m_nUsingOffHand)
+					{
+						nDualWieldingPenalty += 1;
+					}
+				}
+			}
+
 			for (i = 0; i < 21; ++i)
 			{
-				szTemp.Format("%d", nAttackMatrix[i] - nToHitAdj);
+				szTemp.Format("%d", nAttackMatrix[i] - nToHitAdj + nDualWieldingPenalty);
 				m_cWeaponChartList.SetItemText(nWeaponCount, i + 2, szTemp);
 
 				if (j == 0)
 				{
-					m_nAttackMatrix[i] = nAttackMatrix[i] - nToHitAdj;
+					m_nAttackMatrix[i] = nAttackMatrix[i] - nToHitAdj + nDualWieldingPenalty;
 				}
 			}
 
@@ -4954,12 +4989,15 @@ void CDMCharViewDialog::OnSwapButton1()
 
 	m_pCharacter->MarkChanged();
 	
-	for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
+	if (m_pCharacter->m_bIsDualWielding == FALSE)
 	{
-		if (m_pCharacter->m_Inventory[i].m_dwObjectID == m_pCharacter->m_SelectedWeapons[0].m_dwObjectID &&  m_pCharacter->m_SelectedWeapons[0].m_dwObjectID != 0)
+		for (int i = 0; i < MAX_CHARACTER_INVENTORY; ++i)
 		{
-			m_pApp->PlayEquipItemSFX(m_pCharacter->m_Inventory[i].m_szType, m_pCharacter->m_SelectedWeapons[0].m_szType);
-			break;
+			if (m_pCharacter->m_Inventory[i].m_dwObjectID == m_pCharacter->m_SelectedWeapons[0].m_dwObjectID &&  m_pCharacter->m_SelectedWeapons[0].m_dwObjectID != 0)
+			{
+				m_pApp->PlayEquipItemSFX(m_pCharacter->m_Inventory[i].m_szType, m_pCharacter->m_SelectedWeapons[0].m_szType);
+				break;
+			}
 		}
 	}
 
@@ -4969,6 +5007,9 @@ void CDMCharViewDialog::OnSwapButton2()
 {
 	
 	cDNDWeapon swapWeapon;
+
+	m_pCharacter->m_bIsDualWielding = FALSE;
+	m_bIsDualWielding = FALSE;
 
 	m_pCharacter->m_SelectedWeapons[1].CopyFull(&swapWeapon);
 
@@ -5510,6 +5551,21 @@ void CDMCharViewDialog::OnBnClickedKeenEaredCheck2()
 	Refresh();
 }
 
+
+void CDMCharViewDialog::OnBnClickedDualWieldCheck()
+{
+	UpdateData(TRUE); 
+
+	m_pCharacter->m_bIsDualWielding = m_bIsDualWielding;
+	m_bCharIsDualWielding = m_bIsDualWielding;
+
+	ProcessCharStats();
+
+	m_pCharacter->MarkChanged();
+
+	Refresh();
+}
+
 void CDMCharViewDialog::OnCbnEditchangeSecondarySkillCombo()
 {
 	UpdateData(TRUE);
@@ -5675,7 +5731,7 @@ void CDMCharViewDialog::OnBnClickedAssassinSkillsModButton()
 
 void CDMCharViewDialog::OnBnClickedClericTurnModButton()
 {
-	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(m_pCharacter->m_szCharacterName, m_pCharacter->m_nClericTurnModifiers, TRUE);
+	cDMModifyClericSkillsDialog *pDlg = new cDMModifyClericSkillsDialog(GetCharacterSFXName(), m_pCharacter->m_nClericTurnModifiers, TRUE);
 	pDlg->DoModal();
 	delete pDlg;
 
@@ -5718,6 +5774,7 @@ void CDMCharViewDialog::PopUpXPToolTip(int nClass)
 	}
 }
 
+
 void CDMCharViewDialog::OnStnClickedXp1Label()
 {
 	PopUpXPToolTip(0);
@@ -5738,12 +5795,38 @@ void CDMCharViewDialog::OnBnClickedToolTip()
 	m_cToolTip.ShowWindow(SW_HIDE);
 }
 
+
+void CDMCharViewDialog::OnStnClickedVoiceNameButton()
+{
+	CString szPrompt = _T("Enter character name for SFX:");
+	CString szRetVal = m_pCharacter->m_szSFXName;
+
+	CDMInputDialog *pDlg = new CDMInputDialog(szPrompt.GetBuffer(0), &szRetVal);
+	pDlg->DoModal();
+
+	if (szRetVal != _T(""))
+	{
+		strcpy(m_pCharacter->m_szSFXName, szRetVal.Left(63));
+	}
+	else
+	{
+		memset(m_pCharacter->m_szSFXName, 0, 64 * sizeof(char));
+	}
+
+	m_pCharacter->MarkChanged();
+
+	Refresh();
+}
+
+
 void CDMCharViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 {
 	m_cToolTip.ShowWindow(SW_HIDE);
 
 	CDMBaseCharViewDialog::OnMouseMove(nFlags, point);
 }
+
+
 
 
 

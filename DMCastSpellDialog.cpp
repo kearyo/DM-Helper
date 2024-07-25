@@ -349,7 +349,7 @@ void DMCastSpellDialog::OnOK()
 					if (pApp->SpellIsHealingSpell(pSpellSlot->m_pSpell))
 					{
 						DWORD dwCharacterID = 0;
-						DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, DND_SELECTOR_CHARACTER);
+						DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwCharacterID, 0, 0, DND_SELECTOR_CHARACTER);
 						pDlg->DoModal();
 						delete pDlg;
 
@@ -367,7 +367,7 @@ void DMCastSpellDialog::OnOK()
 
 						if (dwSpellAttackedCharacterID == 0 || dwSpellAttackedCharacterID == m_pCharacter->m_dwCharacterID)
 						{
-							DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwSpellAttackedCharacterID, 0, DND_SELECTOR_CHARACTER);
+							DMCharacterSelectorDialog *pDlg = new DMCharacterSelectorDialog(&dwSpellAttackedCharacterID, 0, 0, DND_SELECTOR_CHARACTER);
 							pDlg->DoModal();
 							delete pDlg;
 						}
@@ -384,7 +384,7 @@ void DMCastSpellDialog::OnOK()
 						if (pApp->m_bSpellFXOnMaps)
 						{
 							int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
-							pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->m_szCharacterFirstName, m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_nCastLevel, pSpellSlot->m_bCastFromDevice, nSoundRepeats, pPartyDlg, dwSpellAttackedCharacterID);
+							pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->GetCharacterSFXName(), m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_nCastLevel, pSpellSlot->m_bCastFromDevice, nSoundRepeats, pPartyDlg, dwSpellAttackedCharacterID);
 							AfxBeginThread(DMInstantMapSFXThreadProc, (LPVOID)pApp);
 							if (pApp->m_pDMReminderSFXDialog == NULL)
 							{
@@ -405,7 +405,7 @@ void DMCastSpellDialog::OnOK()
 					{
 						if (pSpellSlot->m_bCastFromDevice == FALSE && pSpellSlot->m_pSpell->HasVerbalComponent())
 						{
-							pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE, pSpellSlot->m_pSpell->m_nSpellIdentifier);
+							pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->GetCharacterSFXName(), "NADA", FALSE, pSpellSlot->m_pSpell->m_nSpellIdentifier);
 						}
 
 						int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
@@ -486,7 +486,7 @@ void DMCastSpellDialog::OnBnClickedFailCast()
 
 				if (pSpellSlot->m_bCastFromDevice == FALSE && pSpellSlot->m_pSpell->HasVerbalComponent())
 				{
-					pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->m_szCharacterFirstName, "NADA", FALSE, pSpellSlot->m_pSpell->m_nSpellIdentifier);
+					pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->GetCharacterSFXName(), "NADA", FALSE, pSpellSlot->m_pSpell->m_nSpellIdentifier);
 				}
 				m_pApp->PlaySoundFX("SPELL FAILURE");
 

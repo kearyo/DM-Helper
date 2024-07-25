@@ -17,6 +17,12 @@ typedef enum
 	DND_SELECTOR_MAP,
 
 	DND_SELECTOR_PARTY,
+
+	DND_SELECTOR_PARTY_MEMBER,
+
+	DND_SELECTOR_SUBPARTY_MEMBER,
+
+	DND_SELECTOR_SUBPARTY_REMOVE_MEMBER,
 	
 	DND_SELECTOR_LAST_TYPE,
 
@@ -30,7 +36,7 @@ class DMCharacterSelectorDialog : public CDialog
 {
 // Construction
 public:
-	DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DND_SELECTOR_TYPES _SelectorType, DND_CHARACTER_CLASSES _SelectorClass = DND_CHARACTER_CLASS_UNDEF, DWORD dwExcludeID = 0, CWnd* pParent = NULL);   // standard constructor
+	DMCharacterSelectorDialog(DWORD *pdwReturnedID, DWORD _dwParentPartyID, DWORD _dwSubPartyID, DND_SELECTOR_TYPES _SelectorType, DND_CHARACTER_CLASSES _SelectorClass = DND_CHARACTER_CLASS_UNDEF, DWORD dwExcludeID = 0, CWnd* pParent = NULL);   // standard constructor
 	
 	CDMHelperApp * m_pApp;
 
@@ -41,6 +47,8 @@ public:
 	DWORD m_dwExcludeID;
 
 	DWORD m_dwParentPartyID;
+
+	DWORD m_dwSubPartyID;
 
 	DWORD *m_pdwReturnedID;
 

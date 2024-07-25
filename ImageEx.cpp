@@ -116,7 +116,7 @@ ImageEx::~ImageEx()
 // N T ALMOND       29012002	1.0			Origin
 // 
 ////////////////////////////////////////////////////////////////////////////////
-bool ImageEx::InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, BOOL bDrawUnder, float fAlpha, BOOL bColorize, float fRed, float fGreen, float fBlue)
+bool ImageEx::InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpriteScale, BOOL bCycleAnimation, BOOL *pbRenderingFlag, int nCycles, BOOL bColorKeyed, BOOL bTranslucent, BOOL bDrawUnder, float fAlpha, BOOL bColorize, float fRed, float fGreen, float fBlue, double dMonitorScaleFactorX, double dMonitorScaleFactorY)
 {
 
 	m_hWnd = hWnd;
@@ -140,6 +140,9 @@ bool ImageEx::InitAnimation(HWND hWnd, CPoint pt, float fScreenScale, float fSpr
 	m_fRed = fRed;
 	m_fGreen = fGreen;
 	m_fBlue = fBlue;
+
+	m_dMonitorScaleFactorX = dMonitorScaleFactorX;
+	m_dMonitorScaleFactorY = dMonitorScaleFactorY;
 
 	if (!m_bIsInitialized)
 	{
@@ -545,7 +548,10 @@ bool ImageEx::DrawFrameGIF()
 	long hmWidth = GetWidth();
 	long hmHeight = GetHeight();
 
-	float fScale = m_fSpriteScale * m_fScreenScale;
+	float fWinGDIScale = m_dMonitorScaleFactorX;
+
+	float fSpriteScale = m_fSpriteScale * fWinGDIScale;
+	float fScale = fSpriteScale * m_fScreenScale;
 
 	hmWidth *= fScale;
 	hmHeight *= fScale;
@@ -560,8 +566,10 @@ bool ImageEx::DrawFrameGIF()
 	{
 		Graphics graphics(hDC);
 
-		int nBackWidth = hmWidth; //*2;
-		int nBackHeight = hmHeight; //*2;
+		int nBufferSize = max(hmWidth, hmHeight);
+
+		int nBackWidth = nBufferSize;
+		int nBackHeight = nBufferSize;
 
 		if (*m_pbRenderingFlag == FALSE)
 		{
@@ -577,18 +585,21 @@ bool ImageEx::DrawFrameGIF()
 
 				ClientToScreen(m_hWnd, &pointScreen);
 
+				pointScreen.x *= fWinGDIScale;
+				pointScreen.y *= fWinGDIScale;
+
 				memdc = CreateCompatibleDC(scrdc);
-				membit = CreateCompatibleBitmap(scrdc, nBackWidth, nBackHeight);
+				membit = CreateCompatibleBitmap(scrdc, nBackWidth*fWinGDIScale, nBackHeight*fWinGDIScale);
 				HBITMAP hOldBitmap = (HBITMAP)SelectObject(memdc, membit);
-				BitBlt(memdc, 0, 0, nBackWidth, nBackHeight, scrdc, pointScreen.x, pointScreen.y, SRCCOPY);
+				BitBlt(memdc, 0, 0, nBackWidth*fWinGDIScale, nBackHeight*fWinGDIScale, scrdc, pointScreen.x, pointScreen.y, SRCCOPY); // copy the onscreen image into the ?
 
 				//Gdiplus::Bitmap bitmap(membit, NULL);
 				//graphics.DrawImage(&bitmap, m_pt.x, m_pt.y, hmWidth, hmHeight);
 
 				m_pBackGroundBitmap = new Bitmap(membit, NULL);
-
+				
 				#if USE_GIF_BUFFER
-				HBITMAP membitB = CreateCompatibleBitmap(scrdc, nBackWidth, nBackHeight);;
+				HBITMAP membitB = CreateCompatibleBitmap(scrdc, nBackWidth*fWinGDIScale, nBackHeight*fWinGDIScale);
 				m_pBufferBitmap = new Bitmap(membitB, NULL);
 				DeleteObject(membitB);
 				#endif
@@ -604,23 +615,25 @@ bool ImageEx::DrawFrameGIF()
 			{
 				#if USE_GIF_BUFFER
 				Graphics g(m_pBufferBitmap);
-				g.DrawImage(m_pBackGroundBitmap, 0, 0, nBackWidth, nBackHeight);
+				g.DrawImage(m_pBackGroundBitmap, 0, 0, (int)(nBackWidth * fWinGDIScale), (int)(nBackHeight * fWinGDIScale));
 				#else
 				graphics.DrawImage(m_pBackGroundBitmap, _pt.x, _pt.y, nBackWidth, nBackHeight);
 				#endif
 			}
 
-			if (m_bCycleAnimation == TRUE || m_bCycled == FALSE)
+			if (m_bCycleAnimation == TRUE || m_bCycled == FALSE) 
 			{
+				ImageAttributes ImgAttr;
+
 				if (m_bTranslucent)
 				{
 					#if 0
 					ColorMatrix ClrMatrix = {
-						1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-						0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-						0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-						0.0f, 0.0f, 0.0f, m_fAlpha, 0.0f,
-						0.0f, 0.0f, 0.0f, 0.0f, 1.0f
+					1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, 0.0f, m_fAlpha, 0.0f,
+					0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 					};
 					#else
 					float fRed = 1.0f;
@@ -635,147 +648,83 @@ bool ImageEx::DrawFrameGIF()
 					}
 
 					ColorMatrix ClrMatrix = {
-						fRed, 0.0f, 0.0f, 0.0f, 0.0f,
-						0.0f, fGreen, 0.0f, 0.0f, 0.0f,
-						0.0f, 0.0f, fBlue, 0.0f, 0.0f,
-						0.0f, 0.0f, 0.0f, m_fAlpha, 0.0f,
-						0.0f, 0.0f, 0.0f, 0.0f, 1.0f
+					fRed, 0.0f, 0.0f, 0.0f, 0.0f,
+					0.0f, fGreen, 0.0f, 0.0f, 0.0f,
+					0.0f, 0.0f, fBlue, 0.0f, 0.0f,
+					0.0f, 0.0f, 0.0f, m_fAlpha, 0.0f,
+					0.0f, 0.0f, 0.0f, 0.0f, 1.0f
 					};
 
 					#endif
 
-					ImageAttributes ImgAttr;
-
 					ImgAttr.SetColorMatrix(&ClrMatrix, ColorMatrixFlagsDefault,
-						ColorAdjustTypeBitmap);
+					ColorAdjustTypeBitmap);
 
 					ImgAttr.SetColorKey(Color(0, 0, 0, 0), Color(0, 128, 128, 128), ColorAdjustTypeBitmap);
-					
-					RectF dst;
-					dst.X = (Gdiplus::REAL) _pt.x;
-					dst.Y = (Gdiplus::REAL) _pt.y;
-					dst.Width = (Gdiplus::REAL)hmWidth;
-					dst.Height = (Gdiplus::REAL)hmHeight;
-
-					#if USE_GIF_BUFFER
-					RectF dstB;
-					dstB.X = 0;
-					dstB.Y = 0;
-					dstB.Width = nBackWidth;
-					dstB.Height = nBackHeight;
-
-					Graphics g(m_pBufferBitmap);
-					g.DrawImage(this, dstB, 0, 0, GetWidth(), GetHeight(), Gdiplus::UnitPixel, &ImgAttr);
-
-					if (m_bDrawUnder) // draw under image
-					{
-						if (m_pBackGroundBitmap != NULL)
-						{
-							#if USE_GIF_BUFFER
-							Graphics g(m_pBufferBitmap);
-
-							ImageAttributes imAttr;
-							imAttr.SetColorKey(Color(0, 0, 0), Color(0, 0, 0), ColorAdjustTypeBitmap);
-
-							Rect destRect(0, 0, nBackWidth, nBackHeight);
-							g.DrawImage(m_pBackGroundBitmap, destRect, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, &imAttr);
-
-							//g.DrawImage(m_pBackGroundBitmap, 0, 0, nBackWidth, nBackHeight);
-							#else
-							graphics.DrawImage(m_pBackGroundBitmap, _pt.x, _pt.y, nBackWidth, nBackHeight);
-							#endif
-						}
-					}
-
-					graphics.DrawImage(m_pBufferBitmap, dst, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, NULL); // draw it on the screen
-					#else
-					graphics.DrawImage(this, dst, 0, 0, GetWidth(), GetHeight(), Gdiplus::UnitPixel, &ImgAttr);
-					#endif
-
-					
 				}
 				else if (m_bColorKeyed)
 				{
-					ImageAttributes ImgAttr;
+						
 					ImgAttr.SetColorKey(Color(0, 0, 0, 0), Color(0, 128, 128, 128), ColorAdjustTypeBitmap);
-					RectF dst;
-
-					dst.X = (Gdiplus::REAL) _pt.x;
-					dst.Y = (Gdiplus::REAL) _pt.y;
-					dst.Width = (Gdiplus::REAL)hmWidth;
-					dst.Height = (Gdiplus::REAL)hmHeight;
-
-					#if USE_GIF_BUFFER
-					RectF dstB;
-					dstB.X = 0;
-					dstB.Y = 0;
-					dstB.Width = nBackWidth;
-					dstB.Height = nBackHeight;
-
-					Graphics g(m_pBufferBitmap);
-					g.DrawImage(this, dstB, 0, 0, GetWidth(), GetHeight(), Gdiplus::UnitPixel, &ImgAttr);
-
-					if (m_bDrawUnder) // draw under image
-					{
-						if (m_pBackGroundBitmap != NULL)
-						{
-							#if USE_GIF_BUFFER
-							Graphics g(m_pBufferBitmap);
-
-							ImageAttributes imAttr;
-							imAttr.SetColorKey(Color(0, 0, 0), Color(0, 0, 0), ColorAdjustTypeBitmap);
-
-							Rect destRect(0, 0, nBackWidth, nBackHeight);
-							g.DrawImage(m_pBackGroundBitmap, destRect, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, &imAttr);
-
-							//g.DrawImage(m_pBackGroundBitmap, 0, 0, nBackWidth, nBackHeight);
-							#else
-							graphics.DrawImage(m_pBackGroundBitmap, _pt.x, _pt.y, nBackWidth, nBackHeight);
-							#endif
-						}
-					}
-
-					graphics.DrawImage(m_pBufferBitmap, dst, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, NULL);  // draw it on the screen
-					#else
-					graphics.DrawImage(this, dst, 0, 0, GetWidth(), GetHeight(), Gdiplus::UnitPixel, &ImgAttr);
-					#endif
 				}
 				else
 				{
-					if (m_pBackGroundBitmap != NULL && m_bDrawUnder)
+					ImgAttr.SetColorKey(Color(0, 0, 0), Color(0, 0, 0), ColorAdjustTypeBitmap);
+				}
+
+				RectF dst;
+				dst.X = (Gdiplus::REAL) _pt.x;
+				dst.Y = (Gdiplus::REAL) _pt.y;
+				dst.Width = nBackWidth; // (Gdiplus::REAL)hmWidth;
+				dst.Height = nBackHeight; // (Gdiplus::REAL)hmHeight;
+
+				#if USE_GIF_BUFFER
+				RectF dstB;
+				dstB.X = 0;
+				dstB.Y = 0;
+				dstB.Width = (Gdiplus::REAL)hmWidth;  //nBackWidth;
+				dstB.Height = (Gdiplus::REAL)hmHeight;  //nBackHeight;
+
+				Graphics g(m_pBufferBitmap);
+				int WW = GetWidth();
+				int HH = GetHeight();
+				g.DrawImage(this, dstB, 0, 0, GetWidth(), GetHeight(), Gdiplus::UnitPixel, &ImgAttr);
+				////g.DrawImage(this, dstB, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, &ImgAttr);
+
+				if (m_bDrawUnder) // draw under image
+				{
+					if (m_pBackGroundBitmap != NULL)
 					{
 						#if USE_GIF_BUFFER
 						Graphics g(m_pBufferBitmap);
-
-						g.DrawImage(this, 0,0, hmWidth, hmHeight);
 
 						ImageAttributes imAttr;
 						imAttr.SetColorKey(Color(0, 0, 0), Color(0, 0, 0), ColorAdjustTypeBitmap);
 
 						Rect destRect(0, 0, nBackWidth, nBackHeight);
-						g.DrawImage(m_pBackGroundBitmap, destRect, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, &imAttr);
-
-						//g.DrawImage(m_pBackGroundBitmap, 0, 0, nBackWidth, nBackHeight);
+						g.DrawImage(m_pBackGroundBitmap, destRect, 0, 0, nBackWidth * fWinGDIScale, nBackHeight * fWinGDIScale, Gdiplus::UnitPixel, &imAttr);  // draw the image into the background bitmap
 						#else
 						graphics.DrawImage(m_pBackGroundBitmap, _pt.x, _pt.y, nBackWidth, nBackHeight);
 						#endif
 
-						RectF dst;
-
-						dst.X = (Gdiplus::REAL) _pt.x;
-						dst.Y = (Gdiplus::REAL) _pt.y;
-						dst.Width = (Gdiplus::REAL)hmWidth;
-						dst.Height = (Gdiplus::REAL)hmHeight;
-
 						graphics.DrawImage(m_pBufferBitmap, dst, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, NULL);  // draw it on the screen
 
-					}
-					else
-					{
-						graphics.DrawImage(this, _pt.x, _pt.y, hmWidth, hmHeight);
+						//dst.X = 0;
+						//dst.Y = 350;
+						//graphics.DrawImage(m_pBufferBitmap, dst, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, NULL); // draw again for debugging purposes
 					}
 				}
-				
+				else
+				{
+					graphics.DrawImage(m_pBufferBitmap, dst, 0, 0, nBackWidth* fWinGDIScale, nBackHeight* fWinGDIScale, Gdiplus::UnitPixel, NULL);  // draw it on the screen
+
+					//dst.X = 0;
+					//dst.Y = 350;
+					//graphics.DrawImage(m_pBufferBitmap, dst, 0, 0, nBackWidth* fWinGDIScale, nBackHeight* fWinGDIScale, Gdiplus::UnitPixel, NULL); // draw again for debugging purposes
+				}
+				#else
+				graphics.DrawImage(this, dst, 0, 0, nBackWidth, nBackHeight, Gdiplus::UnitPixel, &ImgAttr);
+				#endif
 			}
 		}
 

@@ -34,6 +34,7 @@ public:
 	void NextSegment();
 	void ClearSelectedCharacterTarget();
 	BOOL IsSelectedCharacterAlive();
+	BOOL IsSelectedCharacterDualWielding();
 	BOOL IsCharacterAlive(CDMBaseCharViewDialog *pDlg);
 	BOOL IsSelectedCharacterInOpponentParty();
 	CDMBaseCharViewDialog *GetSelectedCharacterDialog();

@@ -422,6 +422,31 @@ int FindIndex(int *nArray, int nFindMe, int nStart, int nEnd, int *nLoops)
 
 BOOL CDMHelperApp::InitInstance()
 {
+	//BOOL dpi_result = SetProcessDPIAware();
+	auto activeWindow = GetActiveWindow();
+	HMONITOR monitor = MonitorFromWindow(activeWindow, MONITOR_DEFAULTTONEAREST);
+
+	// Get the logical width and height of the monitor
+	MONITORINFOEX monitorInfoEx;
+	monitorInfoEx.cbSize = sizeof(monitorInfoEx);
+	GetMonitorInfo(monitor, &monitorInfoEx);
+	auto cxLogical = monitorInfoEx.rcMonitor.right - monitorInfoEx.rcMonitor.left;
+	auto cyLogical = monitorInfoEx.rcMonitor.bottom - monitorInfoEx.rcMonitor.top;
+
+	// Get the physical width and height of the monitor
+	DEVMODE devMode;
+	devMode.dmSize = sizeof(devMode);
+	devMode.dmDriverExtra = 0;
+	EnumDisplaySettings(monitorInfoEx.szDevice, ENUM_CURRENT_SETTINGS, &devMode);
+	auto cxPhysical = devMode.dmPelsWidth;
+	auto cyPhysical = devMode.dmPelsHeight;
+
+	// Calculate the scaling factor
+	m_dMonitorScaleFactorX = ((double)cxPhysical / (double)cxLogical);
+	m_dMonitorScaleFactorY = ((double)cyPhysical / (double)cyLogical);
+
+
+
 	if (!AfxSocketInit())
 	{
 		AfxMessageBox(IDP_SOCKETS_INIT_FAILED);
@@ -635,7 +660,7 @@ BOOL CDMHelperApp::InitInstance()
 
 	m_pGameMapSingleLock = new CSingleLock(&m_GameMapMutex);
 
-	#if GAMETABLE_BUILD
+	#if 0 //GAMETABLE_BUILD
 	m_dwMiniUpdateFlag = 0;
 	m_pGameServerUpdateThread = AfxBeginThread(DMGameServerUpdateThreadProc, (LPVOID)this);
 	#endif
@@ -5982,6 +6007,13 @@ BOOL CDMHelperApp::PlayPCSoundFX(CString szDesc, CString szName, CString szDefau
 	if (g_bUseSoundEffects == FALSE)
 		return FALSE;
 
+	if (szName.Find("Human - ") == 0)
+	{
+		nOverrideNum = (nOverrideNum % 4) + 1;
+		szName.Format("Human Male 0%d", nOverrideNum);
+		szDesc.Replace("Attack", "WAR CRY");
+	}
+
 	szDesc.Replace("*", szName);
 
 	if (FALSE == PlaySoundFX(szDesc, bAsync, nOverrideNum))
@@ -6139,6 +6171,45 @@ int CDMHelperApp::GetSpellRepeats(PSPELLSLOT pSpellSlot)
 	return nRepeats;
 }
 
+DWORD playWAVEFile(HWND hWndNotify, LPSTR lpszWAVEFileName)
+{
+	UINT wDeviceID;
+	DWORD dwReturn;
+	MCI_OPEN_PARMS mciOpenParms;
+	MCI_PLAY_PARMS mciPlayParms;
+
+	// Open the device by specifying the device and filename.
+	// MCI will choose a device capable of playing the specified file.
+
+	mciOpenParms.lpstrDeviceType = "waveaudio";
+	mciOpenParms.lpstrElementName = lpszWAVEFileName;
+	if (dwReturn = mciSendCommand(0, MCI_OPEN,
+		MCI_OPEN_TYPE | MCI_OPEN_ELEMENT,
+		(DWORD)(LPVOID)&mciOpenParms))
+	{
+		// Failed to open device. Don't close it; just return error.
+		return (dwReturn);
+	}
+
+	// The device opened successfully; get the device ID.
+	wDeviceID = mciOpenParms.wDeviceID;
+
+	// Begin playback. The window procedure function for the parent 
+	// window will be notified with an MM_MCINOTIFY message when 
+	// playback is complete. At this time, the window procedure closes 
+	// the device.
+
+	mciPlayParms.dwCallback = (DWORD)hWndNotify;
+	if (dwReturn = mciSendCommand(wDeviceID, MCI_PLAY, MCI_NOTIFY,
+		(DWORD)(LPVOID)&mciPlayParms))
+	{
+		mciSendCommand(wDeviceID, MCI_CLOSE, 0, NULL);
+		return (dwReturn);
+	}
+
+	return (0L);
+}
+
 void CDMHelperApp::PlaySpellSFX(int nSpellID, int nRepeats)
 {
 
@@ -6175,10 +6246,15 @@ void CDMHelperApp::PlaySpellSFX(int nSpellID, int nRepeats)
 
 					for (int k = 0; k < nRepeats; ++k)
 					{
-						PlaySoundFXFromFile(szPath);
 						if (nRepeats)
 						{
+							PlaySoundFXFromFile(szPath);
+							//playWAVEFile(NULL, szPath.GetBuffer(0));
 							Sleep(250);
+						}
+						else
+						{
+							PlaySoundFXFromFile(szPath);
 						}
 					}
 					return;
@@ -6468,12 +6544,12 @@ BOOL CDMHelperApp::WoundCharacter(DWORD dwCharacterID, int *nRetDamage)
 			if (pCharDlg->m_pCharacter->m_nSex)
 			{
 				//m_pApp->PlaySoundFX("Female PC Die");
-				PlayPCSoundFX("* PC Die", pCharDlg->m_szCharacterFirstName, "Female");
+				PlayPCSoundFX("* PC Die", pCharDlg->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
 				//m_pApp->PlaySoundFX("Male PC Die");
-				PlayPCSoundFX("* PC Die", pCharDlg->m_szCharacterFirstName, "Male");
+				PlayPCSoundFX("* PC Die", pCharDlg->GetCharacterSFXName(), "Male");
 			}
 
 			pCharDlg->m_szInitiativeAction = _T("DEAD");
@@ -6485,12 +6561,12 @@ BOOL CDMHelperApp::WoundCharacter(DWORD dwCharacterID, int *nRetDamage)
 			if (pCharDlg->m_pCharacter->m_nSex)
 			{
 				//m_pApp->PlaySoundFX("Female PC Hurt");
-				PlayPCSoundFX("* PC Hurt", pCharDlg->m_szCharacterFirstName, "Female");
+				PlayPCSoundFX("* PC Hurt", pCharDlg->GetCharacterSFXName(), "Female");
 			}
 			else
 			{
 				//m_pApp->PlaySoundFX("Male PC Hurt");
-				PlayPCSoundFX("* PC Hurt", pCharDlg->m_szCharacterFirstName, "Male");
+				PlayPCSoundFX("* PC Hurt", pCharDlg->GetCharacterSFXName(), "Male");
 			}
 		}
 	}

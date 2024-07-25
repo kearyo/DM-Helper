@@ -196,7 +196,6 @@
 #define IDB_DROP_ALL_BUTTON_BITMAP      316
 #define IDB_GIVE_BUTTON_BITMAP          317
 #define IDB_BUY_BUTTON_BITMAP           318
-#define IDB_BITMAP3                     319
 #define IDB_TINY_LEFT_ARROW_BITMAP      319
 #define IDC_CHAR_VIEW                   1000
 #define IDC_CHAR_NAME_EDIT              1001
@@ -253,7 +252,9 @@
 #define IDC_CHAR_SHEET                  1026
 #define IDC_SPELL_COMPONENTS_CHECK      1026
 #define IDC_HP_BY_LEVEL                 1027
+#define IDC_MU_SPELL_INT_CHECK          1027
 #define IDC_SHOW_HP_CHECK               1028
+#define IDC_FREECAST_CANTRIPS_CHECK     1028
 #define IDC_CON_COMMENT                 1029
 #define IDC_DEX_COMMENT                 1030
 #define IDC_STR_COMMENT                 1031
@@ -638,6 +639,7 @@
 #define IDC_TOOL_TIP                    1143
 #define IDC_DESC_2                      1144
 #define IDC_CREATE_NPC_BUTTON           1144
+#define IDC_VOICE_NAME_BUTTON           1144
 #define IDC_DESC_3                      1145
 #define IDC_DELETE_NPC_BUTTON           1145
 #define IDC_DESC_4                      1146
@@ -1052,6 +1054,7 @@
 #define IDC_PREREQ_ATTRIB_CHECK_2       1442
 #define IDC_X3_CHECK                    1442
 #define IDC_SFX_TRANSLUCENT_CHECK       1442
+#define IDC_DUAL_WIELD_CHECK            1442
 #define IDC_EP_BUTTON                   1443
 #define IDC_ENCOUNTER_LIST              1443
 #define IDC_TELEPATH_CHECK              1443
