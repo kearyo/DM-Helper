@@ -6534,8 +6534,14 @@ BOOL CDMHelperApp::WoundCharacter(DWORD dwCharacterID, int *nRetDamage)
 
 		pCharDlg->m_pCharacter->m_nCurrentDamage += nValue;
 
+		pCharDlg->m_pCharacter->m_nWounds += 1;
+
 		if (pCharDlg->m_pCharacter->m_nCurrentDamage < 0)
+		{
 			pCharDlg->m_pCharacter->m_nCurrentDamage = 0;
+			pCharDlg->m_pCharacter->m_nWounds = 0;
+		}
+		
 
 		pCharDlg->PostMessage(DND_DIRTY_WINDOW_MESSAGE, 1, 0);
 
@@ -6631,8 +6637,13 @@ BOOL CDMHelperApp::HealCharacter(DWORD dwCharacterID)
 		{
 			pCharDlg->m_pCharacter->m_nCurrentDamage -= nValue;
 
-			if (pCharDlg->m_pCharacter->m_nCurrentDamage < 0)
+			pCharDlg->m_pCharacter->m_nWounds -= 1;
+
+			if (pCharDlg->m_pCharacter->m_nCurrentDamage <= 0)
+			{	
+				pCharDlg->m_pCharacter->m_nWounds = 0;
 				pCharDlg->m_pCharacter->m_nCurrentDamage = 0;
+			}
 
 			pCharDlg->ProcessCharStats();
 

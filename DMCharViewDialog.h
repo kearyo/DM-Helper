@@ -542,6 +542,7 @@ public:
 	afx_msg void OnStnClickedVoiceNameButton();
 	afx_msg void OnBnClickedDualWieldCheck();
 	BOOL m_bIsDualWielding;
+	CString m_szCurrentHPLabel;
 };
 
 //{{AFX_INSERT_LOCATION}}

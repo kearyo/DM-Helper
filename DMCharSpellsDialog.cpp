@@ -363,6 +363,34 @@ void DMCharSpellsDialog::Refresh()
 
 				break;
 			}
+			case DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE:
+			{    
+				int nIllusionistIndex = FindClassIndex(m_pCharacter, DND_CHARACTER_CLASS_ILLUSIONIST);
+				int nTotalSpellsInLevel = CountSpellsInLevel(m_pCharacter, DND_CHARACTER_CLASS_ILLUSIONIST, 7);
+				int nHighSpells = GetSpellLevels(m_pCharacter, DND_CHARACTER_CLASS_ILLUSIONIST, m_pCharacter->m_nLevel[nIllusionistIndex], 7);
+				int nTotalMageSpells = CountSpellsInLevel(m_pCharacter, DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE, 1);
+
+				if (nHighSpells - nTotalSpellsInLevel <= 0 && nTotalMageSpells == 0)
+					break;
+
+				m_nTabSpellIndexes[nTopTabs] = i;
+				m_nSpellTabIndexes[i] = nTopTabs;
+				m_cSpellsTopTab.InsertItem(nTopTabs++, "Magic User");
+
+				if (i == m_nTabSpellIndexes[m_nSelectedSpellClass])
+				{
+					nMaxSpellLevels = 9;
+					m_cSpellsModeTab.InsertItem(nModeTabs++, "Spells");
+					m_cSpellsModeTab.InsertItem(nModeTabs++, "Spell Book");
+					m_cSpellsModeTab.InsertItem(nModeTabs++, "Memorized");
+
+					m_pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);
+
+					m_bMageDisplay = TRUE;
+				}
+
+				break;
+			}
 		}
 	}
 
@@ -679,6 +707,7 @@ void DMCharSpellsDialog::Refresh()
 		}
 		case DND_CHARACTER_CLASS_MAGE:
 		case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+		case DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE:
 		{
 			m_cSpellbookIcon.ShowWindow(SW_SHOW);
 			break;
@@ -1124,6 +1153,15 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 				if(m_nSelectedSpellLists[DND_SPELL_LIST][i] == 1)
 				{
 					m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] += 1;
+
+					if (m_nSelectedSpellLevel == 0 && g_bUseUnearthedArcana && g_bFreecastCantrips)
+					{
+						if (m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] > 1)
+						{
+							m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] = 1;
+						}
+					}
+
 					nTotalMemorizedSpellsInLevel = CountSpellsInLevel(m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel]);	
 
 					m_nSpellPreparationTime += m_nSelectedSpellLevel * 15;
@@ -1141,6 +1179,15 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 				if(m_nSelectedSpellLists[DND_SPELLBOOK_LIST][i] == 1)
 				{
 					m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] += 1;
+
+					if (m_nSelectedSpellLevel == 0 && g_bUseUnearthedArcana && g_bFreecastCantrips)
+					{
+						if (m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] > 1)
+						{
+							m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel][i] = 1;
+						}
+					}
+
 					nTotalMemorizedSpellsInLevel = CountSpellsInLevel(m_pCharacter->m_nSpellsMemorized[m_nTabSpellIndexes[m_nSelectedSpellClass]][m_nSelectedSpellLevel]);	
 
 					m_nSpellPreparationTime += m_nSelectedSpellLevel * 15;
@@ -1207,6 +1254,7 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 			}
 			*/
 			
+			BOOL bSpellFailedToCast = FALSE;
 			for(int i = 0; i < m_cSpellsMemorizedList.GetCount(); ++i)
 			{
 				if(m_cSpellsMemorizedList.GetSel(i))
@@ -1229,7 +1277,23 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 
 							if (dwCharacterID)
 							{
-								m_pApp->HealCharacter(dwCharacterID);
+								if (pSelectedSpellSlot->m_pSpell->m_nSpellLevel == 0 && g_bFreecastCantrips)
+								{
+									PDNDCHARVIEWDLG pCharDlg = NULL;
+									m_pApp->m_CharacterViewMap.Lookup(dwCharacterID, pCharDlg);
+									if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL && pCharDlg->m_pCharacter->m_nWounds > 0)
+									{
+										m_pApp->HealCharacter(dwCharacterID);
+									}
+									else
+									{
+										bSpellFailedToCast = TRUE;
+									}
+								}
+								else
+								{
+									m_pApp->HealCharacter(dwCharacterID);
+								}
 							}
 						}
 
@@ -1238,8 +1302,15 @@ void DMCharSpellsDialog::OnMemorizeSpell()
 							m_pApp->PlayPCSoundFX("* PC Cast Spell", m_pSiblingWindow->GetCharacterSFXName(), "NADA", FALSE, pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier);
 						}
 
-						int nSoundRepeats = m_pApp->GetSpellRepeats(pSelectedSpellSlot);
-						m_pApp->PlaySpellSFX(pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
+						if (bSpellFailedToCast == FALSE)
+						{
+							int nSoundRepeats = m_pApp->GetSpellRepeats(pSelectedSpellSlot);
+							m_pApp->PlaySpellSFX(pSelectedSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
+						}
+						else
+						{
+							m_pApp->PlaySoundFX("SPELL FAILURE");
+						}
 
 						DMPartyDialog *pPartyDlg = m_pApp->FindCharacterPartyDialog(m_pCharacter);
 						if (pPartyDlg != NULL)
@@ -1526,7 +1597,7 @@ void DMCharSpellsDialog::OnBnClickedTranscribeSpell()
 				int nClassIndex = -1;
 				for (int i = 0; i < 4; ++i)
 				{
-					if (pCharDlg->m_pCharacter->m_SpellClasses[i] == pSelectedBookSpell->m_ClassBook || (pCharDlg->m_pCharacter->m_SpellClasses[i] == DND_CHARACTER_SPELL_CLASS_RANGER_MAGE && pSelectedBookSpell->m_ClassBook == DND_CHARACTER_CLASS_MAGE))
+					if (pCharDlg->m_pCharacter->m_SpellClasses[i] == pSelectedBookSpell->m_ClassBook || (pCharDlg->m_pCharacter->m_SpellClasses[i] == DND_CHARACTER_SPELL_CLASS_RANGER_MAGE && pSelectedBookSpell->m_ClassBook == DND_CHARACTER_CLASS_MAGE) || (pCharDlg->m_pCharacter->m_SpellClasses[i] == DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE && pSelectedBookSpell->m_ClassBook == DND_CHARACTER_CLASS_MAGE))
 					{
 						nClassIndex = i;
 						break;

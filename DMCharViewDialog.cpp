@@ -234,6 +234,7 @@ CDMCharViewDialog::CDMCharViewDialog(CDMHelperDlg* pMainDialog, cDNDCharacter	*_
 	, m_szLevelTitle2(_T(""))
 	, m_szLevelTitle3(_T(""))
 	, m_bIsDualWielding(FALSE)
+	, m_szCurrentHPLabel(_T(""))
 {
 	//{{AFX_DATA_INIT(CDMCharViewDialog)
 	m_szCharacterName = _T("");
@@ -521,6 +522,7 @@ void CDMCharViewDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_LEVEL_TITLE_2, m_szLevelTitle2);
 	DDX_Text(pDX, IDC_LEVEL_TITLE_3, m_szLevelTitle3);
 	DDX_Check(pDX, IDC_DUAL_WIELD_CHECK, m_bIsDualWielding);
+	DDX_Text(pDX, IDC_CURRENT_HP, m_szCurrentHPLabel);
 }
 
 
@@ -1202,6 +1204,8 @@ void CDMCharViewDialog::Refresh()
 		m_szHPByLevel = _T("");
 	}
 
+	
+
 	if (m_pCharacter->m_nHitPoints && m_pCharacter->m_nCurrentDamage)
 	{
 		float fHPPerc = (float)m_pCharacter->m_nCurrentDamage / (float)m_pCharacter->m_nHitPoints;
@@ -1213,11 +1217,23 @@ void CDMCharViewDialog::Refresh()
 			m_pCharacter->m_HP_State = DND_HP_STATE_WOUNDED;
 		else
 			m_pCharacter->m_HP_State = DND_HP_STATE_INJURED;
+
+		if (g_bFreecastCantrips)
+		{
+			m_szCurrentHPLabel.Format("crnt wnds: %d", m_pCharacter->m_nWounds);
+		}
+		else
+		{
+			m_szCurrentHPLabel = "crnt";
+		}
 	}
 	else
 	{
 		m_pCharacter->m_HP_State = DND_HP_STATE_OK;
+		m_szCurrentHPLabel = "crnt";
 	}
+
+	
 
 	m_szSTRComment = m_szSTRCommentBuffer;
 	m_szINTComment = m_szINTCommentBuffer;
@@ -2783,6 +2799,11 @@ void CDMCharViewDialog::ProcessCharStats()
 			m_szHPByLevelBuffer += szTemp;
 		}
 	} // end j loop
+
+	if (m_pCharacter->m_nWounds < 0)
+	{
+		m_pCharacter->m_nWounds = 0;
+	}
 
 	if(nTotalClasses)
 	{	

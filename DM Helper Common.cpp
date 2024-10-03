@@ -2838,6 +2838,7 @@ BOOL cDNDCharacter::BuyAllSpellComponents(BOOL bNoCost)
 			}
 			case DND_CHARACTER_CLASS_MAGE:
 			case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+			case DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE:
 			{
 				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);
 				break;
@@ -2904,8 +2905,11 @@ BOOL cDNDCharacter::CastSpell(cDNDSpellSlot *pSpellSlot, BOOL bFailedToCast)
 
 	if(pSpellSlot->m_pnMemorizedSlot <= 0)
 		return FALSE;
-
-	*pSpellSlot->m_pnMemorizedSlot -= 1;
+	
+	if (pSpellSlot->m_pSpell->m_nSpellLevel != 0 || !g_bUseUnearthedArcana || !g_bFreecastCantrips)
+	{
+		*pSpellSlot->m_pnMemorizedSlot -= 1;
+	}
 
 	ValidateMagicContainerInventory();
 
@@ -6923,6 +6927,16 @@ int GetLevelCanCastSpell(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpel
 					return nLevel;
 				}
 			}
+			else if (pCharacter->m_SpellClasses[i] == DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE && _nSpellClass == DND_CHARACTER_CLASS_MAGE)
+			{
+				nRetLevel = GetSpellLevels(pCharacter, DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE, nLevel, _nSpellLevel);
+
+				if (nRetLevel)
+				{
+					*pnCastingLevel = pCharacter->m_nCastingLevels[i];
+					return nLevel;
+				}
+			}
 			else if(pCharacter->m_SpellClasses[i] == DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC && _nSpellClass == DND_CHARACTER_CLASS_CLERIC)
 			{
 				nRetLevel = GetSpellLevels(pCharacter, DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC, nLevel, _nSpellLevel);
@@ -6937,6 +6951,19 @@ int GetLevelCanCastSpell(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpel
 	}
 
 	return nRetLevel;
+}
+
+int FindClassIndex(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nClass)
+{
+	for (int i = 0; i < 4; ++i)
+	{
+		if (pCharacter->m_Class[i] == _nClass)
+		{
+			return i;
+		}
+	}
+
+	return 0;
 }
 
 int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass, int _nCastLevel, int _nSpellLevel)
@@ -7449,6 +7476,20 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 			else
 			{
 				nRetSpells = _IllusionistMatrix[_nCastLevel][_nSpellLevel];
+
+				if (_nSpellLevel == 7) // if the illusionist is using first level magic user spells, it costs a 7th level illusionist spell slot
+				{
+					int nTotalMageSpells = CountSpellsInLevel(pCharacter, DND_CHARACTER_CLASS_MAGE, 1);
+
+					for (int i = 0; i < 128; ++i)
+					{
+						if (pCharacter->m_nSpellsMemorized[3][1][i] != 0)
+						{
+							nRetSpells -= 1;
+							break;
+						}
+					}
+				}
 			}
 
 			if (nRetSpells && g_bMagicUserINTSpellBonus)
@@ -7471,7 +7512,26 @@ int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass
 
 			break;
 		}
+		case DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE:
+		{
+			if (_nSpellLevel == 1)
+			{
+				nRetSpells = 4 + _nCastLevel - 14;
 
+				//shatner
+				int nTotalSpellsInLevel = CountSpellsInLevel(pCharacter, DND_CHARACTER_CLASS_ILLUSIONIST, 7);
+				int nHighSpells = _IllusionistMatrix[_nCastLevel][7];
+
+				if (nHighSpells - nTotalSpellsInLevel <= 0)
+					nRetSpells = 0;
+			}
+			else
+			{
+				nRetSpells = 0;
+			}
+
+			break;
+		}
 
 		case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
 		{
@@ -8968,6 +9028,14 @@ BOOL GetSpellClasses(cDNDCharacter *pCharacter)
 			{
 				pCharacter->m_SpellClasses[i] = DND_CHARACTER_CLASS_ILLUSIONIST;
 				pCharacter->m_nCastingLevels[i] = pCharacter->m_nLevel[i];
+
+				if (pCharacter->m_nLevel[i] > 13)
+				{
+					pCharacter->m_SpellClasses[3] = DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE;
+					pCharacter->m_nCastingLevels[3] = pCharacter->m_nLevel[i];
+					bRetVal = TRUE;
+				}
+
 				bRetVal = TRUE;
 				break;
 			}
@@ -12088,6 +12156,7 @@ void NPCharacterGenerateSpells(cDNDCharacter *pCharacter)
 			{
 				case DND_CHARACTER_CLASS_MAGE:
 				case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+				case DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE:
 				{
 					//this character needs a spellbook
 					pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);

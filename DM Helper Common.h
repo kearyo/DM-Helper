@@ -401,6 +401,7 @@ typedef enum
 
 	DND_CHARACTER_SPELL_CLASS_RANGER_DRUID = 1000,
 	DND_CHARACTER_SPELL_CLASS_RANGER_MAGE = 1001,
+	DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE = 1002,
 	DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC = 2000,
 
 	DND_CHARACTER_CLASS_MONSTER = 5000,
@@ -2452,8 +2453,9 @@ public:
 	char m_szSFXName[64];
 
 	DND_HP_STATE_TYPES m_HP_State;
+	int m_nWounds;
 
-	int m_nReserved_1[6384];  // remember to divide by 4 dummy was 6417 before m_szMiniName 6400 before m_szSFXName
+	int m_nReserved_1[6383];  // remember to divide by 4 dummy was 6417 before m_szMiniName 6400 before m_szSFXName
 
 	cDNDCharacter()
 	{
@@ -2601,8 +2603,9 @@ public:
 		memset(m_szSFXName, 0, 64 * sizeof(char));
 
 		m_HP_State = DND_HP_STATE_OK;
+		m_nWounds = 0;
 
-		memset(m_nReserved_1, 0, 6384 * sizeof(int));
+		memset(m_nReserved_1, 0, 6383 * sizeof(int));
 
 	}
 
@@ -3067,6 +3070,7 @@ int GetAssassinationTable(cDNDCharacter *pCharacter, int *pnAssassinationMatrix)
 
 int GetScrollSpellFailureChance(cDNDCharacter *pCharacter, POBJECTTYPE pScroll, int _nSpellLevel, int *pnTotalFailure, int *pnReversed);
 int GetLevelCanCastSpell(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass, int _nSpellLevel, int *pnCastingLevel);
+int FindClassIndex(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nClass);
 int GetSpellLevels(cDNDCharacter *pCharacter, DND_CHARACTER_CLASSES _nSpellClass, int _nCastLevel, int _nSpellLevel);
 
 int CalculateExperienceBonus(cDNDCharacter *pCharacter, int nClass = -1, int *pnNumClasses = NULL);

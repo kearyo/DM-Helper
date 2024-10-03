@@ -4067,8 +4067,13 @@ BOOL DMPartyDialog::InitiativeWound(int nDamage, CDMCharViewDialog *pTargetChara
 
 		pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage += nDamage;
 
-		if (pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage < 0)
+		pTargetCharacterDialog->m_pCharacter->m_nWounds += 1;
+
+		if (pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage <= 0)
+		{
 			pTargetCharacterDialog->m_pCharacter->m_nCurrentDamage = 0;
+			pTargetCharacterDialog->m_pCharacter->m_nWounds = 0;
+		}
 
 		pTargetCharacterDialog->ProcessCharStats();
 
@@ -4501,8 +4506,13 @@ void DMPartyDialog::OnWoundButton()
 
 		m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage += nValue;
 
-		if(m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage < 0)
+		m_pSelectedCharacterDialog->m_pCharacter->m_nWounds += 1;
+
+		if (m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage <= 0)
+		{
 			m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage = 0;
+			m_pSelectedCharacterDialog->m_pCharacter->m_nWounds = 0;
+		}
 
 		m_pSelectedCharacterDialog->ProcessCharStats();
 		m_pSelectedCharacterDialog->Refresh();
@@ -4582,8 +4592,13 @@ void DMPartyDialog::OnHealButton()
 
 		m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage -= nValue;
 
-		if(m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage < 0)
+		m_pSelectedCharacterDialog->m_pCharacter->m_nWounds -= 1;
+
+		if (m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage <= 0)
+		{
 			m_pSelectedCharacterDialog->m_pCharacter->m_nCurrentDamage = 0;
+			m_pSelectedCharacterDialog->m_pCharacter->m_nWounds = 0;
+		}
 
 		m_pSelectedCharacterDialog->ProcessCharStats();
 
@@ -4712,7 +4727,6 @@ void DMPartyDialog::OnAttackHitButton2()
 
 	if(m_pOpposingNPCDialog != NULL)
 	{
-		// here Keary
 		if (m_pApp->m_dwInitiativeCurrentAttackerID != m_pOpposingNPCDialog->m_pNPC->m_dwCharacterID)
 		{
 			m_pApp->m_nInitiativeCurrentAttackNumber = 0;
@@ -4982,8 +4996,13 @@ void DMPartyDialog::OnWoundButton2()
 
 		m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage += nValue;
 
-		if(m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage < 0)
+		m_pOpposingCharacterDialog->m_pCharacter->m_nWounds += 1;
+
+		if (m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage <= 0)
+		{
 			m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage = 0;
+			m_pOpposingCharacterDialog->m_pCharacter->m_nWounds = 0;
+		}
 
 		m_pOpposingCharacterDialog->ProcessCharStats();
 
@@ -5070,8 +5089,13 @@ void DMPartyDialog::OnHealButton2()
 
 		m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage -= nValue;
 
-		if(m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage < 0)
+		m_pOpposingCharacterDialog->m_pCharacter->m_nWounds -= 1;
+
+		if (m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage <= 0)
+		{
 			m_pOpposingCharacterDialog->m_pCharacter->m_nCurrentDamage = 0;
+			m_pOpposingCharacterDialog->m_pCharacter->m_nWounds = 0;
+		}
 
 		m_pOpposingCharacterDialog->ProcessCharStats();
 

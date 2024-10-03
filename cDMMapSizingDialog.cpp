@@ -76,6 +76,10 @@ void cDMMapSizingDialog::OnBnClickedResizeCellButton()
 	m_pDNDMap->m_nPixelSizeX = nBitmapWidth;
 	m_pDNDMap->m_nPixelSizeY = nBitmapHeight;
 
+	//initialize size of the cells
+	m_pDNDMap->m_Cells[0][0].m_nCellSizeX = nBitmapWidth;
+	m_pDNDMap->m_Cells[0][0].m_nCellSizeY = nBitmapHeight;
+
 	OnBnClickedOk();
 }
 
@@ -152,6 +156,10 @@ void cDMMapSizingDialog::OnBnClickedResizeMapButton()
 			RectF bmpRect(0, 0, m_pDNDMap->m_nPixelSizeX - 1, m_pDNDMap->m_nPixelSizeY - 1);
 
 			m_pDNDMap->m_Cells[nColumn][nRow].m_pBitmap = m_pOriginalBitmap->Clone(0, 0, m_pDNDMap->m_nPixelSizeX - 1, m_pDNDMap->m_nPixelSizeY - 1, m_pOriginalBitmap->GetPixelFormat());
+
+			//initialize size of the cells
+			m_pDNDMap->m_Cells[nColumn][nRow].m_nCellSizeX = m_pDNDMap->m_nPixelSizeX;
+			m_pDNDMap->m_Cells[nColumn][nRow].m_nCellSizeY = m_pDNDMap->m_nPixelSizeY;
 
 			if (m_pDNDMap->m_Cells[nColumn][nRow].m_pBitmap == NULL)
 			{

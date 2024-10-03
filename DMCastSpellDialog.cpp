@@ -104,29 +104,35 @@ void DMCastSpellDialog::Refresh()
 
 	for(int nSpellClass = 0; nSpellClass < 4 ; ++nSpellClass)
 	{
+		CString szCantripLabel = "";
 		switch(m_pCharacter->m_SpellClasses[nSpellClass])
 		{
 			case DND_CHARACTER_CLASS_CLERIC:
 			case DND_CHARACTER_SPELL_CLASS_PALADIN_CLERIC:
 			{
 				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_CLERIC);
+				szCantripLabel = "(o)";
 				break;
 			}
 			case DND_CHARACTER_CLASS_DRUID:
 			case DND_CHARACTER_SPELL_CLASS_RANGER_DRUID:
 			{
 				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_DRUID);
+				szCantripLabel = "(o)";
 				break;
 			}
 			case DND_CHARACTER_CLASS_MAGE:
 			case DND_CHARACTER_SPELL_CLASS_RANGER_MAGE:
+			case DND_CHARACTER_SPELL_CLASS_ILLUSIONIST_MAGE:
 			{
 				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_MAGE);
+				szCantripLabel = "(c)";
 				break;
 			}
 			case DND_CHARACTER_CLASS_ILLUSIONIST:
 			{
 				pSpellBook = pApp->m_SpellBooks.GetAt(DND_CHARACTER_CLASS_ILLUSIONIST);
+				szCantripLabel = "(c)";
 				break;
 			}
 			default:
@@ -160,10 +166,21 @@ void DMCastSpellDialog::Refresh()
 					{
 						cDNDSpell *pSpell = &pSpellBook->m_Spells[nLevel][nSpell];
 
-						if(m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell] > 1)
-							szTemp.Format("%d x %s", m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell], pSpell->m_szSpellName);
+						CString szSpellName;
+						
+						if (pSpell->m_nSpellLevel == 0)
+						{
+							szSpellName.Format("%s %s", szCantripLabel, pSpell->m_szSpellName);
+						}
 						else
-							szTemp = pSpell->m_szSpellName;
+						{
+							szSpellName = pSpell->m_szSpellName;
+						}
+
+						if(m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell] > 1)
+							szTemp.Format("%d x %s", m_pCharacter->m_nSpellsMemorized[nSpellClass][nLevel][nSpell], szSpellName);
+						else
+							szTemp = szSpellName;
 
 						CString szComponents = "  ( * )";
 						szComponents.Replace("*", pSpell->m_szSpellComponents);
@@ -291,6 +308,7 @@ void DMCastSpellDialog::OnOK()
 	BOOL bCloseWindow = TRUE;
 
 	UpdateData(TRUE);
+	BOOL bSpellFailedToCast = FALSE;
 
 	int nCursor = m_cSpellList.GetCurSel();
 
@@ -355,7 +373,23 @@ void DMCastSpellDialog::OnOK()
 
 						if (dwCharacterID)
 						{
-							m_pApp->HealCharacter(dwCharacterID);
+							if (pSpellSlot->m_pSpell->m_nSpellLevel == 0 && g_bFreecastCantrips)
+							{
+								PDNDCHARVIEWDLG pCharDlg = NULL;
+								m_pApp->m_CharacterViewMap.Lookup(dwCharacterID, pCharDlg);
+								if (pCharDlg != NULL && pCharDlg->m_pCharacter != NULL && pCharDlg->m_pCharacter->m_nWounds > 0)
+								{
+									m_pApp->HealCharacter(dwCharacterID);
+								}
+								else
+								{
+									bSpellFailedToCast = TRUE;
+								}
+							}
+							else
+							{
+								m_pApp->HealCharacter(dwCharacterID);
+							}
 						}
 					}
 					else if (pApp->SpellIsDirectDamageSpell(pSpellSlot->m_pSpell))
@@ -381,7 +415,7 @@ void DMCastSpellDialog::OnOK()
 					#if GAMETABLE_BUILD
 					if (pApp->m_pInstantMapSFXPlacer == NULL)
 					{
-						if (pApp->m_bSpellFXOnMaps)
+						if (pApp->m_bSpellFXOnMaps && bSpellFailedToCast == FALSE)
 						{
 							int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
 							pApp->m_pInstantMapSFXPlacer = new cDNDInstantMapSFXPlacer(m_pBaseCharViewDialog->GetCharacterSFXName(), m_pCharacter->m_dwCharacterID, pSpellSlot->m_pSpell, pSpellSlot->m_nCastLevel, pSpellSlot->m_bCastFromDevice, nSoundRepeats, pPartyDlg, dwSpellAttackedCharacterID);
@@ -408,8 +442,15 @@ void DMCastSpellDialog::OnOK()
 							pApp->PlayPCSoundFX("* PC Cast Spell", m_pBaseCharViewDialog->GetCharacterSFXName(), "NADA", FALSE, pSpellSlot->m_pSpell->m_nSpellIdentifier);
 						}
 
-						int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
-						pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
+						if (!bSpellFailedToCast)
+						{
+							int nSoundRepeats = pApp->GetSpellRepeats(pSpellSlot);
+							pApp->PlaySpellSFX(pSpellSlot->m_pSpell->m_nSpellIdentifier, nSoundRepeats);
+						}
+						else
+						{
+							pApp->PlaySoundFX("SPELL FAILURE");
+						}
 
 						BOOL bKilledTarget = FALSE;
 						if (dwSpellAttackedCharacterID)
