@@ -122,6 +122,7 @@ public:
 	CStatic m_cMusicLabel;
 	afx_msg void OnBnClickedOpenTrackListButton();
 	CButton m_cTrackListButton;
+	CString m_szScaleComment;
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -63,6 +63,9 @@ public:
 	CString m_szSpellDesc;
 	afx_msg void OnBnClickedFailCast();
 	afx_msg void OnBnClickedCancel();
+	BOOL m_bHideCantripsCheck;
+	afx_msg void OnBnClickedHideCantripsCheck();
+	CButton m_cHideCantripsCheck;
 };
 
 //{{AFX_INSERT_LOCATION}}

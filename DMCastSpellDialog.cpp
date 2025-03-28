@@ -28,6 +28,7 @@ static char THIS_FILE[] = __FILE__;
 DMCastSpellDialog::DMCastSpellDialog(DMPartyDialog *_pPartyDialog, CDMBaseCharViewDialog *_pBaseCharViewDialog, cDNDCharacter	*_pCharacter, CWnd* pParent /*=NULL*/)
 	: CDialog(DMCastSpellDialog::IDD, pParent)
 	, m_szSpellDesc(_T(""))
+	, m_bHideCantripsCheck(g_bHideCantripsCheck)
 {
 	//{{AFX_DATA_INIT(DMCastSpellDialog)
 		// NOTE: the ClassWizard will add member initialization here
@@ -49,6 +50,8 @@ void DMCastSpellDialog::DoDataExchange(CDataExchange* pDX)
 	//}}AFX_DATA_MAP
 	DDX_Control(pDX, IDOK, m_cCastButton);
 	DDX_Text(pDX, IDC_SPELL_DESC, m_szSpellDesc);
+	DDX_Check(pDX, IDC_HIDE_CANTRIPS_CHECK, m_bHideCantripsCheck);
+	DDX_Control(pDX, IDC_HIDE_CANTRIPS_CHECK, m_cHideCantripsCheck);
 }
 
 
@@ -63,6 +66,7 @@ BEGIN_MESSAGE_MAP(DMCastSpellDialog, CDialog)
 	ON_LBN_SELCHANGE(IDC_SPELL_LIST, &DMCastSpellDialog::OnLbnSelchangeSpellList)
 	ON_BN_CLICKED(ID_FAIL_CAST, &DMCastSpellDialog::OnBnClickedFailCast)
 	ON_BN_CLICKED(IDCANCEL, &DMCastSpellDialog::OnBnClickedCancel)
+	ON_BN_CLICKED(IDC_HIDE_CANTRIPS_CHECK, &DMCastSpellDialog::OnBnClickedHideCantripsCheck)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -83,6 +87,13 @@ BOOL DMCastSpellDialog::OnInitDialog()
 	}
 
 	m_cSpellList.SetHorizontalExtent(1000);
+
+	#if USE_CANTRIPS
+	if (g_bUseUnearthedArcana)
+	{
+		m_cHideCantripsCheck.ShowWindow(SW_SHOW);
+	}
+	#endif
 
 	Refresh();
 	
@@ -145,9 +156,16 @@ void DMCastSpellDialog::Refresh()
 		if(pSpellBook != NULL)
 		{
 			int nCastLevel = m_pCharacter->m_nCastingLevels[nSpellClass];
+			int nStartLevel = 0;
 
-			#if USE_CANTRIPS
-			for(int nLevel = 0;  nLevel <= MAX_SPELL_LEVELS; ++nLevel)
+			#if USE_CANTRIPS	
+			
+			if (m_bHideCantripsCheck || !g_bUseUnearthedArcana)
+			{
+				nStartLevel = 1;
+			}
+
+			for (int nLevel = nStartLevel; nLevel <= MAX_SPELL_LEVELS; ++nLevel)
 			#else
 			for(int nLevel = 1;  nLevel <= MAX_SPELL_LEVELS; ++nLevel)
 			#endif
@@ -685,4 +703,14 @@ void DMCastSpellDialog::OnLbnSelchangeSpellList()
 void DMCastSpellDialog::OnBnClickedCancel()
 {
 	CDialog::OnCancel();
+}
+
+
+void DMCastSpellDialog::OnBnClickedHideCantripsCheck()
+{
+	UpdateData(TRUE);
+
+	g_bHideCantripsCheck = m_bHideCantripsCheck;
+
+	Refresh();
 }

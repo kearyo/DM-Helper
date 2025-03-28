@@ -292,6 +292,7 @@ extern BOOL g_bUsed10Initiative;
 extern BOOL g_bUseSoundEffects;
 extern BOOL g_bMagicUserINTSpellBonus;
 extern BOOL g_bFreecastCantrips;
+extern BOOL g_bHideCantripsCheck;
 
 #define ATTRIB_STR		0
 #define ATTRIB_INT		1
@@ -1222,6 +1223,47 @@ public:
 		if ((m_nCustomFlags & 0x0001) == 1)
 		{
 			return TRUE;
+		}
+
+		return FALSE;
+	}
+
+	BOOL IsElfWeapon()
+	{
+		switch (m_wTypeId)
+		{
+			case 1152: // long sword
+			case 1153: // short sword
+			case 1106: // bow composite short
+			case 1107: // bow composite short exc strength
+			case 1108: // bow composite long
+			case 1109: // bow composite long exc strength
+			case 1110: // bow long
+			case 1111: // bow long exc strength
+			case 1112: // bow short
+			case 1113: // bow short exc strength
+			{
+				return TRUE;
+			}
+		}
+
+		return FALSE;
+	}
+
+	BOOL IsHalflingWeapon()
+	{
+		switch (m_wTypeId)
+		{
+			case 1106: // bow composite short
+			case 1107: // bow composite short exc strength
+			case 1112: // bow short
+			case 1113: // bow short exc strength
+			case 1116: // crossbow light ?
+			case 1145: // sling
+			case 1146: // sling exc strength ?
+			{
+				return TRUE;
+			}
 		}
 
 		return FALSE;

@@ -54,6 +54,8 @@ public:
 
 	DWORD m_dwInventoryFlag;	// flag for validity of object tables
 
+	CString m_szSelectedItem; // last selected item
+
 	//int m_nSelectedInventorySlot;
 	cDNDObject *m_pSelectedInventorySlot;
 

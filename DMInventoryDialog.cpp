@@ -116,6 +116,8 @@ DMInventoryDialog::DMInventoryDialog(CDMHelperDlg* pMainDialog, cDNDCharacter *_
 
 	m_dwInventoryFlag = m_pApp->m_dwInventoryFlag;
 
+	m_szSelectedItem = _T("");
+
 	Create(DMInventoryDialog::IDD, pParent);
 }
 
@@ -604,6 +606,11 @@ void DMInventoryDialog::InitDisplay()
 				m_cStoreList.InsertString(nIndex, szTemp);
 				m_cStoreList.SetItemDataPtr(nIndex, pObj);
 
+				if (pObj->m_szType == m_szSelectedItem)
+				{
+					m_cStoreList.SetCurSel(nIndex);
+				}
+
 				++nIndex;
 			}
 		}
@@ -702,6 +709,11 @@ void DMInventoryDialog::InitDisplay()
 				m_cStoreList.InsertString(nIndex, szTemp);
 				m_cStoreList.SetItemDataPtr(nIndex, pMagicItem);
 
+				if (pMagicItem->m_szDesc == m_szSelectedItem)
+				{
+					m_cStoreList.SetCurSel(nIndex);
+				}
+
 				++nIndex;
 			}
 		}
@@ -711,6 +723,8 @@ void DMInventoryDialog::InitDisplay()
 	{
 		m_pPCDetailsDialog->Init();
 	}
+
+	UpdateData(FALSE);
 
 	Refresh();
 }
@@ -1313,6 +1327,8 @@ void DMInventoryDialog::CheckItemSelect()
 
 			szItemName.Format("%s", pMagicItem->m_szDesc);
 			m_szItemDesc.Format("DESC: %s", pMagicItem->m_szDesc);
+
+			m_szSelectedItem = pMagicItem->m_szDesc;
 		}
 		else
 		{
@@ -1322,6 +1338,8 @@ void DMInventoryDialog::CheckItemSelect()
 			{
 				m_szItemDesc.Format("DESC: %s", pObj->m_szExtendedName);
 			}
+
+			m_szSelectedItem = pObj->m_szType;
 		}
 
 		if (szItemName != _T(""))

@@ -26,6 +26,7 @@ BOOL g_bUsed10Initiative;
 BOOL g_bUseSoundEffects;
 BOOL g_bMagicUserINTSpellBonus;
 BOOL g_bFreecastCantrips;
+BOOL g_bHideCantripsCheck = FALSE;
 
 
 cDNDCustomClass _gCustomClass[12];	// yep global, so sue me

@@ -230,6 +230,8 @@ public:
 
 	BOOL m_bCatchMe;	//this is a debugging variable
 
+	int m_nFogCellSize;
+
 	//DWORD m_dwRandomDungeonPartyID;
 	
 

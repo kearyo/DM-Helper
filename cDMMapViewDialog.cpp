@@ -298,6 +298,8 @@ cDMMapViewDialog::cDMMapViewDialog(CDMHelperDlg* pMainDialog, cDNDMap *pDNDMap, 
 	m_bCatchMe = FALSE;
 	m_bUpdateDetachedScale = FALSE;
 
+	m_nFogCellSize = 32;
+
 	m_pUpdateRect = NULL;
 
 	m_DragPoint.x = 0;
@@ -1290,14 +1292,25 @@ void cDMMapViewDialog::OnPaint()
 		int nCols = m_pDNDMap->m_nColumns;
 		int nRows = m_pDNDMap->m_nRows;
 
-		int nRemX = (m_pDNDMap->m_nPixelSizeX * nCols) % 32;
-		int nRemY = (m_pDNDMap->m_nPixelSizeY * nRows) % 32;
+		if (m_pDNDMap->m_nPixelSizeX > m_pDNDMap->m_nPixelSizeY)
+		{
+			m_nFogCellSize = m_pDNDMap->m_nPixelSizeX / 100;
+		}
+		else
+		{
+			m_nFogCellSize = m_pDNDMap->m_nPixelSizeY / 100;
+		}
 
-		int nFOWSizeX = ((m_pDNDMap->m_nPixelSizeX * nCols + nRemX) / 32)+1;
-		int nFOWSizeY = ((m_pDNDMap->m_nPixelSizeY * nRows + nRemY) / 32)+1;
+		
 
-		int nPixelSizeX = (int)(32.0f * m_fViewScale);
-		int nPixelSizeY = (int)(32.0f * m_fViewScale);
+		int nRemX = (m_pDNDMap->m_nPixelSizeX * nCols) % m_nFogCellSize;
+		int nRemY = (m_pDNDMap->m_nPixelSizeY * nRows) % m_nFogCellSize;
+
+		int nFOWSizeX = ((m_pDNDMap->m_nPixelSizeX * nCols + nRemX) / m_nFogCellSize) + 1;
+		int nFOWSizeY = ((m_pDNDMap->m_nPixelSizeY * nRows + nRemY) / m_nFogCellSize) + 1;
+
+		int nPixelSizeX = (int)(m_nFogCellSize * m_fViewScale);
+		int nPixelSizeY = (int)(m_nFogCellSize * m_fViewScale);
 
 		for (int xx = 0; xx < nFOWSizeX; ++xx)
 		{
@@ -1320,7 +1333,7 @@ void cDMMapViewDialog::OnPaint()
 							fAlpha = 1.0f;
 						}
 
-						DrawTransparentBitmap(&graphics, m_pFogOfWarBitmap, x1, y1, nPixelSizeX, nPixelSizeY, 32,32, fAlpha);
+						DrawTransparentBitmap(&graphics, m_pFogOfWarBitmap, x1, y1, nPixelSizeX, nPixelSizeY, m_nFogCellSize, m_nFogCellSize, fAlpha);
 					}
 				}
 			}
@@ -3670,8 +3683,8 @@ void cDMMapViewDialog::OnMouseMove(UINT nFlags, CPoint point)
 		{
 			for (int nYY = nStartY; nYY < nEndY; ++nYY)
 			{
-				int nFogX = max(0, (int)(nXX / m_fViewScale / 32.0f)) % 100;
-				int nFogY = max(0, (int)(nYY / m_fViewScale / 32.0f)) % 100;
+				int nFogX = max(0, (int)(nXX / m_fViewScale / (float)m_nFogCellSize)) % 100;
+				int nFogY = max(0, (int)(nYY / m_fViewScale / (float)m_nFogCellSize)) % 100;
 
 				int nOldFog = m_pDNDMap->m_nFogOfWarCell[nFogY][nFogX];
 

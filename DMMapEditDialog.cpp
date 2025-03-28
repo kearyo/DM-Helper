@@ -35,6 +35,7 @@ DMMapEditDialog::DMMapEditDialog(cDNDMap *pDNDMap, CWnd* pParent /*=NULL*/)
 	, m_nTileHeight(0)
 	, m_szTileHeight(_T("0"))
 	, m_szMapMusic(_T(""))
+	, m_szScaleComment(_T(""))
 {
 	//{{AFX_DATA_INIT(DMMapEditDialog)
 	m_szMapName = _T("");
@@ -118,6 +119,8 @@ void DMMapEditDialog::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_MAP_MUSIC_EDIT, m_szMapMusic);
 	DDX_Control(pDX, IDC_MAP_MUSIC_LABEL, m_cMusicLabel);
 	DDX_Control(pDX, IDC_OPEN_TRACK_LIST_BUTTON, m_cTrackListButton);
+	DDX_Text(pDX, IDC_SCALE_COMMENT, m_szScaleComment);
+	DDV_MaxChars(pDX, m_szScaleComment, 256);
 }
 
 BEGIN_MESSAGE_MAP(DMMapEditDialog, CDialog)
@@ -270,9 +273,13 @@ void DMMapEditDialog::Refresh()
 		{	
 			m_cScaleMapButton.ShowWindow(SW_HIDE);
 		}
+
+		m_szScaleComment.Format("1 pixel = %0.3f inches", m_pDNDMap->m_fScaleX*12.0f);
 	}
 	else
 	{
+		m_szScaleComment.Format("1 pixel = %0.3f feet", m_pDNDMap->m_fScaleX*5280.0f);
+
 		if(m_pDNDMap->m_dwParentMapID)
 		{
 			m_cMapScaleEdit.EnableWindow(FALSE);

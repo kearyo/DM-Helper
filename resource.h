@@ -1037,6 +1037,7 @@
 #define IDC_X1_CHECK                    1440
 #define IDC_MALE_CHECK                  1440
 #define IDC_SHOW_INSTALLED_CHECK        1440
+#define IDC_HIDE_CANTRIPS_CHECK         1440
 #define IDC_PP_BUTTON                   1441
 #define IDC_GRID_CHECK                  1441
 #define IDC_EMPATH_CHECK                1441
@@ -1411,6 +1412,7 @@
 #define IDC_FALSE_BUTTON                1698
 #define IDC_NAME_TRANSFER_BUTTON        1699
 #define IDC_CURRENT_HP                  1700
+#define IDC_SCALE_COMMENT               1701
 #define ID_OPEN_CHARACTER               32771
 #define ID_CLOSE_CHARACTER              32772
 #define ID_NEW_CHARACTER                32773
@@ -1467,7 +1469,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        320
 #define _APS_NEXT_COMMAND_VALUE         32820
-#define _APS_NEXT_CONTROL_VALUE         1701
+#define _APS_NEXT_CONTROL_VALUE         1702
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

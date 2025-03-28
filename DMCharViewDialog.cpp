@@ -3190,6 +3190,28 @@ void CDMCharViewDialog::ProcessCharStats()
 			nToHitAdj += nMagicAdj;
 			nDamageAdj += nMagicAdj;
 
+			switch (m_pCharacter->m_nRace)
+			{
+				case DND_CHARACTER_RACE_HALFLING:
+				case DND_CHARACTER_RACE_HALFLING_TALLFELLOW:
+				case DND_CHARACTER_RACE_HALFLING_STOUT:
+				{	
+					if (m_pCharacter->m_SelectedWeapons[j].IsHalflingWeapon())
+					{
+						nToHitAdj += 3;
+					}
+					break;
+				}
+				case DND_CHARACTER_RACE_ELF:
+				{
+					if (m_pCharacter->m_SelectedWeapons[j].IsElfWeapon())
+					{
+						nToHitAdj += 1;
+					}
+					break;
+				}
+			}
+
 			int nDualWieldingPenalty = 0;
 			if (IsMissileWeapon(&m_pCharacter->m_SelectedWeapons[j]))  // dexterity adjustment to to-hit for missile weapons
 			{
